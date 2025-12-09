@@ -56,7 +56,7 @@ const Projects = () => {
 
   const [view, setView] = useState('grid'); // 'grid' or 'list'
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return '#10b981';
       case 'planning': return '#f59e0b';

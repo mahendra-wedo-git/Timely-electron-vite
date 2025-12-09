@@ -1,5 +1,4 @@
-import React from 'react'
-import TimelyLogin from '../components/Login'
+import { TimelyLogin } from 'src/components/Login'
 
 export const LoginPage = () => {
   return (

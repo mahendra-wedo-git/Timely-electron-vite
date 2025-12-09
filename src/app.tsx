@@ -1,68 +1,71 @@
-
-import { useState } from 'react';
-import Sidebar from './components/Sidebar';
-import WorkLog from './components/WorkLog';
-import Projects from './components/Projects';
-import Dashboard from './components/Dashboard';
-import { Route, Routes } from 'react-router-dom';
-import { Analytic } from './components/Analytic';
-import { Settings } from './components/Settings';
-import { WorkLogPage } from './pages/WorkLog';
-import { ProjectsPage } from './pages/Projects';
-import { AnalyticsPage } from './pages/Analytics';
-import { SettingsPage } from './pages/Settings';
-import TimelyLogin from './components/Login';
-import ProtectedRoute from './ProtectedRoute';
-import Layout from './Layout';
+import Sidebar from "./components/Sidebar";
+import Dashboard from "./components/Dashboard";
+import { Route, Routes } from "react-router-dom";
+import { WorkLogPage } from "./pages/WorkLog";
+import { ProjectsPage } from "./pages/Projects";
+import { AnalyticsPage } from "./pages/Analytics";
+import { SettingsPage } from "./pages/Settings";
+import { TimelyLogin } from "./components/Login";
 
 const App = () => {
-  // const [activePage, setActivePage] = useState('dashboard');
+  // const isLogin = localStorage.getItem("userEmail") ? true : false;
+  // return (
+  //   <>
+  //     {/* routing changes */}
+  //     <div className="app-container">
+  //       {isLogin && (
+  //         <>
+  //           <Sidebar />
+  //           <Routes>
+  //             <Route path="/" element={<TimelyLogin />} />
+  //             <Route path="/login" element={<TimelyLogin />} />
+  //           </Routes>
+  //         </>
+  //       )}
 
-  // const renderPage = () => {
-  //   switch (activePage) {
-  //     case 'dashboard':
-  //       return <Dashboard />;
-  //     case 'worklog':
-  //       return <WorkLog />;
-  //     case 'projects':
-  //       return <Projects />;
-  //     case 'analytics':
-  //       return <div className="page-placeholder">Analytics Coming Soon</div>;
-  //     case 'settings':
-  //       return <div className="page-placeholder">Settings Coming Soon</div>;
-  //     default:
-  //       return <Dashboard />;
-  //   }
-  // };
+  //       <main className="main-content">
+  //         <Routes>
+  //           <Route path="/" element={<Dashboard />} />
+  //           <Route path="/login" element={<TimelyLogin />} />
+  //           <Route path="/dashboard" element={<Dashboard />} />
+  //           <Route path="/worklog" element={<WorkLogPage />} />
+  //           <Route path="/projects" element={<ProjectsPage />} />
+  //           <Route path="/analytics" element={<AnalyticsPage />} />
+  //           <Route path="/settings" element={<SettingsPage />} />
+  //         </Routes>
+  //       </main>
+  //     </div>
+  //   </>
+  // );
+
+  const isLogin = Boolean(localStorage.getItem("userEmail"));
 
   return (
-    <>
-      {/* old changes */}
-      {/* <div className="app-container">
-      <Sidebar activePage={activePage} setActivePage={setActivePage} />
-      <main className="main-content">
-        {renderPage()}
-      </main>
-    </div> */}
+    <div className="app-container">
+      {isLogin ? (
+        <>
+          {/* Sidebar visible only when user is logged in */}
+          <Sidebar />
 
-
-      {/* routing changes */}
-      <div className="app-container">
-        <Sidebar />
-
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/worklog" element={<WorkLogPage />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+          </main>
+        </>
+      ) : (
         <main className="main-content">
           <Routes>
-            <Route path="/" element={<TimelyLogin />} />
-            <Route path="/login" element={<TimelyLogin />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/worklog" element={<WorkLogPage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<TimelyLogin />} />
           </Routes>
         </main>
-      </div>
-    </>
+      )}
+    </div>
   );
 };
 
