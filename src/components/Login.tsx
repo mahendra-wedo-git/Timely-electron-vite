@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Lock, Mail, Eye, EyeOff, X } from "lucide-react";
 import { AuthService } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/appContext";
 
 const authService = new AuthService();
 export const TimelyLogin = () => {
-  const [step, setStep] = useState(1); // 1: email check, 2: password entry
+  const [step, setStep] = useState(2); 
   const [email, setEmail] = useState("");
+  const { setCurrentAuthTab } = useAppContext();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,7 +48,8 @@ export const TimelyLogin = () => {
     }
   };
 
-  const handlePasswordSubmit = async () => {
+  const handleLogin = async () => {
+    const formData = new FormData();
     if (!password) {
       setError("Please enter your password");
       return;
@@ -57,18 +60,25 @@ export const TimelyLogin = () => {
 
     try {
       console.log("Login attempt:", { email, password, csrfmiddlewaretoken });
-      localStorage.setItem("userEmail", email);
-      navigate("/dashboard");
-      window.location.reload();
-      const response = await authService.SingIn({
-        email,
-        password,
-        csrfmiddlewaretoken: csrfmiddlewaretoken!,
-      });
-      console.log("login response >>", response);
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      console.log("Login successful!");
+      const token = await authService.requestCSRFToken();
+      setCsrfmiddlewaretoken(token.csrf_token);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("csrfmiddlewaretoken", token.csrf_token!);
+      const response = await authService.SingIn(
+        formData as unknown as {
+          email: string;
+          password: string;
+          csrfmiddlewaretoken: string;
+        }
+      );
+      localStorage.setItem("userEmail", email);
+      if (response.success) {
+        navigate("/");
+        window.location.reload();
+      }
+      console.log("login response >>", response);
     } catch (err) {
       setError("Invalid password. Please try again.");
     } finally {
@@ -88,7 +98,7 @@ export const TimelyLogin = () => {
       if (step === 1) {
         handleEmailSubmit();
       } else {
-        handlePasswordSubmit();
+        handleLogin();
       }
     }
   };
@@ -153,11 +163,13 @@ export const TimelyLogin = () => {
                       <Mail className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
-                      id="email-readonly"
+                      id="email"
                       type="email"
                       value={email}
-                      readOnly
-                      className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 outline-none"
+                      onChange={(e) => setEmail(e.target.value)}
+                      // onKeyPress={handleKeyPress}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent outline-none transition"
+                      placeholder="you@example.com"
                     />
                     <button
                       type="button"
@@ -208,7 +220,7 @@ export const TimelyLogin = () => {
 
                 {/* Forgot Password */}
                 <div className="flex justify-end">
-                  <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                  <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500" onClick={()=> setCurrentAuthTab("FORGOT_PASSWORD")}>
                     Forgot password?
                   </button>
                 </div>
@@ -224,7 +236,7 @@ export const TimelyLogin = () => {
 
             {/* Submit Button */}
             <button
-              onClick={step === 1 ? handleEmailSubmit : handlePasswordSubmit}
+              onClick={step === 1 ? handleEmailSubmit : handleLogin}
               disabled={isLoading}
               className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -237,11 +249,14 @@ export const TimelyLogin = () => {
           </div>
 
           {/* Sign Up Link - Only show on first step */}
-          {step === 1 && (
+          {step === 2 && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <button className="font-medium text-indigo-600 hover:text-indigo-500">
+                <button
+                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                  onClick={() => setCurrentAuthTab("REGISTER")}
+                >
                   Sign up
                 </button>
               </p>

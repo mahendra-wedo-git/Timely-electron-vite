@@ -5,7 +5,7 @@ import { WorkLogPage } from "./pages/WorkLog";
 import { ProjectsPage } from "./pages/Projects";
 import { AnalyticsPage } from "./pages/Analytics";
 import { SettingsPage } from "./pages/Settings";
-import { TimelyLogin } from "./components/Login";
+import { AuthWrapper } from "./components/AuthWrapper";
 
 const App = () => {
   // const isLogin = localStorage.getItem("userEmail") ? true : false;
@@ -61,7 +61,7 @@ const App = () => {
       ) : (
         <main className="main-content">
           <Routes>
-            <Route path="*" element={<TimelyLogin />} />
+            <Route path="*" element={<AuthWrapper />} />
           </Routes>
         </main>
       )}

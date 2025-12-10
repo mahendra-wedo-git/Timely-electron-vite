@@ -1,6 +1,8 @@
-
-
-import { ICsrfTokenData, IEmailCheckData, IEmailCheckResponse } from "../../types/auth";
+import {
+  ICsrfTokenData,
+  IEmailCheckData,
+  IEmailCheckResponse,
+} from "../../types/auth";
 import { APIService } from "./api.service";
 import { API_BASE_URL } from "./../utils/common.helper";
 
@@ -51,8 +53,23 @@ export class AuthService extends APIService {
         throw error?.response?.data;
       });
   }
-  async SingIn(data: { email: string , password: string, csrfmiddlewaretoken: string }): Promise<any> {
+  async SingIn(data: {
+    email: string;
+    password: string;
+    csrfmiddlewaretoken: string;
+  }): Promise<any> {
     return this.post("/auth/electron/sign-in/", data, { headers: {} })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+  async SingUp(data: {
+    email: string;
+    password: string;
+    csrfmiddlewaretoken: string;
+  }): Promise<any> {
+    return this.post("/auth/electron/sign-up/", data, { headers: {} })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

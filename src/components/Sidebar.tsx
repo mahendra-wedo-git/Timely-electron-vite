@@ -8,6 +8,7 @@ import {
   Users,
   ChartBar,
 } from "lucide-react";
+import { AuthService } from "../services/auth.service";
 
 interface NavItem {
   id: string;
@@ -15,6 +16,7 @@ interface NavItem {
   icon: React.ReactNode;
   path: string;
 }
+const authService = new AuthService();
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -51,6 +53,13 @@ const Sidebar: React.FC = () => {
   const handleNavClick = (path: string): void => {
     navigate(path);
   };
+  const handleLogout = async () => {
+    await authService.signOut("").then(() => {
+      navigate("/login");
+      localStorage.clear();
+      window.location.reload();
+    });
+  };
 
   return (
     <div className="sidebar">
@@ -80,11 +89,7 @@ const Sidebar: React.FC = () => {
           <div className="user-info">
             <div className="user-name">Mahendra Parmar</div>
             <div className="user-status">Online</div>
-            <div className="user-status" onClick={() => {
-              localStorage.clear()
-              navigate('/login')
-              window.location.reload()
-              }}>
+            <div className="user-status" onClick={handleLogout}>
               Logout
             </div>
           </div>
