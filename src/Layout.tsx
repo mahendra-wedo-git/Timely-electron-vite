@@ -25,7 +25,7 @@
 // Layout.jsx
 import { Fragment } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/Sidebar/Sidebar";
 
 const Layout = () => {
   const isLogin = localStorage.getItem("userEmail");
@@ -44,4 +44,3 @@ const Layout = () => {
 };
 
 export default Layout;
-

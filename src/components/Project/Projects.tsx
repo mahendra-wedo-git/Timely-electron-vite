@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { FaPlus, FaUsers, FaTasks, FaChartLine } from 'react-icons/fa';
 
-const Projects = () => {
+export const Projects = () => {
   const [projects, setProjects] = useState([
     {
       id: 1,

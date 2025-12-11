@@ -1,4 +1,4 @@
-import { Analytic } from "../components/Analytic";
+import { Analytic } from "src/components";
 
 export const AnalyticsPage = () => {
     return <Analytic />;

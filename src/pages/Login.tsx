@@ -1,7 +1,5 @@
-import { TimelyLogin } from 'src/components/Login'
+import { TimelyLogin } from "src/components";
 
 export const LoginPage = () => {
-  return (
-    <TimelyLogin />
-  )
-}
+  return <TimelyLogin />;
+};

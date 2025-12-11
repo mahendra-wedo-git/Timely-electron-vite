@@ -17,6 +17,9 @@
 
     /* Linting */
     "strict": true,
+    "paths": {
+      "src/*": ["src/*"]
+    },
      "baseUrl": ".",
      "rootDir": ".",
     "noUnusedLocals": true,

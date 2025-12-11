@@ -1,7 +1,7 @@
 // src/components/Dashboard.jsx
 import { FaClock, FaBriefcase, FaCheckCircle, FaChartLine } from 'react-icons/fa';
 
-const Dashboard = () => {
+export const Dashboard = () => {
   const recentActivities = [
     { id: 1, action: 'Completed task "Design UI"', time: '2 hours ago', type: 'task' },
     { id: 2, action: 'Added 4.5 hours to Website Redesign', time: '3 hours ago', type: 'worklog' },
@@ -85,5 +85,3 @@ const Dashboard = () => {
     </div>
   );
 };
-
-export default Dashboard;

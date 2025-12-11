@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { Lock, Mail, Eye, EyeOff, X } from "lucide-react";
-import { AuthService } from "../services/auth.service";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "../context/appContext";
+import { AuthService } from "src/services";
+import { useAppContext } from "src/context";
+import { useDispatch } from "react-redux";
+import { setCurrentUser } from "src/redux/userSlice";
 
 const authService = new AuthService();
 export const TimelyLogin = () => {
-  const [step, setStep] = useState(2); 
+  const [step, setStep] = useState(2);
   const [email, setEmail] = useState("");
+  const dispatch = useDispatch();
   const { setCurrentAuthTab } = useAppContext();
   const navigate = useNavigate();
   const [password, setPassword] = useState("");
@@ -73,12 +76,13 @@ export const TimelyLogin = () => {
           csrfmiddlewaretoken: string;
         }
       );
-      localStorage.setItem("userEmail", email);
-      if (response.success) {
+      if (response?.success) {
+        localStorage.setItem("userEmail", email);
+        dispatch(setCurrentUser(response?.user));
         navigate("/");
         window.location.reload();
+        console.log("login response >>", response);
       }
-      console.log("login response >>", response);
     } catch (err) {
       setError("Invalid password. Please try again.");
     } finally {
@@ -220,7 +224,10 @@ export const TimelyLogin = () => {
 
                 {/* Forgot Password */}
                 <div className="flex justify-end">
-                  <button className="text-sm font-medium text-indigo-600 hover:text-indigo-500" onClick={()=> setCurrentAuthTab("FORGOT_PASSWORD")}>
+                  <button
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    onClick={() => setCurrentAuthTab("FORGOT_PASSWORD")}
+                  >
                     Forgot password?
                   </button>
                 </div>

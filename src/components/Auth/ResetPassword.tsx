@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, CheckCircle } from 'lucide-react';
-import { useAppContext } from '../context/appContext';
-import { AuthService } from '../services/auth.service';
+import { useAppContext } from 'src/context';
+import { AuthService } from 'src/services';
 
 const authService = new AuthService();
 
@@ -43,7 +43,7 @@ export const TimelyResetPassword = () => {
             console.log('Sending reset link to:', email);
 
             // Example API call:
-            const response = await authService.sendResetPasswordLink(formData);
+            const response = await authService.sendResetPasswordLink(formData as unknown as { email: string });
             console.log("response", response)
 
             setIsEmailSent(true);
@@ -61,7 +61,7 @@ export const TimelyResetPassword = () => {
         setCountdown(0);
     };
 
-    const handleKeyPress = (e) => {
+    const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !isEmailSent && countdown === 0) {
             handleSubmit();
         }
@@ -124,7 +124,7 @@ export const TimelyResetPassword = () => {
 
                         {/* Submit Button */}
                         <button
-                            onClick={countdown === 0 ? (isEmailSent ? handleResend : handleSubmit) : null}
+                            onClick={()=>{countdown === 0 ? (isEmailSent ? handleResend : handleSubmit) : null}}
                             disabled={isLoading || countdown > 0}
                             className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >

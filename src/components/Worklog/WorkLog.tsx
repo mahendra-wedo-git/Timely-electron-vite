@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { FaPlus, FaClock, FaCalendar, FaEdit, FaTrash } from 'react-icons/fa';
 
-const WorkLog = () => {
+export const WorkLog = () => {
   const [logs, setLogs] = useState([
     {
       id: 1,

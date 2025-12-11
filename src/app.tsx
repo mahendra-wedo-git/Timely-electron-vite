@@ -1,11 +1,12 @@
-import Sidebar from "./components/Sidebar";
-import Dashboard from "./components/Dashboard";
+import Sidebar from "./components/Sidebar/Sidebar";
 import { Route, Routes } from "react-router-dom";
 import { WorkLogPage } from "./pages/WorkLog";
 import { ProjectsPage } from "./pages/Projects";
 import { AnalyticsPage } from "./pages/Analytics";
 import { SettingsPage } from "./pages/Settings";
-import { AuthWrapper } from "./components/AuthWrapper";
+import { AuthWrapper } from "./components/Auth/AuthWrapper";
+import { DashboardPage } from "./pages/Dashboard";
+import { ChatPage } from "./pages/Chat";
 
 const App = () => {
   // const isLogin = localStorage.getItem("userEmail") ? true : false;
@@ -49,8 +50,9 @@ const App = () => {
 
           <main className="main-content">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/chat" element={<ChatPage />} />
               <Route path="/worklog" element={<WorkLogPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />

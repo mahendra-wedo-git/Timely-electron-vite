@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Lock, Mail, Eye, EyeOff, Check, X } from "lucide-react";
-import { AuthService } from "../services/auth.service";
-import { useAppContext } from "../context/appContext";
 import { Controller, FormProvider, useForm } from "react-hook-form";
+import { AuthService } from "src/services";
+import { useAppContext } from "src/context";
 
 const authService = new AuthService();
 export const TimelyRegister = () => {

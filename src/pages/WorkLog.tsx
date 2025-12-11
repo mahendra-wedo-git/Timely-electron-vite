@@ -1,5 +1,5 @@
+import { WorkLog } from "src/components";
 
-import WorkLog from "../components/WorkLog";
 
 export const WorkLogPage = () => {
     return <WorkLog />;

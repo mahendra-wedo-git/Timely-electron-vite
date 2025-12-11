@@ -1,13 +1,13 @@
-import { useAppContext } from "../context/appContext";
-import { TimelyLogin } from "./Login";
+import { useAppContext } from "src/context";
 import { TimelyRegister } from "./Register";
+import { TimelyLogin } from "./Login";
 import { TimelyResetPassword } from "./ResetPassword";
 
 export const AuthWrapper = () => {
   const { isCurrentAuthTab } = useAppContext();
 
   if (isCurrentAuthTab === "REGISTER") {
-    return <TimelyRegister  />;
+    return <TimelyRegister />;
   } else if (isCurrentAuthTab === "LOGIN") {
     return <TimelyLogin />;
   } else if (isCurrentAuthTab === "FORGOT_PASSWORD") {
