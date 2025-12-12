@@ -55,3 +55,12 @@ export const convertRemToPixel = (rem: number): number => rem * 0.9 * 16;
 
 export const getProgress = (completed: number | undefined, total: number | undefined) =>
   total && total > 0 ? Math.round(((completed ?? 0) / total) * 100) : 0;
+
+
+export function convertCamelCaseToWords(camelCaseString: string) {
+  return camelCaseString
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2")
+    .toLowerCase()
+    .replace(/^./, (str) => str.toUpperCase());
+}

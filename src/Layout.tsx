@@ -21,11 +21,10 @@
 
 // export default Layout;
 
-
 // Layout.jsx
 import { Fragment } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "./components/Sidebar/Sidebar";
+import Sidebar from "./components/root/Sidebar/Sidebar";
 
 const Layout = () => {
   const isLogin = localStorage.getItem("userEmail");

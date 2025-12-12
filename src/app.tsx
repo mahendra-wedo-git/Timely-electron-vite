@@ -1,10 +1,10 @@
-import Sidebar from "./components/Sidebar/Sidebar";
+import Sidebar from "./components/root/Sidebar/Sidebar";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { WorkLogPage } from "./pages/WorkLog";
 import { ProjectsPage } from "./pages/Projects";
 import { AnalyticsPage } from "./pages/Analytics";
 import { SettingsPage } from "./pages/Settings";
-import { AuthWrapper } from "./components/Auth/AuthWrapper";
+import { AuthWrapper } from "./components/root/Auth/AuthWrapper";
 import { DashboardPage } from "./pages/Dashboard";
 import { ChatPage } from "./pages/Chat";
 import { WorkspaceLayout } from "./workspaceLayout";
