@@ -14,7 +14,7 @@
 // export const API_BASE_URL = process.env.VITE_APP_API_URL || "";
 export const API_BASE_URL = (import.meta.env.VITE_APP_API_URL as string) || "";
 // export const WEB_BASE_URL = process.env.NEXT_PUBLIC_WEB_BASE_URL || "";
-// export const WEBSOCKET_BASE_URL = process.env.NEXT_PUBLIC_WEBSOCKET_BASE_URL || "";
+export const WEBSOCKET_BASE_URL = (import.meta.env.VITE_WEBSOCKET_BASE_URL as string) || "";
 
 // export const ADMIN_BASE_URL = process.env.NEXT_PUBLIC_ADMIN_BASE_URL || "";
 // export const ADMIN_BASE_PATH = process.env.NEXT_PUBLIC_ADMIN_BASE_PATH || "";
