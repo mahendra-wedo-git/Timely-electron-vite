@@ -1,15 +1,15 @@
 // import { clsx, type ClassValue } from "clsx";
 // import { twMerge } from "tailwind-merge";
-interface ImportMetaEnv {
-  VITE_APP_API_URL?: string;
-  // Add other environment variables as needed
-}
+// interface ImportMetaEnv {
+//   VITE_APP_API_URL?: string;
+//   // Add other environment variables as needed
+// }
 
-declare global {
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-}
+// declare global {
+//   interface ImportMeta {
+//     readonly env: ImportMetaEnv;
+//   }
+// }
 
 // export const API_BASE_URL = process.env.VITE_APP_API_URL || "";
 export const API_BASE_URL = (import.meta.env.VITE_APP_API_URL as string) || "";

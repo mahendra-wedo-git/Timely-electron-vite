@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   Home,
   ClipboardList,
@@ -24,40 +24,46 @@ const authService = new AuthService();
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { workspace } = useParams();
+  console.log("workspace", workspace);
   const { currentUser } = useAppContext();
-  console.log("currentUsercurrentUser", currentUser);
-
+  // const workspace = localStorage.getItem("workspace") || "wedo";
   const navItems: NavItem[] = [
-    { id: "dashboard", label: "Dashboard", icon: <Home />, path: "/" },
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      icon: <Home />,
+      path: `/${workspace}/dashboard`,
+    },
     {
       id: "worklog",
       label: "Work Log",
       icon: <ClipboardList />,
-      path: "/worklog",
+      path: `/${workspace}/worklog`,
     },
     {
       id: "projects",
       label: "Projects",
       icon: <FolderKanban />,
-      path: "/projects",
+      path: `/${workspace}/projects`,
     },
     {
       id: "chat",
       label: "Chat",
       icon: <MessageSquare />,
-      path: "/chat",
+      path: `/${workspace}/chat`,
     },
     {
       id: "analytics",
       label: "Analytics",
       icon: <ChartBar />,
-      path: "/analytics",
+      path: `/${workspace}/analytics`,
     },
     {
       id: "settings",
       label: "Settings",
       icon: <Settings />,
-      path: "/settings",
+      path: `/${workspace}/settings`,
     },
   ];
 
@@ -77,7 +83,7 @@ const Sidebar: React.FC = () => {
       <div className="sidebar-header">
         <div className="logo">
           <div className="logo-icon">T</div>
-          <h2>Timely</h2>
+          <h2>{workspace}</h2>
         </div>
       </div>
 

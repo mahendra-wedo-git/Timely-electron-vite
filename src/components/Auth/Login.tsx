@@ -18,6 +18,7 @@ export const TimelyLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [csrfmiddlewaretoken, setCsrfmiddlewaretoken] = useState<string>();
+  const workspace = import.meta.env.VITE_WORKSPACE || "wedotest";
 
   const handleEmailSubmit = async () => {
     if (!email) {
@@ -63,7 +64,6 @@ export const TimelyLogin = () => {
 
     try {
       console.log("Login attempt:", { email, password, csrfmiddlewaretoken });
-
       const token = await authService.requestCSRFToken();
       setCsrfmiddlewaretoken(token.csrf_token);
       formData.append("email", email);
@@ -78,8 +78,9 @@ export const TimelyLogin = () => {
       );
       if (response?.success) {
         localStorage.setItem("userEmail", email);
+        localStorage.setItem("workspace", workspace);
         dispatch(setCurrentUser(response?.user));
-        navigate("/");
+        navigate(`/${workspace}`);
         window.location.reload();
         console.log("login response >>", response);
       }
