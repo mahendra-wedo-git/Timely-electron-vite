@@ -5,3 +5,5 @@ export { default as CookiePersistence } from "./cookiePersistence";
 export * from "./authentication.helper";
 export * from "./combineComponents";
 export * from "./validationSchemas";
+export * from "./chat.helper";
+export * from "./user";

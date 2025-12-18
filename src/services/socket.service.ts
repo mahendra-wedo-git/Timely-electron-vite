@@ -65,13 +65,33 @@ export abstract class SocketService {
     };
   }
 
+  // send(data: any) {
+  //   console.log("websocket send", data);
+  //   console.log("socket?.readyState", this.socket?.readyState);
+  //   console.log("WebSocket.OPEN", this.socket);
+  //   if (this.socket?.readyState === WebSocket.OPEN) {
+  //     console.log("socket?.readyState >>>>>", this.socket?.readyState);
+  //     this.socket.send(JSON.stringify(data));
+  //   }
+  // }
+
   send(data: any) {
-    console.log("websocket send", data);
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      console.log("socket?.readyState", this.socket?.readyState);
-      this.socket.send(JSON.stringify(data));
-    }
+  if (!this.socket) {
+    console.warn("WS send skipped: socket is null", data);
+    return;
   }
+
+  if (this.socket.readyState !== WebSocket.OPEN) {
+    console.warn(
+      "WS send skipped: socket not open",
+      this.socket.readyState
+    );
+    return;
+  }
+  console.log("add chat ????",data)
+  this.socket.send(JSON.stringify(data));
+}
+
 
   disconnect() {
     this.manualClose = true;

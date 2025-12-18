@@ -11,8 +11,30 @@ import {
   Check,
   CheckCheck,
   Image,
+  ChartArea,
+  ChartBar,
 } from "lucide-react";
 import { SidebarChat } from "./ChatUserList";
+import { useAppDispatch, useAppSelector } from "src/redux/hooks";
+import { v4 as uuidv4 } from "uuid";
+import {
+  selectCurrentSelectedGroup,
+  selectGroupById,
+} from "src/redux/chatSlice";
+import { IChatGroup, IChatGroupLog, IChatMessage } from "src/types";
+import { useParams } from "react-router-dom";
+import { useChatSocket } from "src/context/chatContext";
+import {
+  addTemporaryMessage,
+  fetchChatGroupLog,
+  fetchChatMessage,
+  selectChatGroupLogDetails,
+  selectChatMessageDetails,
+} from "src/redux/massagesSlice";
+import { groupChatData } from "src/utils";
+import MessageArea from "./MessageArea";
+import { TbMassage } from "react-icons/tb";
+import { ForwardMessageModal } from "./ForwordMessage/ForwordMessage";
 
 interface Message {
   id: string;
@@ -37,86 +59,119 @@ interface Chat {
   isOnline?: boolean;
 }
 
-export const TimelyChat = () => {
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+export const ChatWindow = () => {
+  const [selectedChat, setSelectedChat] = useState<IChatGroup>();
   const [message, setMessage] = useState("");
+  const [openForwardModal, setOpenForwardModal] = useState(false);
+  const [selectedMassage, setSelectedMassage] = useState();
+  const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
+    new Set()
+  );
   const [searchQuery, setSearchQuery] = useState("");
+  const { workspace: workspaceSlug } = useParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const currentUserId = "current-user";
+  const chatSocketService = useChatSocket();
+  // const currentGroup = currentSelectedGroup[workspaceSlug as string];
+  const selectedChatGroup = useAppSelector((state) =>
+    selectedChat?.id !== undefined
+      ? selectGroupById(state, selectedChat.id)
+      : undefined
+  );
+  // const allMessages = getchatMessageDetails(currentChatId || "") || [];
+  // console.log("selectedChatselectedChat",selectedChat)
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      senderId: "2",
-      senderName: "Vyom Patel",
-      content: "hello",
-      timestamp: new Date("2025-09-08T16:36:00"),
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "2",
-      senderId: "2",
-      senderName: "Vyom Patel",
-      content: "radhe radhe",
-      timestamp: new Date("2025-09-08T16:36:30"),
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "3",
-      senderId: "2",
-      senderName: "Vyom Patel",
-      content: "😀",
-      timestamp: new Date("2025-09-29T12:46:00"),
-      type: "text",
-      isRead: true,
-    },
-    {
-      id: "4",
-      senderId: "2",
-      senderName: "Vyom Patel",
-      content: "",
-      timestamp: new Date("2025-11-19T14:38:00"),
-      type: "file",
-      fileName: "byc-student-panel-de...",
-      fileSize: "707.53 KB",
-      isRead: false,
-    },
-    {
-      id: "5",
-      senderId: currentUserId,
-      senderName: "Mahendra Parmar",
-      content: "hi",
-      timestamp: new Date("2025-11-19T14:40:00"),
-      type: "text",
-      isRead: true,
-    },
-  ]);
+  // const currentChatId = currentChat?.groupId;
+
+  const currentSelectedGroup = useAppSelector((state) =>
+    workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : undefined
+  );
+
+  const currentChatId = currentSelectedGroup?.groupId;
+  const receiverUserId = currentSelectedGroup?.userId;
+  const groupName = currentSelectedGroup?.group_name;
+
+  const dispatch = useAppDispatch();
+  const messages_ = useAppSelector(
+    (state) =>
+      workspaceSlug &&
+      currentChatId &&
+      selectChatMessageDetails(state, workspaceSlug, currentChatId)
+  ) as IChatMessage[];
+
+  const logs = useAppSelector((state) =>
+    workspaceSlug && currentChatId && workspaceSlug
+      ? selectChatGroupLogDetails(state, workspaceSlug, currentChatId)
+      : undefined
+  ) as IChatGroupLog[];
+
+  const groupedMessages = groupChatData(messages_, logs);
+  // console.log("groupedMessages", groupedMessages);
+  console.log("logslogslogslogs", logs);
+  useEffect(() => {
+    if (workspaceSlug && currentChatId) {
+      dispatch(
+        fetchChatMessage({
+          workspaceSlug,
+          chatId: currentChatId,
+          params: { cursor: null },
+        })
+      );
+      dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
+    }
+  }, [workspaceSlug, currentChatId, dispatch]);
+
+  const currentUserId = "current-user";
+  console.log("groupedMessages", groupedMessages);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (groupedMessages) {
+      scrollToBottom();
+    }
+  }, [groupedMessages]);
+
+  const deleteMassages = (message: any) => {
+    console.log("deleteMassages", message);
+    chatSocketService?.send({
+      type: "message",
+      intent: "delete",
+      message_id: message.id,
+      group_id: message.group,
+      sender: message.sender,
+    });
+  };
+
+  const handleForward = (message: any) => {
+    console.log("handleForward", message);
+    setSelectedMassage(message);
+    setOpenForwardModal(true);
+    // chatSocketService?.send({
+    //   type: "message",
+    //   intent: "forward",
+    //   message_id: message.id,
+    //   group_id: message.group,
+    //   sender: message.sender,
+    // });
+  };
 
   const handleSendMessage = () => {
-    if (!message.trim() || !selectedChat) return;
+    if (!message.trim() || !selectedChat || !chatSocketService) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      senderId: currentUserId,
-      senderName: "Mahendra Parmar",
-      content: message,
-      timestamp: new Date(),
-      type: "text",
-      isRead: false,
-    };
+    chatSocketService.send({
+      type: "message",
+      content: message || "",
+      group_id: currentChatId,
+      reply_to: receiverUserId,
+      clientMessageId: uuidv4(),
+      attachments: Array.from(uploadedAssetIds),
+      browser_data: browserData,
+    });
 
-    setMessages([...messages, newMessage]);
     setMessage("");
+    setUploadedAssetIds(new Set());
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -126,31 +181,16 @@ export const TimelyChat = () => {
     }
   };
 
-  const formatTimestamp = (date: Date) => {
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-
-    if (isToday) {
-      return date.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-
-    return (
-      date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }) +
-      " " +
-      date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
-    );
-  };
-
   //   const filteredChats = chats.filter((chat) =>
   //     chat.name.toLowerCase().includes(searchQuery.toLowerCase())
   //   );
+
+  const browserData = {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    screen: { width: window.screen.width, height: window.screen.height },
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -168,15 +208,15 @@ export const TimelyChat = () => {
             <div className="flex items-center">
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
-                  {selectedChat.avatar}
+                  {selectedChat.group_name.charAt(0)}
                 </div>
-                {selectedChat.isOnline && (
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                )}
+                {/* {selectedChat.isOnline && ( */}
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                {/* )} */}
               </div>
               <div className="ml-3">
                 <h2 className="text-base font-semibold text-gray-900">
-                  {selectedChat.name}
+                  {selectedChat.group_name}
                 </h2>
               </div>
             </div>
@@ -200,114 +240,27 @@ export const TimelyChat = () => {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((msg, index) => {
-              const showTimestamp =
-                index === 0 ||
-                new Date(messages[index - 1].timestamp).toDateString() !==
-                  new Date(msg.timestamp).toDateString();
-              const isCurrentUser = msg.senderId === currentUserId;
-
-              return (
-                <div key={msg.id}>
-                  {showTimestamp && (
-                    <div className="text-center my-4">
-                      <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        {formatTimestamp(msg.timestamp)
-                          .split(" ")
-                          .slice(0, 3)
-                          .join(" ")}
-                      </span>
-                    </div>
-                  )}
-
-                  <div
-                    className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`flex ${isCurrentUser ? "flex-row-reverse" : "flex-row"} items-start max-w-xl`}
-                    >
-                      {!isCurrentUser && (
-                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                          {selectedChat.avatar}
-                        </div>
-                      )}
-
-                      <div className={`${isCurrentUser ? "mr-2" : "ml-2"}`}>
-                        {!isCurrentUser && (
-                          <p className="text-xs font-semibold text-gray-900 mb-1">
-                            {msg.senderName}
-                          </p>
-                        )}
-
-                        {msg.type === "text" && (
-                          <div
-                            className={`px-4 py-2 rounded-2xl ${
-                              isCurrentUser
-                                ? "bg-indigo-600 text-white"
-                                : "bg-gray-100 text-gray-900"
-                            }`}
-                          >
-                            <p className="text-sm">{msg.content}</p>
-                          </div>
-                        )}
-
-                        {msg.type === "file" && (
-                          <div
-                            className={`px-4 py-3 rounded-2xl border-2 ${
-                              isCurrentUser
-                                ? "bg-indigo-600 border-indigo-600"
-                                : "bg-white border-indigo-600"
-                            } flex items-center space-x-3`}
-                          >
-                            <File
-                              className={`h-5 w-5 ${isCurrentUser ? "text-white" : "text-indigo-600"}`}
-                            />
-                            <div>
-                              <p
-                                className={`text-sm font-medium ${isCurrentUser ? "text-white" : "text-gray-900"}`}
-                              >
-                                {msg.fileName}
-                              </p>
-                              <p
-                                className={`text-xs ${isCurrentUser ? "text-indigo-100" : "text-gray-500"}`}
-                              >
-                                {msg.fileSize}
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                        <div
-                          className={`flex items-center mt-1 space-x-1 ${isCurrentUser ? "justify-end" : ""}`}
-                        >
-                          <span className="text-xs text-gray-500">
-                            {new Date(msg.timestamp).toLocaleTimeString(
-                              "en-US",
-                              { hour: "2-digit", minute: "2-digit" }
-                            )}
-                          </span>
-                          {isCurrentUser &&
-                            (msg.isRead ? (
-                              <CheckCheck className="h-3 w-3 text-indigo-600" />
-                            ) : (
-                              <Check className="h-3 w-3 text-gray-400" />
-                            ))}
-                        </div>
-                      </div>
-
-                      {/* {isCurrentUser && (
-                        <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                          MP
-                        </div>
-                      )} */}
-                    </div>
-                  </div>
+          {groupedMessages && Object.keys(groupedMessages).length === 0 ? (
+            <div className="w-full h-full flex justify-center items-center">
+              <div className="text-center justify-center align-items-center">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+                  <ChartBar className="h-5 w-5 text-indigo-600" />
                 </div>
-              );
-            })}
-            <div ref={messagesEndRef} />
-          </div>
+                <h3 className="text-md text-gray-900 mb-2">
+                  You're starting a new conversation
+                </h3>
+                <p className="text-gray-500">Type your first message below.</p>
+              </div>
+            </div>
+          ) : (
+            <MessageArea
+              groupedMessages={groupedMessages}
+              currentUserId={receiverUserId || ""}
+              messagesEndRef={messagesEndRef}
+              deleteMassages={deleteMassages}
+              handleForward={handleForward}
+            />
+          )}
 
           {/* Message Input */}
           <div className="bg-white border-t border-gray-200 p-4">
@@ -357,6 +310,14 @@ export const TimelyChat = () => {
             </p>
           </div>
         </div>
+      )}
+      {openForwardModal && (
+        <ForwardMessageModal
+          isOpen={openForwardModal}
+          setIsOpen={setOpenForwardModal}
+          // selectedMembers={selectedMembers}
+          selectedMassage={selectedMassage}
+        />
       )}
     </div>
   );

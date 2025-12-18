@@ -1,7 +1,22 @@
 import { Plus, Search, Users } from "lucide-react";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { ChatUserList } from "./ChatUserList";
 import { AddChatModal } from "../UserChatRequestModal";
+import { useParams } from "react-router-dom";
+import {
+  fetchGroups,
+  selectAllGroups,
+  selectGroupById,
+  setSelectedGroup,
+} from "src/redux/chatSlice";
+import { useDispatch } from "react-redux";
+import { useAppDispatch, useAppSelector } from "src/redux/hooks";
+import { IChatGroup, IUserLite } from "src/types";
+import { useChatSocket } from "src/context/chatContext";
+import { CreateGroupModal } from "../CreateGroup/CreateGroup";
+import { WorkspaceService } from "src/services/workspace.service";
+import { useWorkspaceMembers } from "src/context/WorkspaceMemberContext";
+import { fetchWorkspaceMembers } from "src/redux/workspaceMemberSlice";
 interface Chat {
   id: string;
   name: string;
@@ -12,15 +27,121 @@ interface Chat {
   isOnline?: boolean;
 }
 interface ISidebarChat {
-  setSelectedChat: (chat: Chat) => void;
-  selectedChat: Chat | null;
+  setSelectedChat: (chat: IChatGroup) => void;
+  selectedChat: IChatGroup | undefined;
 }
+
+interface User {
+  avatar: string;
+  avatar_url: null;
+  display_name: string;
+  email: string;
+  first_name: string;
+  id: string;
+  is_bot: false;
+  last_login_medium: string;
+  last_name: string;
+}
+const workspaceService = new WorkspaceService();
 export const SidebarChat: FC<ISidebarChat> = ({
   selectedChat,
   setSelectedChat,
 }) => {
+  const { workspace: workspaceSlug } = useParams();
+  const chatSocketService = useChatSocket();
   const [searchQuery, setSearchQuery] = useState("");
+  const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [userListModalOpen, setUserListModalOpen] = useState(false);
+  const [groupListModalOpen, setGroupListModalOpen] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const groups: any = useAppSelector(selectAllGroups);
+  // const selectedChatGroup = useAppSelector((state) => selectGroupById(state, selectedChat?.id));
+  // console.log("selectedChatGroup",selectedChatGroup)
+
+
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if(users.length > 0) return
+      try {
+        const members: any = await workspaceService.fetchWorkspaceMembers(
+          workspaceSlug as string
+        );
+        setUsers(members);
+        // console.log("members", members);
+      } catch (error) {
+        console.log("errorrrr", error);
+      }
+    };
+
+    fetchMembers();
+  }, [workspaceSlug]);
+
+    useEffect(() => {
+      if (!workspaceSlug) return;
+      // fetchWorkspaceMember(workspaceSlug);
+      dispatch(fetchWorkspaceMembers(workspaceSlug));
+    }, [workspaceSlug]);
+  const [chatUsers, setChatUsers] = useState(groups || []);
+  const onSelect = (groupId: string) => {
+    dispatch(setSelectedGroup(groupId));
+  };
+
+  const handleSendRequest = async (user: IUserLite) => {
+    setSendingTo(user.id);
+    const newMsg = {
+      type: "group",
+      intend: "create",
+      is_private: true,
+      members: [user.id],
+    };
+    chatSocketService?.send(newMsg);
+    // Simulate API call
+    setTimeout(() => {
+      console.log("Chat request sent to user:", user.id);
+      setSendingTo(null);
+      setUserListModalOpen(false);
+      dispatch(fetchGroups(workspaceSlug as string));
+      dispatch(setSelectedGroup(workspaceSlug as string));
+      // You can add success notification here
+    }, 100);
+  };
+
+  const handleCreateGroup = () => {
+    setGroupListModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (!workspaceSlug) return;
+    dispatch(fetchGroups(workspaceSlug));
+    // dispatch(setSelectedGroup(workspaceSlug));
+    // setChatUsers(groups);
+  }, [workspaceSlug, dispatch]);
+  // // const loader = useAppSelector((s) => s.chat.loader);
+
+  // useEffect(() => {
+  //   if (!workspaceSlug) return;
+  //   dispatch(fetchGroups(workspaceSlug));
+  // }, [workspaceSlug]);
+
+  // const dispatch = useAppDispatch();
+
+  // useEffect(() => {
+  //   if (!workspaceSlug) return;
+  //   const getChatUserList = async () => {
+  //     try {
+  //       const AllChats:any = await dispatch(fetchGroups(workspaceSlug));
+  //       console.log("AllChatsAllChats", AllChats);
+  //       setChatUsers(AllChats);
+  //     } catch (error) {
+  //       console.error("Error fetching chat user list:", error);
+  //     }
+  //   };
+  //   getChatUserList();
+  // }, [workspaceSlug]);
+
   //   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   return (
     <>
@@ -53,6 +174,7 @@ export const SidebarChat: FC<ISidebarChat> = ({
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto">
           <ChatUserList
+            groups={groups}
             selectedChat={selectedChat}
             setSelectedChat={setSelectedChat}
             searchQuery={searchQuery}
@@ -68,7 +190,10 @@ export const SidebarChat: FC<ISidebarChat> = ({
             <Plus className="h-4 w-4 mr-2" />
             Add Chat
           </button>
-          <button className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center justify-center">
+          <button
+            onClick={() => setGroupListModalOpen(true)}
+            className="w-full py-2 px-4 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 flex items-center justify-center"
+          >
             <Users className="h-4 w-4 mr-2" />
             Create Group
           </button>
@@ -78,7 +203,17 @@ export const SidebarChat: FC<ISidebarChat> = ({
       {userListModalOpen && (
         <AddChatModal
           isOpen={userListModalOpen}
+          users={users}
           setIsOpen={setUserListModalOpen}
+          handleSendRequest={handleSendRequest}
+          sendingTo={sendingTo}
+        />
+      )}
+      {groupListModalOpen && (
+        <CreateGroupModal
+          isOpen={groupListModalOpen}
+          setIsOpen={setGroupListModalOpen}
+          users={users}
         />
       )}
     </>

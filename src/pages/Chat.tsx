@@ -1,5 +1,5 @@
-import { TimelyChat } from "src/components";
+import { ChatWindow } from "src/components";
 
 export const ChatPage = () => {
-  return <TimelyChat />;
+  return <ChatWindow />;
 };

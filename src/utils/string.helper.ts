@@ -111,6 +111,15 @@ export const getFirstCharacters = (str: string) => {
 //   return sanitizedText.trim(); // trim the string to remove leading and trailing whitespaces
 // };
 
+export const sanitizeHTML = (htmlString: string): string => {
+  if (!htmlString) return "";
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  return doc.body.textContent?.trim() || "";
+};
+
+
 export const extractTextFromTiptapDoc = (doc: any): string => {
   if (!doc || typeof doc !== "object" || doc.type !== "doc" || !Array.isArray(doc.content)) {
     throw new Error("Invalid Tiptap doc");
@@ -137,15 +146,15 @@ export const extractTextFromTiptapDoc = (doc: any): string => {
  * console.log(text); // Some text
  */
 
-// export const stripAndTruncateHTML = (html: string, length: number = 55) => {
-//   let text = "";
-//   try {
-//     text = extractTextFromTiptapDoc(html);
-//   } catch {
-//     text = sanitizeHTML(html);
-//   }
-//   return truncateText(text, length);
-// };
+export const stripAndTruncateHTML = (html: string, length: number = 55) => {
+  let text = "";
+  try {
+    text = extractTextFromTiptapDoc(html);
+  } catch {
+    text = sanitizeHTML(html);
+  }
+  return truncateText(text, length);
+};
 
 // export const stripHTML = (html: string, isSlice: boolean = true) => {
 //   let text = "";
@@ -334,3 +343,11 @@ export const cleanedHTML = (htmlString: string) => {
 
   return sanitized.trim();
 };
+
+
+export const extractPlainText = (html: string) =>
+  html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();

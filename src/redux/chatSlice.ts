@@ -1,0 +1,148 @@
+import {
+  createSlice,
+  createEntityAdapter,
+  createAsyncThunk,
+  PayloadAction,
+} from "@reduxjs/toolkit";
+import { ChatService } from "src/services";
+import { IChatGroup } from "src/types";
+import { RootState } from "./store";
+
+const chatService = new ChatService();
+
+/* ------------------ ENTITY ADAPTER ------------------ */
+
+const groupsAdapter = createEntityAdapter<IChatGroup>({
+  selectId: (g) => g.id,
+  sortComparer: false,
+});
+
+/* ------------------ ASYNC THUNK ------------------ */
+
+export const fetchGroups = createAsyncThunk<IChatGroup[], string>(
+  "chat/fetchGroups",
+  async (workspaceSlug) => {
+    return await chatService.userChats(workspaceSlug);
+  }
+);
+
+/* ------------------ STATE TYPE ------------------ */
+type CurrentSelectedGroup = {
+  groupId: string;
+  userId: string;
+  group_name: string;
+};
+
+type ChatExtraState = {
+  unreadCounts: Record<string, number>;
+  loader: boolean;
+  selectedGroupId: string | null;
+  currentSelectedGroup: Record<string, CurrentSelectedGroup | undefined>;
+};
+
+type ChatState = ReturnType<typeof groupsAdapter.getInitialState> &
+  ChatExtraState;
+
+/* ------------------ INITIAL STATE ------------------ */
+
+const initialState: ChatState = groupsAdapter.getInitialState({
+  unreadCounts: {},
+  loader: false,
+  selectedGroupId: null as string | null,
+  currentSelectedGroup: {},
+});
+
+/* ------------------ SLICE ------------------ */
+
+const chatSlice = createSlice({
+  name: "chat",
+  initialState,
+  reducers: {
+    setSelectedGroup(state, action: PayloadAction<string>) {
+      state.selectedGroupId = action.payload;
+      state.unreadCounts[action.payload] = 0;
+    },
+
+    updateUnread(
+      state,
+      action: PayloadAction<{ groupId: string; count: number }>
+    ) {
+      const { groupId, count } = action.payload;
+      state.unreadCounts[groupId] = count;
+    },
+
+    updateGroup(state, action: PayloadAction<IChatGroup>) {
+      groupsAdapter.upsertOne(state, action.payload);
+    },
+
+    setCurrentSelectedGroup(
+      state,
+      action: PayloadAction<{
+        workspaceSlug: string;
+        groupId: string;
+        userId: string;
+        group_name: string;
+      }>
+    ) {
+      const { workspaceSlug, groupId, userId, group_name } = action.payload;
+
+      state.currentSelectedGroup[workspaceSlug] = {
+        groupId,
+        userId,
+        group_name,
+      };
+
+      // reset unread count (MobX parity)
+      state.unreadCounts[groupId] = 0;
+
+      // persist last selected group
+      if (typeof window !== "undefined") {
+        try {
+          window.localStorage.setItem(
+            `timely_last_selected_chat_${workspaceSlug}`,
+            groupId
+          );
+        } catch {}
+      }
+    },
+  },
+  extraReducers(builder) {
+    builder
+      .addCase(fetchGroups.pending, (state) => {
+        state.loader = true;
+      })
+      .addCase(fetchGroups.fulfilled, (state, action) => {
+        groupsAdapter.setAll(state, action.payload);
+
+        action.payload.forEach((g) => {
+          state.unreadCounts[g.id] = g.unread_count ?? 0;
+        });
+
+        state.loader = false;
+      })
+      .addCase(fetchGroups.rejected, (state) => {
+        state.loader = false;
+      });
+  },
+});
+
+/* ------------------ EXPORTS ------------------ */
+
+export const { setSelectedGroup, updateUnread, updateGroup , setCurrentSelectedGroup} =
+  chatSlice.actions;
+
+export default chatSlice.reducer;
+
+/* ------------------ SELECTORS ------------------ */
+
+export const {
+  selectAll: selectAllGroups,
+  selectById: selectGroupById,
+  selectIds: selectGroupIds,
+} = groupsAdapter.getSelectors<RootState>((state) => state.chat);
+
+export const selectCurrentSelectedGroup = (
+  state: RootState,
+  workspaceSlug: string
+) => state.chat.currentSelectedGroup[workspaceSlug];
+

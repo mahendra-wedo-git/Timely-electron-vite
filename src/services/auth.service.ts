@@ -58,7 +58,7 @@ export class AuthService extends APIService {
     password: string;
     csrfmiddlewaretoken: string;
   }): Promise<any> {
-    return this.post("/auth/electron/sign-in/", data, { headers: {} })
+    return this.post("/auth/common/sign-in/", data, { headers: {} })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
