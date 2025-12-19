@@ -749,8 +749,8 @@ export const { clearError } = workspaceMemberSlice.actions;
 export default workspaceMemberSlice.reducer;
 
 // Basic Selectors
-export const selectWorkspaceMemberMap = (state: { workspaceMember: WorkspaceMemberState }) =>
-  state.workspaceMember.workspaceMemberMap;
+export const selectWorkspaceMemberMap = (state: { workspaceMember: WorkspaceMemberState },workspaceSlug: string) =>
+  state.workspaceMember.workspaceMemberMap[workspaceSlug];
 
 export const selectWorkspaceMemberInvitations = (state: { workspaceMember: WorkspaceMemberState }) =>
   state.workspaceMember.workspaceMemberInvitations;

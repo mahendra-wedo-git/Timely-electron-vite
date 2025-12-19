@@ -5,14 +5,16 @@ import {
   selectCurrentSelectedGroup,
   setCurrentSelectedGroup,
 } from "src/redux/chatSlice";
-import { IChatGroup } from "src/types";
+import { IChatGroup, IChatMessage } from "src/types";
 import { formatMessageDate } from "src/utils";
 import { GroupChatAvatar } from "../group-chat-avatar";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import {
   fetchWorkspaceMembers,
+  selectWorkspaceMemberDetails,
   selectWorkspaceMemberMap,
 } from "src/redux/workspaceMemberSlice";
+import { stripAndTruncateHTML } from "src/utils/string.helper";
 // import { selectMemberMap } from "src/redux/memberRootSlice";
 
 interface Chat {
@@ -29,12 +31,14 @@ interface IChatUser {
   selectedChat: IChatGroup | undefined;
   searchQuery: string;
   groups: IChatGroup[];
+  lastMessage: Record<string, IChatMessage>;
 }
 export const ChatUserList: FC<IChatUser> = ({
   selectedChat,
   setSelectedChat,
   searchQuery,
   groups,
+  lastMessage,
 }) => {
   if (!groups) return null;
   const { data: currentUser, fetchCurrentUser } = useUser();
@@ -62,8 +66,6 @@ export const ChatUserList: FC<IChatUser> = ({
     fetchCurrentWorkspaceUser();
   }, []);
 
-
-
   const filteredChats = groups.filter((chat) =>
     chat.group_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -84,9 +86,6 @@ export const ChatUserList: FC<IChatUser> = ({
   // const currentSelectedGroup = useAppSelector((state) =>
   //   workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : null
   // );
-
-
-
   const memberDetails = getWorkspaceMemberDetails(memberId as string);
 
   // console.log("memberIdmemberId", memberId);
@@ -109,6 +108,8 @@ export const ChatUserList: FC<IChatUser> = ({
   return (
     <div className="flex-1 overflow-y-auto">
       {filteredChats.map((chat: IChatGroup) => {
+        const lastMsg = lastMessage[chat.id] || null;
+        const isMe = lastMsg?.sender === currentUser?.id;
         // const userDetails = memberMap[chat.members[0]];
         // console.log("otherMemberId", userDetails);
         return (
@@ -143,14 +144,18 @@ export const ChatUserList: FC<IChatUser> = ({
                 <h3 className="text-sm font-semibold text-gray-900">
                   {chat.group_name}
                 </h3>
-                <span className="text-xs text-gray-500">
-                  {formatMessageDate(
-                    chat?.created_at ? chat.created_at.toString() : ""
-                  )}
-                </span>
+
+                {lastMsg && (
+                  <span className="text-xs text-gray-500">
+                    {formatMessageDate(lastMsg.created_at)}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-600 truncate">
-                "No messages yet"
+                {/* {lastMsg?.content || "No messages yet"} */}
+                {lastMsg
+                  ? `${isMe ? "You: " : ""}${stripAndTruncateHTML(lastMsg.content || "", 20)}`
+                  : "No messages yet"}
                 {/* {chat.lastMessage || "No messages yet"} */}
               </p>
             </div>

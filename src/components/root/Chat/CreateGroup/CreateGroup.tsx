@@ -98,10 +98,10 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
   const filteredUsers =
     users?.filter(
       (user: any) =>
-        user?.member?.display_name
+        user?.member?.first_name
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
-        user?.member?.display_name
+        user?.member?.last_name
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
     ) || [];
@@ -245,7 +245,7 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
                         {/* )} */}
                         <div className="ml-3 min-w-0 flex-1">
                           <h3 className="text-sm font-medium text-gray-900 truncate">
-                            {user.display_name}
+                            {user.first_name && user.first_name} {user.last_name && user.last_name}
                           </h3>
                           <p className="text-xs text-gray-500 truncate">
                             {user.email}

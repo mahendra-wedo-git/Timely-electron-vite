@@ -20,6 +20,7 @@ export interface IChatGroup {
   is_pinned?: boolean;  
   is_mute?: boolean;
   mute_id?: string;
+  member_count?: number;
   group_avatar?: string | null;
   group_avatar_detail?: IGroupAttachment;
   pin_id?: string;

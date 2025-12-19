@@ -11,12 +11,12 @@ import {
 } from "src/redux/chatSlice";
 import { useDispatch } from "react-redux";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
-import { IChatGroup, IUserLite } from "src/types";
+import { IChatGroup, IChatMessage, IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
 import { CreateGroupModal } from "../CreateGroup/CreateGroup";
 import { WorkspaceService } from "src/services/workspace.service";
 import { useWorkspaceMembers } from "src/context/WorkspaceMemberContext";
-import { fetchWorkspaceMembers } from "src/redux/workspaceMemberSlice";
+import { fetchWorkspaceMembers, selectWorkspaceMemberDetails, selectWorkspaceMemberMap } from "src/redux/workspaceMemberSlice";
 interface Chat {
   id: string;
   name: string;
@@ -29,6 +29,7 @@ interface Chat {
 interface ISidebarChat {
   setSelectedChat: (chat: IChatGroup) => void;
   selectedChat: IChatGroup | undefined;
+  lastMessage: Record<string, IChatMessage>;
 }
 
 interface User {
@@ -46,6 +47,7 @@ const workspaceService = new WorkspaceService();
 export const SidebarChat: FC<ISidebarChat> = ({
   selectedChat,
   setSelectedChat,
+  lastMessage
 }) => {
   const { workspace: workspaceSlug } = useParams();
   const chatSocketService = useChatSocket();
@@ -56,10 +58,11 @@ export const SidebarChat: FC<ISidebarChat> = ({
 
   const dispatch = useAppDispatch();
   const groups: any = useAppSelector(selectAllGroups);
+  console.log("user chat list",groups)
   // const selectedChatGroup = useAppSelector((state) => selectGroupById(state, selectedChat?.id));
   // console.log("selectedChatGroup",selectedChatGroup)
 
-
+//  for workspcae members
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
@@ -79,6 +82,9 @@ export const SidebarChat: FC<ISidebarChat> = ({
     fetchMembers();
   }, [workspaceSlug]);
 
+  // const lastMessage = useAppSelector((state) => selectLastMessage(state));
+  // const users = useAppSelector((state) => selectWorkspaceMemberMap(state, workspaceSlug as string));
+  // console.log("workspace all user",users)
     useEffect(() => {
       if (!workspaceSlug) return;
       // fetchWorkspaceMember(workspaceSlug);
@@ -99,14 +105,14 @@ export const SidebarChat: FC<ISidebarChat> = ({
     };
     chatSocketService?.send(newMsg);
     // Simulate API call
-    setTimeout(() => {
+    // setTimeout(() => {
       console.log("Chat request sent to user:", user.id);
       setSendingTo(null);
       setUserListModalOpen(false);
-      dispatch(fetchGroups(workspaceSlug as string));
-      dispatch(setSelectedGroup(workspaceSlug as string));
+      // dispatch(fetchGroups(workspaceSlug as string));
+      // dispatch(setSelectedGroup(workspaceSlug as string));
       // You can add success notification here
-    }, 100);
+    // }, 1000);
   };
 
   const handleCreateGroup = () => {
@@ -175,6 +181,7 @@ export const SidebarChat: FC<ISidebarChat> = ({
         <div className="flex-1 overflow-y-auto">
           <ChatUserList
             groups={groups}
+            lastMessage={lastMessage}
             selectedChat={selectedChat}
             setSelectedChat={setSelectedChat}
             searchQuery={searchQuery}

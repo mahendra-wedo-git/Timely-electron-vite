@@ -76,7 +76,7 @@
 import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useAppDispatch } from "src/redux/hooks";
-import { updateGroup } from "src/redux/chatSlice";
+import { removeGroup, updateGroup } from "src/redux/chatSlice";
 import { useUser } from "src/context/userContext";
 import { useChatSocket } from "src/context/chatContext";
 import {
@@ -103,13 +103,27 @@ export function ChatSocketContainer() {
     socket.connectToRoom(
       workspaceSlug,
       (parsed) => {
-        console.log("parsedparsedparsed", parsed);
+        console.log("parsedparsedparsed", parsed,currentUser);
         if (parsed.workspace && parsed.workspace !== workspaceSlug) return;
 
         switch (parsed.type) {
           case "group":
-            dispatch(updateGroup(parsed.result));
-            break;
+            if (parsed.intent === "remove_member" && currentUser.id === parsed.member) {
+              console.log("remove group call", parsed);
+              const groupId = parsed.id;
+              if (!groupId) return;
+              socket?.send({
+                type: "group",
+                intent: "discard_group",
+                group_id: groupId,
+              });
+              dispatch(removeGroup(groupId));
+              return;
+            }
+            if (parsed?.result?.id) {
+              dispatch(updateGroup(parsed.result));
+              return;
+            }
           case "message":
             console.log("parsed");
             const chatId = parsed.group || parsed.group_id;
@@ -122,7 +136,7 @@ export function ChatSocketContainer() {
                   message: parsed, // FULL MESSAGE
                 })
               );
-            }else if (parsed.intent === "delete") {
+            } else if (parsed.intent === "delete") {
               dispatch(
                 deleteMessage({
                   workspaceSlug,

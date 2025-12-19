@@ -72,7 +72,12 @@ const chatSlice = createSlice({
     },
 
     updateGroup(state, action: PayloadAction<IChatGroup>) {
+      if(!action.payload.id) return
       groupsAdapter.upsertOne(state, action.payload);
+    },
+
+    removeGroup(state, action: PayloadAction<string>) {
+      groupsAdapter.removeOne(state, action.payload);
     },
 
     setCurrentSelectedGroup(
@@ -128,7 +133,7 @@ const chatSlice = createSlice({
 
 /* ------------------ EXPORTS ------------------ */
 
-export const { setSelectedGroup, updateUnread, updateGroup , setCurrentSelectedGroup} =
+export const { setSelectedGroup, updateUnread, updateGroup , setCurrentSelectedGroup , removeGroup} =
   chatSlice.actions;
 
 export default chatSlice.reducer;
@@ -146,3 +151,7 @@ export const selectCurrentSelectedGroup = (
   workspaceSlug: string
 ) => state.chat.currentSelectedGroup[workspaceSlug];
 
+
+export const getGroup = (state: RootState, groupId: string) => {
+  return state.chat.entities[groupId] || null as IChatGroup | null;
+};

@@ -58,9 +58,9 @@ export const fetchSearchMessages = createAsyncThunk(
 
 export const fetchLastMessage = createAsyncThunk(
   "message/fetchLastMessage",
-  async ({ workspaceSlug, currentUserId }: { workspaceSlug: string; currentUserId: string }) => {
+  async ({ workspaceSlug, currentUserId }: { workspaceSlug: string; currentUserId?: string }) => {
     const response = await chatService.getWorkspaceLastMessages(workspaceSlug);
-    return { response, currentUserId };
+    return { response };
   }
 );
 

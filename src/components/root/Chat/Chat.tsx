@@ -13,6 +13,7 @@ import {
   Image,
   ChartArea,
   ChartBar,
+  User,
 } from "lucide-react";
 import { SidebarChat } from "./ChatUserList";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
@@ -28,13 +29,16 @@ import {
   addTemporaryMessage,
   fetchChatGroupLog,
   fetchChatMessage,
+  fetchLastMessage,
   selectChatGroupLogDetails,
   selectChatMessageDetails,
+  selectLastMessage,
 } from "src/redux/massagesSlice";
 import { groupChatData } from "src/utils";
 import MessageArea from "./MessageArea";
 import { TbMassage } from "react-icons/tb";
 import { ForwardMessageModal } from "./ForwordMessage/ForwordMessage";
+import { GroupMembersModal } from "./GroupMemberModal/GroupMemberModal";
 
 interface Message {
   id: string;
@@ -60,9 +64,10 @@ interface Chat {
 }
 
 export const ChatWindow = () => {
-  const [selectedChat, setSelectedChat] = useState<IChatGroup>();
+  const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(undefined);
   const [message, setMessage] = useState("");
   const [openForwardModal, setOpenForwardModal] = useState(false);
+  const [openMemberModal, setOpenMemberModal] = useState(false);
   const [selectedMassage, setSelectedMassage] = useState();
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
     new Set()
@@ -89,6 +94,9 @@ export const ChatWindow = () => {
   const currentChatId = currentSelectedGroup?.groupId;
   const receiverUserId = currentSelectedGroup?.userId;
   const groupName = currentSelectedGroup?.group_name;
+
+  const lastMessage = useAppSelector((state) => selectLastMessage(state));
+  console.log("currentSelectedGroup", currentSelectedGroup);
 
   const dispatch = useAppDispatch();
   const messages_ = useAppSelector(
@@ -118,6 +126,7 @@ export const ChatWindow = () => {
       );
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
     }
+    if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
   }, [workspaceSlug, currentChatId, dispatch]);
 
   const currentUserId = "current-user";
@@ -197,6 +206,7 @@ export const ChatWindow = () => {
       {/* Sidebar - Chat List */}
       <SidebarChat
         selectedChat={selectedChat}
+        lastMessage={lastMessage}
         setSelectedChat={setSelectedChat}
       />
 
@@ -229,6 +239,12 @@ export const ChatWindow = () => {
               </button>
               <button className="text-gray-500 hover:text-gray-700 text-sm">
                 Photos
+              </button>
+              <button
+                className="text-gray-500 hover:text-gray-700 text-sm"
+                onClick={() => setOpenMemberModal(true)}
+              >
+                <User className="h-5 w-5" />
               </button>
               <button className="text-gray-400 hover:text-gray-600">
                 <Search className="h-5 w-5" />
@@ -317,6 +333,14 @@ export const ChatWindow = () => {
           setIsOpen={setOpenForwardModal}
           // selectedMembers={selectedMembers}
           selectedMassage={selectedMassage}
+        />
+      )}
+      {openMemberModal && currentChatId && (
+        <GroupMembersModal
+          isOpen={openMemberModal}
+          setIsOpen={setOpenMemberModal}
+          chatId={currentChatId}
+          setSelectedChat={setSelectedChat}
         />
       )}
     </div>
