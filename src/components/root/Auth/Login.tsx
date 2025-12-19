@@ -21,7 +21,6 @@ export const TimelyLogin = () => {
   const workspace = import.meta.env.VITE_WORKSPACE || "wedotest";
 
   const handleLogin = async (values: ILogin) => {
-    console.log("values for login", values);
     const formData = new FormData();
 
     setIsLoading(true);
@@ -44,7 +43,6 @@ export const TimelyLogin = () => {
         dispatch(setCurrentUser(response?.user));
         navigate(`/${workspace}`);
         window.location.reload();
-        console.log("login response >>", response);
       }
     } catch (err) {
       console.error("Login error:", err);

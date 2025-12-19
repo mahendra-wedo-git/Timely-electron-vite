@@ -1,6 +1,8 @@
 // import dayjs from "dayjs";
 // import { IChatReaction, IUserLite } from "packages/types/src";
 
+import { IUserLite } from "src/types";
+
 // export function groupChatData(messages: any[], logs: any[]) {
 //   const combined = [...messages, ...logs];
 //   combined.sort(
@@ -141,12 +143,13 @@ export const formatMessageDate = (dateString: string) => {
 };
 
 
-// export function getMemberName(member: IUserLite): string {
-//   if (member.first_name && member.last_name) {
-//     return `${member.first_name} ${member.last_name}`;
-//   }
-//   return member.display_name;
-// }
+export function getMemberName(member: IUserLite): string {
+  if (!member) return "";
+  if (member.first_name && member.last_name) {
+    return `${member.first_name} ${member.last_name}`;
+  }
+  return member.display_name;
+}
 
 // export function groupReactionsWithUsers(
 //   reactions: IChatReaction[],

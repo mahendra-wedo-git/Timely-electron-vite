@@ -28,7 +28,6 @@ const createWindow = (): void => {
   });
 
   const isDev = !app.isPackaged;
-  console.log("isDev",app.isPackaged)
   const devServer = MAIN_WINDOW_VITE_DEV_SERVER_URL;
   const viteName = MAIN_WINDOW_VITE_NAME ?? 'main_window';
 

@@ -16,6 +16,8 @@ import { selectMemberMap } from "src/redux/memberRootSlice";
 import { IoRemove } from "react-icons/io5";
 import { BiTab } from "react-icons/bi";
 import { IChatMessage } from "src/types";
+import { ForwardedMessage } from "./ForwardMessages";
+import { GroupActivityItem } from "./group-activity";
 
 interface MentionProps {
   entityIdentifier: string;
@@ -39,7 +41,7 @@ export const MessageArea: FC<{
   handleForward,
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
-  // console.log("memberMap >>>",memberMap)
+
   const Mention: FC<MentionProps> = ({ entityIdentifier, entityName }) => {
     return <span className="text-indigo-600">@{entityName}</span>;
   };
@@ -73,22 +75,21 @@ export const MessageArea: FC<{
       {Object.entries(groupedMessages).map(([date, messages]) => {
         return messages.map((msg, index) => {
           const userDetail = memberMap[msg?.sender];
-          // console.log("userDetail",userDetail)
+          const forwardedFrom = msg?.forwarded_from || null;
+          const forwardedFromUser = memberMap[forwardedFrom?.sender];
           const showTimestamp =
             index === 0 ||
             new Date(messages[index - 1].created_at).toDateString() !==
               new Date(msg.created_at).toDateString();
           const isCurrentUser = msg?.sender === currentUserId;
-          // console.log(
-          //   "userDetailuserDetailuserDetail",
-          //   userDetail,
-          //   currentUserId
-          // );
-          //   console.log("userDetailuserDetailuserDetail",currentUserId)
-          //   console.log("isCurrentUserisCurrentUser",isCurrentUser,msg.sender,currentUserId)
 
           if (msg.deleted_at)
             return <DeletedMessage isCurrentUser={isCurrentUser} />;
+          // if (msg.action !== undefined) return GroupActivityItem({ log: msg });
+          if (msg.action !== undefined) {
+              return <GroupActivityItem key={msg.id} log={msg} />;
+            }
+
           return (
             <div key={msg.id}>
               {showTimestamp && (
@@ -156,7 +157,11 @@ export const MessageArea: FC<{
                       }`}
                     >
                       <p className="text-sm">
-                        {renderMessageContent(msg.content)}
+                        {forwardedFrom && forwardedFromUser ? (
+                          <ForwardedMessage forwardedFromUser={forwardedFromUser} forwardedFrom={forwardedFrom} msg={msg} />
+                        ) : (
+                          renderMessageContent(msg.content)
+                        )}
                       </p>
                     </div>
 

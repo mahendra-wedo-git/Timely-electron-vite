@@ -58,9 +58,7 @@ export const SidebarChat: FC<ISidebarChat> = ({
 
   const dispatch = useAppDispatch();
   const groups: any = useAppSelector(selectAllGroups);
-  console.log("user chat list",groups)
   // const selectedChatGroup = useAppSelector((state) => selectGroupById(state, selectedChat?.id));
-  // console.log("selectedChatGroup",selectedChatGroup)
 
 //  for workspcae members
   const [users, setUsers] = useState<User[]>([]);
@@ -73,7 +71,6 @@ export const SidebarChat: FC<ISidebarChat> = ({
           workspaceSlug as string
         );
         setUsers(members);
-        // console.log("members", members);
       } catch (error) {
         console.log("errorrrr", error);
       }
@@ -84,7 +81,6 @@ export const SidebarChat: FC<ISidebarChat> = ({
 
   // const lastMessage = useAppSelector((state) => selectLastMessage(state));
   // const users = useAppSelector((state) => selectWorkspaceMemberMap(state, workspaceSlug as string));
-  // console.log("workspace all user",users)
     useEffect(() => {
       if (!workspaceSlug) return;
       // fetchWorkspaceMember(workspaceSlug);
@@ -106,7 +102,6 @@ export const SidebarChat: FC<ISidebarChat> = ({
     chatSocketService?.send(newMsg);
     // Simulate API call
     // setTimeout(() => {
-      console.log("Chat request sent to user:", user.id);
       setSendingTo(null);
       setUserListModalOpen(false);
       // dispatch(fetchGroups(workspaceSlug as string));

@@ -88,8 +88,6 @@ export const ChatUserList: FC<IChatUser> = ({
   // );
   const memberDetails = getWorkspaceMemberDetails(memberId as string);
 
-  // console.log("memberIdmemberId", memberId);
-  // console.log("member details >>>", memberDetails);
 
   const handleChatOverview = (chat: IChatGroup) => {
     if (!workspaceSlug || !currentUser?.id) return;
@@ -111,7 +109,6 @@ export const ChatUserList: FC<IChatUser> = ({
         const lastMsg = lastMessage[chat.id] || null;
         const isMe = lastMsg?.sender === currentUser?.id;
         // const userDetails = memberMap[chat.members[0]];
-        // console.log("otherMemberId", userDetails);
         return (
           <button
             key={chat.id}

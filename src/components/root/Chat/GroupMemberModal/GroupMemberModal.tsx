@@ -1,12 +1,21 @@
 import React, { FC, useState } from "react";
-import { Search, X, UserPlus, LogOut, Users } from "lucide-react";
+import {
+  Search,
+  X,
+  UserPlus,
+  LogOut,
+  Users,
+  XCircle,
+  AlertCircle,
+} from "lucide-react";
 import { useAppSelector } from "src/redux/hooks";
-import { selectChatGroupLogDetails } from "src/redux/massagesSlice";
 import { useParams } from "react-router-dom";
 import { getGroup } from "src/redux/chatSlice";
-import { IChatGroup, IUser } from "src/types";
+import { IChatGroup,  IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
 import { useUser } from "src/context";
+import { selectMemberMap } from "src/redux/memberRootSlice";
+import { CreateGroupModal } from "../CreateGroup/CreateGroup";
 
 interface Member {
   id: string;
@@ -20,22 +29,25 @@ interface GroupMembersModalProps {
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   chatId: string;
-  setSelectedChat: (chat: IChatGroup) => void
+  setSelectedChat: (chat: IChatGroup) => void;
 }
 
 export const GroupMembersModal: FC<GroupMembersModalProps> = ({
   isOpen,
   setIsOpen,
   chatId,
-  setSelectedChat
+  setSelectedChat,
 }) => {
   const { workspace: workspaceSlug } = useParams();
+  const [selectedMember, setSelectedMember] = useState<IUserLite | null>(null);
+  const memberDetails = useAppSelector(selectMemberMap);
   // const groupDetails = workspaceSlug ? useAppSelector((state) => selectChatGroupLogDetails(state, workspaceSlug, chatId)) : null;
   const groupDetails: IChatGroup | null = workspaceSlug
-    ? useAppSelector((state) => getGroup(state, chatId))
-    : null;
-  console.log("groupDetails", groupDetails);
+  ? useAppSelector((state) => getGroup(state, chatId))
+  : null;
+  console.log("groupDetails",groupDetails)
   const { data: currentUser } = useUser();
+  const isCurrentUser = selectedMember?.id === currentUser?.id;
   //   const [isOpen, setIsOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddPeople, setShowAddPeople] = useState(false);
@@ -88,17 +100,17 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
   };
 
   const confirmLeave = async () => {
-    console.log("Leaving group...");
     try {
       chatSocketService?.send({
         type: "group",
         intent: "remove_member",
         group_id: chatId,
-        member: currentUser?.id,
+        member: selectedMember?.id,
       });
       setShowLeaveConfirm(false);
       setIsOpen(false);
-      setSelectedChat(undefined);
+      setSelectedMember(null);
+      isCurrentUser && setSelectedChat(undefined);
     } catch (error) {}
   };
 
@@ -111,15 +123,29 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
           <div className="p-6">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-4">
-              <LogOut className="h-6 w-6 text-red-600" />
+              {isCurrentUser ? (
+                <LogOut className="h-6 w-6 text-red-600" />
+              ) : (
+                <AlertCircle className="h-6 w-6 text-red-600" />
+              )}
             </div>
             <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">
-              Leave Group?
+              {isCurrentUser ? "Leave Group?" : "Remove Member?"}
             </h2>
-            <p className="text-sm text-gray-600 text-center mb-6">
-              Are you sure you want to leave "electron testing"? You won't
-              receive messages from this group anymore.
-            </p>
+            {isCurrentUser ? (
+              <p className="text-sm text-gray-600 text-center mb-6">
+                Are you sure you want to leave{" "}
+                {groupDetails?.group_name || "this group"}? You will lose access
+                to the group and its messages. This action cannot be undone.
+              </p>
+            ) : (
+              <p className="text-sm text-gray-600 text-center mb-6">
+                Are you sure you want to remove member{" "}
+                {selectedMember?.email || ""}? from this group? They will lose
+                access to the group and its messages. This action cannot be
+                undone.
+              </p>
+            )}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLeaveConfirm(false)}
@@ -131,7 +157,7 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
                 onClick={confirmLeave}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none transition"
               >
-                Leave Group
+               {isCurrentUser ? "Leave Group" : "Remove"} 
               </button>
             </div>
           </div>
@@ -140,9 +166,17 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
     );
   }
 
-  // Add People Modal
+  
   if (showAddPeople) {
-    return <AddPeopleModal onClose={() => setShowAddPeople(false)} />;
+    return (
+      <CreateGroupModal
+        isOpen={showAddPeople}
+        setIsOpen={setShowAddPeople}
+        users={memberDetails}
+        groupDetails={groupDetails}
+        isAddMemberModal
+      />
+    );
   }
 
   // Main People List Modal
@@ -160,7 +194,7 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
                 {groupDetails?.group_name}
               </h2>
               <p className="text-sm text-gray-500">
-                People ({groupDetails?.member_count})
+                People ({groupDetails?.members.length})
               </p>
             </div>
           </div>
@@ -188,28 +222,48 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
 
         {/* Members List */}
         <div className="max-h-96 overflow-y-auto">
-          {filteredMembers?.length > 0 ? (
+          {filteredMembers?.length > 0 || groupDetails.members.length > 0 ? (
             <div>
-              {filteredMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center p-4 hover:bg-gray-50 transition"
-                >
+              {groupDetails.members.map((member: string) => {
+                const availableMember =
+                  memberDetails?.[member] || memberDetails;
+                return (
                   <div
-                    className={`w-10 h-10 rounded-full ${member.avatarColor} flex items-center justify-center text-white font-semibold text-sm flex-shrink-0`}
+                    key={availableMember.id}
+                    className="flex items-center p-4 hover:bg-gray-50 transition"
                   >
-                    {member.avatar}
+                    {/* <div
+                      className={`w-10 h-10 rounded-full ${availableMember.avatarColor} flex items-center justify-center text-white font-semibold text-sm flex-shrink-0`}
+                    >
+                      {availableMember.first_name.charAt(0) + availableMember.last_name.charAt(0)}
+                    </div> */}
+                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                      {availableMember.first_name.charAt(0)}
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {availableMember?.first_name}{" "}
+                        {availableMember?.last_name}
+                        {/* {availableMember.isYou && (
+                          <span className="ml-2 text-gray-500">(You)</span>
+                        )} */}
+                      </h3>
+                      <p className="text-xs text-gray-500 truncate">
+                        {availableMember.email}
+                      </p>
+                    </div>
+
+                    <XCircle
+                      className="h-5 w-5 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                      // onClick={() => handleRemoveMember(availableMember.id)}
+                      onClick={() => {
+                        setSelectedMember(availableMember);
+                        setShowLeaveConfirm(true);
+                      }}
+                    />
                   </div>
-                  <div className="ml-3 flex-1">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {member.name}
-                      {member.isYou && (
-                        <span className="ml-2 text-gray-500">(You)</span>
-                      )}
-                    </h3>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="p-8 text-center">
@@ -228,7 +282,10 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
             Add people
           </button>
           <button
-            onClick={handleLeave}
+            onClick={() => {
+              setSelectedMember(currentUser as IUserLite);
+              handleLeave();
+            }}
             className="w-full flex items-center px-6 py-4 text-sm font-medium text-red-600 hover:bg-red-50 transition rounded-b-2xl"
           >
             <LogOut className="h-5 w-5 mr-3" />
@@ -291,7 +348,6 @@ function AddPeopleModal({ onClose }: { onClose: () => void }) {
 
     setIsAdding(true);
     setTimeout(() => {
-      console.log("Adding users:", selectedUsers);
       setIsAdding(false);
       onClose();
     }, 1000);

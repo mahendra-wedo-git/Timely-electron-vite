@@ -25,7 +25,6 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
   onClose,
   setIsOpen,
 }) => {
-    console.log("selectedMassage >>>",selectedMassage)
   const originalMessage = {
     sender: "Mahendra Parmar",
     content: "hello",
@@ -39,7 +38,6 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
   const [note, setNote] = useState("");
   const [isForwarding, setIsForwarding] = useState(false);
   const WorkspaceMember = useAppSelector(selectAllGroups);
-  console.log("WorkspaceMemberWorkspaceMember", WorkspaceMember);
   const users: User[] = [
     {
       id: "1",
@@ -261,7 +259,9 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
                     </span>
                   </div>
                   <p className="text-sm text-gray-700">
-                    {selectedMassage.content}
+                    {selectedMassage?.content && selectedMassage?.content.length > 80
+                      ? `${selectedMassage?.content.slice(0, 80)}...`
+                      : selectedMassage?.content}
                   </p>
                 </div>
               </div>

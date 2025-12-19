@@ -36,7 +36,6 @@ import {
 } from "src/redux/massagesSlice";
 import { groupChatData } from "src/utils";
 import MessageArea from "./MessageArea";
-import { TbMassage } from "react-icons/tb";
 import { ForwardMessageModal } from "./ForwordMessage/ForwordMessage";
 import { GroupMembersModal } from "./GroupMemberModal/GroupMemberModal";
 
@@ -64,7 +63,9 @@ interface Chat {
 }
 
 export const ChatWindow = () => {
-  const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(undefined);
+  const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
+    undefined
+  );
   const [message, setMessage] = useState("");
   const [openForwardModal, setOpenForwardModal] = useState(false);
   const [openMemberModal, setOpenMemberModal] = useState(false);
@@ -83,20 +84,18 @@ export const ChatWindow = () => {
       : undefined
   );
   // const allMessages = getchatMessageDetails(currentChatId || "") || [];
-  // console.log("selectedChatselectedChat",selectedChat)
 
   // const currentChatId = currentChat?.groupId;
 
   const currentSelectedGroup = useAppSelector((state) =>
     workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : undefined
   );
-
+  console.log("selectedMassageselectedMassage", selectedChatGroup);
   const currentChatId = currentSelectedGroup?.groupId;
   const receiverUserId = currentSelectedGroup?.userId;
   const groupName = currentSelectedGroup?.group_name;
 
   const lastMessage = useAppSelector((state) => selectLastMessage(state));
-  console.log("currentSelectedGroup", currentSelectedGroup);
 
   const dispatch = useAppDispatch();
   const messages_ = useAppSelector(
@@ -105,16 +104,13 @@ export const ChatWindow = () => {
       currentChatId &&
       selectChatMessageDetails(state, workspaceSlug, currentChatId)
   ) as IChatMessage[];
-
   const logs = useAppSelector((state) =>
-    workspaceSlug && currentChatId && workspaceSlug
+    workspaceSlug && currentChatId
       ? selectChatGroupLogDetails(state, workspaceSlug, currentChatId)
       : undefined
   ) as IChatGroupLog[];
 
   const groupedMessages = groupChatData(messages_, logs);
-  // console.log("groupedMessages", groupedMessages);
-  console.log("logslogslogslogs", logs);
   useEffect(() => {
     if (workspaceSlug && currentChatId) {
       dispatch(
@@ -129,9 +125,6 @@ export const ChatWindow = () => {
     if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
   }, [workspaceSlug, currentChatId, dispatch]);
 
-  const currentUserId = "current-user";
-  console.log("groupedMessages", groupedMessages);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -143,7 +136,6 @@ export const ChatWindow = () => {
   }, [groupedMessages]);
 
   const deleteMassages = (message: any) => {
-    console.log("deleteMassages", message);
     chatSocketService?.send({
       type: "message",
       intent: "delete",
@@ -154,16 +146,8 @@ export const ChatWindow = () => {
   };
 
   const handleForward = (message: any) => {
-    console.log("handleForward", message);
     setSelectedMassage(message);
     setOpenForwardModal(true);
-    // chatSocketService?.send({
-    //   type: "message",
-    //   intent: "forward",
-    //   message_id: message.id,
-    //   group_id: message.group,
-    //   sender: message.sender,
-    // });
   };
 
   const handleSendMessage = () => {
@@ -240,12 +224,14 @@ export const ChatWindow = () => {
               <button className="text-gray-500 hover:text-gray-700 text-sm">
                 Photos
               </button>
-              <button
-                className="text-gray-500 hover:text-gray-700 text-sm"
-                onClick={() => setOpenMemberModal(true)}
-              >
-                <User className="h-5 w-5" />
-              </button>
+              {selectedChatGroup && !selectedChatGroup?.is_private && (
+                <button
+                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  onClick={() => setOpenMemberModal(true)}
+                >
+                  <User className="h-5 w-5" />
+                </button>
+              )}
               <button className="text-gray-400 hover:text-gray-600">
                 <Search className="h-5 w-5" />
               </button>

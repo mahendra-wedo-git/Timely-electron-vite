@@ -15,98 +15,48 @@ interface User {
 interface CreateGroupModalProps {
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isOpen: boolean;
-  users: User[];
-  isAddMemberModal?: boolean
+  users: User[] | any;
+  isAddMemberModal?: boolean;
+  groupDetails?: any;
 }
 export const CreateGroupModal: FC<CreateGroupModalProps> = ({
   setIsOpen,
   isOpen,
   users,
-  isAddMemberModal = false
+  isAddMemberModal = false,
+  groupDetails,
 }) => {
   //   const [isOpen, setIsOpen] = useState(true);
   const [groupName, setGroupName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
-   const chatSocket = useChatSocket();
-  //   const users: User[] = [
-  //     {
-  //       id: "1",
-  //       name: "Timely Admin",
-  //       email: "admin@timely.com",
-  //       avatar: "A",
-  //       avatarColor: "bg-indigo-600",
-  //     },
-  //     {
-  //       id: "2",
-  //       name: "Wedo Admin",
-  //       email: "admin@wedowebapps.com",
-  //       avatar: "A",
-  //       avatarColor: "bg-indigo-600",
-  //     },
-  //     {
-  //       id: "3",
-  //       name: "Admin Timely",
-  //       email: "admin.timely@yogmail.com",
-  //       avatar: "",
-  //       avatarColor: "bg-gray-400",
-  //       avatarImage: "https://via.placeholder.com/40",
-  //     },
-  //     {
-  //       id: "4",
-  //       name: "Alex Sales",
-  //       email: "alex2@mailinator.com",
-  //       avatar: "A",
-  //       avatarColor: "bg-indigo-600",
-  //     },
-  //     {
-  //       id: "5",
-  //       name: "Bhagy Detroja",
-  //       email: "bhagy.wedowebapps@gmail.com",
-  //       avatar: "B",
-  //       avatarColor: "bg-indigo-700",
-  //     },
-  //     {
-  //       id: "6",
-  //       name: "Bhavesh Rajpurohit",
-  //       email: "bhaveshr.wedowebapps@gmail.com",
-  //       avatar: "B",
-  //       avatarColor: "bg-indigo-700",
-  //     },
-  //     {
-  //       id: "7",
-  //       name: "Chirag Patel",
-  //       email: "chirag@wedowebapps.com",
-  //       avatar: "C",
-  //       avatarColor: "bg-blue-600",
-  //     },
-  //     {
-  //       id: "8",
-  //       name: "Darshan Shah",
-  //       email: "darshan@wedowebapps.com",
-  //       avatar: "D",
-  //       avatarColor: "bg-purple-600",
-  //     },
-  //   ];
+  const chatSocket = useChatSocket();
+
 
   //   const filteredUsers = users.filter(
   //     (user) =>
   //       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
   //       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   //   );
-  const filteredUsers =
-    users?.filter(
-      (user: any) =>
-        user?.member?.first_name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        user?.member?.last_name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-    ) || [];
-//   console.log("usersusers", users);
-//   console.log("filteredUsersfilteredUsers", filteredUsers);
+  const filteredUsers = isAddMemberModal
+    ? Object.values(users)?.filter((user: any) =>
+        user?.first_name.toLowerCase().includes(searchQuery.toLowerCase())
+      ) ||
+      Object.values(users)?.filter((user: any) =>
+        user?.last_name.toLowerCase().includes(searchQuery.toLowerCase())
+      ) ||
+      []
+    : users?.filter(
+        (user: any) =>
+          user?.member?.first_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          user?.member?.last_name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())
+      ) || [];
+  //   console.log("usersusers", users);
 
   const toggleMemberSelection = (userId: string) => {
     setSelectedMembers((prev) =>
@@ -116,10 +66,10 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
     );
   };
 
-//   console.log("toggleMemberSelection", selectedMembers);
+  //   console.log("toggleMemberSelection", selectedMembers);
 
   const handleCreateGroup = () => {
-    if (!groupName.trim()) {
+    if (!groupName.trim() && !isAddMemberModal) {
       alert("Please enter a group name");
       return;
     }
@@ -136,23 +86,25 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
       name: groupName,
       members: selectedMembers,
     };
+    const addMembers = {
+      type: "group",
+      group_id: groupDetails?.id,
+      intent: "add_member",
+      members: selectedMembers,
+    };
     // const addMembers = {
     //   type: "group",
     //   group_id: "groupId",
     //   intent: "add_member",
     //   members: selectedMembers,
     // };
-    // if (isAddMemberModal) {
-    //   chatSocket.send(addMembers);
-    // } else {
+    if (isAddMemberModal) {
+      chatSocket.send(addMembers);
+    } else {
       chatSocket.send(addGroup);
-    // }
+    }
     // Simulate API call
     setTimeout(() => {
-      console.log("Creating group:", {
-        name: groupName,
-        members: selectedMembers,
-      });
       setIsCreating(false);
       setIsOpen(false);
     }, 1000);
@@ -171,10 +123,12 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              Create Group
+              {isAddMemberModal ? "Add Members" : "Create Group"}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Add group details below to create a new group.
+              {isAddMemberModal
+                ? "Add members to existing group."
+                : "Add group details below to create a new group."}
             </p>
           </div>
           <button
@@ -188,15 +142,17 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
         {/* Form Content */}
         <div className="p-6 space-y-4">
           {/* Group Name Field */}
-          <div>
-            <input
-              type="text"
-              placeholder="Group Name *"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400"
-            />
-          </div>
+          {isAddMemberModal ? null : (
+            <div>
+              <input
+                type="text"
+                placeholder="Group Name *"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400"
+              />
+            </div>
+          )}
 
           {/* Search Members */}
           <div>
@@ -220,7 +176,7 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
             {filteredUsers.length > 0 ? (
               <div className="divide-y divide-gray-100">
                 {filteredUsers.map((userList: any) => {
-                  const user = userList.member;
+                  const user = isAddMemberModal ? userList : userList.member;
                   const isSelected = selectedMembers.includes(user.id);
 
                   return (
@@ -245,7 +201,8 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
                         {/* )} */}
                         <div className="ml-3 min-w-0 flex-1">
                           <h3 className="text-sm font-medium text-gray-900 truncate">
-                            {user.first_name && user.first_name} {user.last_name && user.last_name}
+                            {user.first_name && user.first_name}{" "}
+                            {user.last_name && user.last_name}
                           </h3>
                           <p className="text-xs text-gray-500 truncate">
                             {user.email}
@@ -286,10 +243,16 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
           </button>
           <button
             onClick={handleCreateGroup}
-            disabled={isCreating || !groupName.trim()}
+            disabled={isCreating || isAddMemberModal ? selectedMembers.length === 0 : !groupName.trim()}
             className="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isCreating ? "Creating..." : "Create Group"}
+            {isCreating
+              ? isAddMemberModal
+                ? "Adding..."
+                : "Creating..."
+              : isAddMemberModal
+                ? "Add Members"
+                : "Create Group"}
           </button>
         </div>
       </div>

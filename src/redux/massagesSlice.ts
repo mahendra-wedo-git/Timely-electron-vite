@@ -348,7 +348,6 @@ const messageSlice = createSlice({
       action: PayloadAction<{ workspaceSlug: string; chatId: string; messageId: string }>
     ) => {
       const { workspaceSlug, chatId, messageId } = action.payload;
-      console.log("deleteMessage from redux ", workspaceSlug, chatId, messageId);
 
       if (!state.chatMessages[workspaceSlug]) {
         state.chatMessages[workspaceSlug] = {};
@@ -359,7 +358,6 @@ const messageSlice = createSlice({
 
       const idx = state.chatMessages[workspaceSlug][chatId].findIndex((m) => m.id === messageId);
       if (idx !== -1) {
-        console.log('idxidxidxidxidx',idx)
         state.chatMessages[workspaceSlug][chatId][idx] = {
           ...state.chatMessages[workspaceSlug][chatId][idx],
           deleted_at: new Date().toString(),
@@ -398,6 +396,7 @@ const messageSlice = createSlice({
       action: PayloadAction<{ workspaceSlug: string; chatId: string; log: IChatGroupLog }>
     ) => {
       const { workspaceSlug, chatId, log } = action.payload;
+      console.log("updateChatGroupLog called",action.payload)
 
       if (!state.chatGroupLog[workspaceSlug]) state.chatGroupLog[workspaceSlug] = {};
       if (!state.chatGroupLog[workspaceSlug][chatId]) state.chatGroupLog[workspaceSlug][chatId] = [];
