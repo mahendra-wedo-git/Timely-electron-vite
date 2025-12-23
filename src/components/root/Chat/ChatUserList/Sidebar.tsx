@@ -15,7 +15,11 @@ import { IChatGroup, IChatMessage, IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
 import { CreateGroupModal } from "../CreateGroup/CreateGroup";
 import { WorkspaceService } from "src/services/workspace.service";
-import { fetchWorkspaceMembers, selectWorkspaceMemberDetails, selectWorkspaceMemberMap } from "src/redux/workspaceMemberSlice";
+import {
+  fetchWorkspaceMembers,
+  selectWorkspaceMemberDetails,
+  selectWorkspaceMemberMap,
+} from "src/redux/workspaceMemberSlice";
 interface Chat {
   id: string;
   name: string;
@@ -143,6 +147,9 @@ export const SidebarChat: FC<ISidebarChat> = ({
   // }, [workspaceSlug]);
 
   //   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const pinnedGroups = groups && groups.filter((group: any) => group.is_pinned);
+  const recentGroups =
+    groups && groups.filter((group: any) => !group.is_pinned);
   return (
     <>
       <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
@@ -163,8 +170,29 @@ export const SidebarChat: FC<ISidebarChat> = ({
             <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
           </div>
         </div>
+        <div className="overflow-y-auto">
+          {pinnedGroups.length > 0 && (
+            <>
+              <div className="px-4 py-2 bg-gray-50">
+                <button className="text-xs text-gray-600 flex items-center">
+                  <span className="mr-1">▼</span> Pin
+                </button>
+              </div>
+              <div className="flex ">
+                <ChatUserList
+                  groups={pinnedGroups}
+                  lastMessage={lastMessage}
+                  selectedChat={selectedChat}
+                  setSelectedChat={setSelectedChat}
+                  searchQuery={searchQuery}
+                />
+              </div>
+            </>
+          )}
 
         {/* Recent Label */}
+    {recentGroups.length > 0 && (
+      <>
         <div className="px-4 py-2 bg-gray-50">
           <button className="text-xs text-gray-600 flex items-center">
             <span className="mr-1">▼</span> Recent
@@ -172,18 +200,20 @@ export const SidebarChat: FC<ISidebarChat> = ({
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
           <ChatUserList
-            groups={groups}
+            groups={recentGroups}
             lastMessage={lastMessage}
             selectedChat={selectedChat}
             setSelectedChat={setSelectedChat}
             searchQuery={searchQuery}
           />
         </div>
-
+      </>
+    )}
+  </div>
         {/* Bottom Buttons */}
-        <div className="p-4 border-t border-gray-200 space-y-2">
+        <div className="p-4 border-t border-gray-200 space-y-2 mt-auto">
           <button
             onClick={() => setUserListModalOpen(true)}
             className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center justify-center"
