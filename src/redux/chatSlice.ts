@@ -77,9 +77,33 @@ const chatSlice = createSlice({
       if (!action.payload.id) return;
       groupsAdapter.upsertOne(state, action.payload);
     },
+
+    // reorderGroupsBasedOnSender(state, action: PayloadAction<string>) {
+    //   const senderGroupId = action.payload;
+
+    //   const groupIds = Object.keys(state.entities);
+
+    //   const filteredGroupIds = groupIds.filter(id => id !== senderGroupId);
+    //   const reorderedGroupIds = [senderGroupId, ...filteredGroupIds];
+
+    //   state.ids = reorderedGroupIds;
+    // },
+
+    //order chat list by sender
+    reorderGroupsBasedOnSender(state, action: PayloadAction<string>) {
+      const senderGroupId = action.payload;
+
+      const groupIds = [...state.ids]; // Start with the current order (from state.ids)
+
+      const filteredGroupIds = groupIds.filter((id) => id !== senderGroupId);
+
+      const reorderedGroupIds = [senderGroupId, ...filteredGroupIds];
+
+      state.ids = reorderedGroupIds;
+    },
+
     updateGroupMembers(state, action: PayloadAction<IChatGroup>) {
-      if(!action.payload.id) return
-      console.log("updateGroupMembers called",action.payload)
+      if (!action.payload.id) return;
       groupsAdapter.upsertOne(state, action.payload);
     },
 
@@ -150,6 +174,7 @@ export const {
   setCurrentSelectedGroup,
   removeGroup,
   updateGroupMembers,
+  reorderGroupsBasedOnSender,
   setSearchQuery, // export search query setter
 } = chatSlice.actions;
 
@@ -187,7 +212,9 @@ export const selectFilteredGroupIds = (state: RootState) => {
 
   if (searchQuery) {
     ids = ids.filter((groupId) =>
-      groups.find((group) => group?.group_name.toLowerCase().includes(searchQuery))
+      groups.find((group) =>
+        group?.group_name.toLowerCase().includes(searchQuery)
+      )
     );
   }
 

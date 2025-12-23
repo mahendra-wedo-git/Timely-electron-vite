@@ -44,18 +44,18 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
               formatDateLabel(forwardedFrom.created_at)}
           </span>
         </div>
-        <div className="text-sm pl-5">
+        <div className="text-xs pl-5">
           {forwardedFrom?.content && forwardedFrom.content}
         </div>
       </div>
 
-      <div className="text-sm leading-relaxed break-words">{content.length > MAX_LENGTH ? displayText : content}</div>
+      <div className="text-xs leading-relaxed break-words">{content.length > MAX_LENGTH ? displayText : content}</div>
       {content.length > MAX_LENGTH && (
         <>
           {!isExpanded && (
             <button
               onClick={() => setIsExpanded(true)}
-              className="mt-2  font-bold   transition-colors block text-sm"
+              className="mt-2  font-bold   transition-colors text-xs"
             >
               Read more
             </button>
@@ -64,7 +64,7 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
           {isExpanded && (
             <button
               onClick={() => setIsExpanded(false)}
-              className="mt-2  font-bold  transition-colors block text-sm"
+              className="mt-2  font-bold  transition-colors text-xs"
             >
               Show less
             </button>

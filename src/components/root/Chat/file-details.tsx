@@ -32,7 +32,7 @@ export const renderAttachments = (
 
             {/* File Info */}
             <div className="flex flex-col min-w-0 flex-1">
-              <span className="truncate font-medium text-sm text-custom-text-100">
+              <span className="truncate font-medium text-xs text-custom-text-100">
                 {truncateText(att.attributes?.name || "Unnamed file", 20)}
               </span>
               <span className="text-xs text-gray-500">

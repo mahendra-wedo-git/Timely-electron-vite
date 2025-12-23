@@ -126,15 +126,15 @@ export const ChatUserList: FC<IChatUser> = ({
               setSelectedChat(chat);
               handleChatOverview(chat);
             }}
-            className={`w-full p-4 flex items-center hover:bg-gray-50 transition ${
+            className={`w-full p-4 flex items-center hover:bg-gray-50 transition-all ${
               selectedChat?.id === chat.id ? "bg-gray-100" : ""
             }`}
           >
             <div className="relative">
-              <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
                 {chat?.members?.length > 1 ? (
                   <GroupChatAvatar
-                    size={42}
+                    size={30}
                     fill="#ffffff"
                     background="bg-indigo-600"
                   />
@@ -148,7 +148,7 @@ export const ChatUserList: FC<IChatUser> = ({
             </div>
             <div className="ml-3 flex-1 text-left">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900">
+                <h3 className="text-xs font-semibold text-gray-900">
                   {chat.group_name}
                 </h3>
 

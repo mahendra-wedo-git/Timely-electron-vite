@@ -20,6 +20,7 @@ import { SidebarChat } from "./ChatUserList";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import { v4 as uuidv4 } from "uuid";
 import {
+  reorderGroupsBasedOnSender,
   selectCurrentSelectedGroup,
   selectGroupById,
 } from "src/redux/chatSlice";
@@ -202,7 +203,8 @@ export const ChatWindow = () => {
       attachments: Array.from(uploadedAssetIds),
       browser_data: browserData,
     });
-
+    //order chat list by sender
+    dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
     setMessage("");
     setUploadedAssetIds(new Set());
     setFiles([]);
@@ -242,7 +244,7 @@ export const ChatWindow = () => {
           <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center">
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
                   {selectedChat.group_name.charAt(0)}
                 </div>
                 {/* {selectedChat.isOnline && ( */}
@@ -250,24 +252,24 @@ export const ChatWindow = () => {
                 {/* )} */}
               </div>
               <div className="ml-3">
-                <h2 className="text-base font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-gray-900">
                   {selectedChat.group_name}
                 </h2>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="text-gray-600 hover:text-gray-900 font-medium text-sm">
+              <button className="text-gray-600 hover:text-gray-900 font-medium text-xs">
                 Chat
               </button>
-              <button className="text-gray-500 hover:text-gray-700 text-sm">
+              <button className="text-gray-500 hover:text-gray-700 text-xs">
                 Files
               </button>
-              <button className="text-gray-500 hover:text-gray-700 text-sm">
+              <button className="text-gray-500 hover:text-gray-700 text-xs">
                 Photos
               </button>
               {selectedChatGroup && !selectedChatGroup?.is_private && (
                 <button
-                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  className="text-gray-500 hover:text-gray-700 text-xs"
                   onClick={() => setOpenMemberModal(true)}
                 >
                   <User className="h-5 w-5" />
@@ -402,7 +404,7 @@ export const ChatWindow = () => {
                         </div>
 
                         <div className="flex flex-col min-w-0">
-                          <span className="truncate max-w-[150px] text-sm font-medium text-gray-700">
+                          <span className="truncate max-w-[150px] text-xs font-medium text-gray-700">
                             {file.name}
                           </span>
                         </div>

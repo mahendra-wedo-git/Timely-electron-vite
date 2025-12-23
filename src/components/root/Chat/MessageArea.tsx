@@ -60,7 +60,7 @@ export const MessageArea: FC<{
               : "bg-gray-100 text-gray-900 justify-start"
           }`}
         >
-          <p className="text-sm">This message was deleted</p>
+          <p className="text-xs">This message was deleted</p>
         </div>
       </div>
     </div>
