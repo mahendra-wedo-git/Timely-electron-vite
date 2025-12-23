@@ -186,14 +186,14 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center">
-              <Users className="h-5 w-5 text-white" />
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+              <Users className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-sm capitalize font-semibold text-gray-900">
                 {groupDetails?.group_name}
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500">
                 People ({groupDetails?.members.length})
               </p>
             </div>
@@ -237,11 +237,11 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
                     >
                       {availableMember.first_name.charAt(0) + availableMember.last_name.charAt(0)}
                     </div> */}
-                    <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
                       {availableMember.first_name.charAt(0)}
                     </div>
                     <div className="ml-3 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900">
+                      <h3 className="text-xs font-medium text-gray-900">
                         {availableMember?.first_name}{" "}
                         {availableMember?.last_name}
                         {/* {availableMember.isYou && (
@@ -276,7 +276,7 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
         <div className="border-t border-gray-200">
           <button
             onClick={handleAddPeople}
-            className="w-full flex items-center px-6 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+            className="w-full flex items-center px-6 py-4 text-xs font-medium text-gray-700 hover:bg-gray-50 transition"
           >
             <UserPlus className="h-5 w-5 mr-3 text-gray-500" />
             Add people
@@ -286,7 +286,7 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
               setSelectedMember(currentUser as IUserLite);
               handleLeave();
             }}
-            className="w-full flex items-center px-6 py-4 text-sm font-medium text-red-600 hover:bg-red-50 transition rounded-b-2xl"
+            className="w-full flex items-center px-6 py-4 text-xs font-medium text-red-600 hover:bg-red-50 transition rounded-b-2xl"
           >
             <LogOut className="h-5 w-5 mr-3" />
             Leave

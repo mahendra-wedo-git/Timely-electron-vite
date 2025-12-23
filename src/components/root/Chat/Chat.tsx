@@ -244,7 +244,7 @@ export const ChatWindow = () => {
           <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <div className="flex items-center">
               <div className="relative">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 rounded-full capitalize bg-indigo-600 flex items-center justify-center text-white font-semibold">
                   {selectedChat.group_name.charAt(0)}
                 </div>
                 {/* {selectedChat.isOnline && ( */}
@@ -252,7 +252,7 @@ export const ChatWindow = () => {
                 {/* )} */}
               </div>
               <div className="ml-3">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm capitalize font-semibold text-gray-900">
                   {selectedChat.group_name}
                 </h2>
               </div>

@@ -106,7 +106,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pt-4 px-6">
           <div>
-            <h3 className="text-lg text-gray-900">
+            <h3 className="text-sm capitalize text-gray-900">
               Send Chat Request
             </h3>
             <p className="text-xs text-gray-400 mt-1">
@@ -148,7 +148,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
                   >
                     <div className="flex items-center flex-1 min-w-0">
                       <div
-                        className={`w-10 h-10 rounded-full bg-indigo-600  flex items-center justify-center text-white  font-semibold text-sm flex-shrink-0`}
+                        className={`w-8 h-8 rounded-full bg-indigo-600  flex items-center justify-center text-white  font-semibold text-sm flex-shrink-0`}
                       >
                         {user.avatar
                           ? user.avatar
@@ -156,7 +156,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
                       </div>
 
                       <div className="ml-3 min-w-0 flex-1">
-                        <h3 className="text-sm font-medium text-gray-900 truncate">
+                        <h3 className="text-xs font-medium text-gray-900 truncate">
                           {user.first_name} {user.last_name}
                         </h3>
                         <p className="text-xs text-gray-500 truncate">
@@ -167,7 +167,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
                     <button
                       onClick={() => handleSendRequest(user)}
                       disabled={sendingTo === user.id}
-                      className="ml-4 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                      className="ml-4 px-4 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                     >
                       {sendingTo === user.id ? "Sending..." : "Send"}
                     </button>
@@ -177,7 +177,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
             </div>
           ) : (
             <div className="p-8 text-center">
-              <p className="text-sm text-gray-500">No members found</p>
+              <p className="text-xs text-gray-500">No members found</p>
             </div>
           )}
         </div>

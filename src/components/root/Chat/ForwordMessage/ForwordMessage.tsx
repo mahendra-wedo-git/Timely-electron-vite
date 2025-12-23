@@ -197,7 +197,7 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
                           {user.group_name.charAt(0).toUpperCase()}
                         </div>
                         <div className="ml-3 min-w-0 flex-1">
-                          <h3 className="text-sm font-medium text-gray-900 truncate">
+                          <h3 className="text-xs font-medium text-gray-900 truncate">
                             {user.group_name}
                           </h3>
                           <p className="text-xs text-gray-500 truncate">
@@ -214,7 +214,7 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
               </div>
             ) : (
               <div className="p-6 text-center">
-                <p className="text-sm text-gray-500">No members found</p>
+                <p className="text-xs text-gray-500">No members found</p>
               </div>
             )}
           </div>
@@ -230,7 +230,7 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
 
           {/* Message Preview Section */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-xs font-medium text-gray-700 mb-2">
               Message preview
             </label>
 
@@ -240,7 +240,7 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               rows={2}
-              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400 resize-none mb-3"
+              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400 resize-none mb-3"
             />
 
             {/* Original Message Preview */}
@@ -251,14 +251,14 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-xs font-semibold text-gray-900">
                       {originalMessage.sender}
                     </span>
                     <span className="text-xs text-gray-500">
                       {originalMessage.timestamp}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-xs text-gray-700">
                     {selectedMassage?.content && selectedMassage?.content.length > 80
                       ? `${selectedMassage?.content.slice(0, 80)}...`
                       : selectedMassage?.content}
@@ -274,14 +274,14 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
           <button
             onClick={handleCancel}
             disabled={isForwarding}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none disabled:opacity-50"
+            className="px-4 py-2 text-xs font-medium text-gray-700 hover:text-gray-900 focus:outline-none disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleForward}
             disabled={isForwarding || selectedMembers.length === 0}
-            className="px-5 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isForwarding ? "Forwarding..." : "Forward"}
           </button>
