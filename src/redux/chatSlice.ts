@@ -104,7 +104,6 @@ const chatSlice = createSlice({
         group_name,
       };
 
-      // reset unread count (MobX parity)
       state.unreadCounts[groupId] = 0;
 
       // persist last selected group

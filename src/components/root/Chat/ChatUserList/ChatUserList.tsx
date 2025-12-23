@@ -1,7 +1,8 @@
-import { FC, useEffect, useState } from "react";
+import { FC, use, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useUser, useWorkspaceMembers } from "src/context";
 import {
+  getGroup,
   selectCurrentSelectedGroup,
   setCurrentSelectedGroup,
 } from "src/redux/chatSlice";
@@ -69,8 +70,6 @@ export const ChatUserList: FC<IChatUser> = ({
     dispatch(fetchWorkspaceMembers(workspaceSlug));
   }, [workspaceSlug]);
 
-
-
   const handleChatOverview = (chat: IChatGroup) => {
     if (!workspaceSlug || !currentUser?.id) return;
     if (workspaceSlug) {
@@ -84,6 +83,35 @@ export const ChatUserList: FC<IChatUser> = ({
       );
     }
   };
+  const lastSelected = window.localStorage.getItem(
+    `timely_last_selected_chat_${workspaceSlug}`
+  );
+
+  const groupDetails: IChatGroup | null = workspaceSlug
+    ? useAppSelector((state) => getGroup(state, lastSelected || ""))
+    : null;
+  useEffect(() => {
+    if (!workspaceSlug || !currentUser?.id) return;
+
+    if (!lastSelected) return;
+
+    setSelectedChat(groupDetails as IChatGroup);
+    dispatch(
+      setCurrentSelectedGroup({
+        workspaceSlug: workspaceSlug as string,
+        groupId: selectedChat?.id ?? lastSelected,
+        userId: currentUser?.id ?? "",
+        group_name: selectedChat?.group_name ?? "",
+      })
+    );
+  }, [
+    selectedChat,
+    workspaceSlug,
+    currentUser,
+    dispatch,
+    groupDetails,
+    lastSelected,
+  ]);
 
   return (
     <div className="flex-1 overflow-y-auto">

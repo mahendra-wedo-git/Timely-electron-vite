@@ -98,7 +98,6 @@ export const ChatWindow = () => {
   const currentSelectedGroup = useAppSelector((state) =>
     workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : undefined
   );
-  console.log("selectedMassageselectedMassage", selectedChatGroup);
   const currentChatId = currentSelectedGroup?.groupId;
   const receiverUserId = currentSelectedGroup?.userId;
   const groupName = currentSelectedGroup?.group_name;
@@ -312,30 +311,6 @@ export const ChatWindow = () => {
               <button className="text-gray-400 hover:text-gray-600">
                 <Smile className="h-5 w-5" />
               </button>
-              {/* <button className="text-gray-400 hover:text-gray-600">
-                <Image className="h-5 w-5" />
-              </button> */}
-              {/* <ImagePicker
-                onUploaded={(images) => {
-                  console.log("Selected images:", images);
-
-                  const formData = new FormData();
-                  images.forEach((img) => {
-                    formData.append("images", img.file);
-                  });
-
-                  console.log("formData >>>>.", formData);
-                }}
-              /> */}
-              {/* <ImagePicker
-                onUploaded={async (images) => {
-                  const formData = new FormData();
-                  images.forEach((img) => {
-                    formData.append("images", img.file);
-                  });
-                  console.log("ImagePicker >>>.", formData);
-                }}
-              /> */}
               <ImagePicker
                 onUploaded={(images) => {
                   if (!currentChatId || !workspaceSlug) return;
