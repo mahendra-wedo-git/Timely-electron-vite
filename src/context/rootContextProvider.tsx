@@ -2,7 +2,7 @@ import { combineComponents } from "../utils/combineComponents";
 import { AppContextProvider, AppContextProviderProps } from "./appContext";
 import { ChatContextProviderProps, ChatSocketProvider } from "./chatContext";
 import { UserContextProviderProps, UserProvider } from "./userContext";
-import { WorkspaceMemberProvider, WorkspaceMemberProviderProps } from "./WorkspaceMemberContext";
+import { WorkspaceMemberProvider, WorkspaceMemberProviderProps } from "./workspaceMemberContext";
 
 
 export const RootContextProvider = combineComponents<

@@ -5,6 +5,7 @@ import chatReducer from "./chatSlice";
 import workspaceMemberReducer from "./workspaceMemberSlice";
 import memberRootReducer from "./memberRootSlice";
 import messageReducer from "./massagesSlice";
+import editorAssetReducer from "./assetsSlice";
 
 const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ const store = configureStore({
     memberRoot: memberRootReducer,
     workspaceMember: workspaceMemberReducer,
     message: messageReducer,
+    editorAsset: editorAssetReducer
   },
 });
 

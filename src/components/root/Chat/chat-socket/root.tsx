@@ -168,12 +168,13 @@ export function ChatSocketContainer() {
           case "message":
             const chatId = parsed.group || parsed.group_id;
             if (parsed.intent === "replaceTempData") {
+              console.log("replaceTemporaryMessage parsed",parsed)
               dispatch(
                 replaceTemporaryMessage({
                   workspaceSlug,
                   chatId: parsed.group,
                   clientMessageId: parsed.clientMessageId,
-                  message: parsed, // FULL MESSAGE
+                  message: parsed,
                 })
               );
             } else if (parsed.intent === "delete") {
@@ -185,10 +186,12 @@ export function ChatSocketContainer() {
                 })
               );
             } else {
+              const chatId = parsed.id || parsed.group;
+              console.log("groupedMessages update socket called", parsed);
               dispatch(
                 updateMessages({
                   workspaceSlug,
-                  chatId: parsed.group,
+                  chatId,
                   msgs: [parsed],
                   currentUserId: currentUser.id,
                 })

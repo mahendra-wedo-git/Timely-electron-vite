@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, useState } from "react";
 import {
   Check,
   CheckCheckIcon,
@@ -18,6 +18,7 @@ import { BiTab } from "react-icons/bi";
 import { IChatMessage } from "src/types";
 import { ForwardedMessage } from "./ForwardMessages";
 import { GroupActivityItem } from "./group-activity";
+import { renderAttachments } from "./file-details";
 
 interface MentionProps {
   entityIdentifier: string;
@@ -41,7 +42,8 @@ export const MessageArea: FC<{
   handleForward,
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
-
+  console.log("groupedMessages >>>", groupedMessages);
+  const [expandedMessages, setExpandedMessages] = useState<Record<string, boolean>>({});
   const Mention: FC<MentionProps> = ({ entityIdentifier, entityName }) => {
     return <span className="text-indigo-600">@{entityName}</span>;
   };
@@ -64,9 +66,34 @@ export const MessageArea: FC<{
     </div>
   );
 
-  const renderMessageContent = (content: string) => {
-    const sanitizedMessageContent = cleanedHTML(content || "");
+   const renderMessageContent = (content: string, msgId: string) => {
+    const sanitizedMessageContent = cleanedHTML(content);
     const plainTextContent = extractPlainText(sanitizedMessageContent);
+    const MAX_LENGTH = 800;
+
+    const isExpanded = expandedMessages[msgId];
+
+    if (plainTextContent.length > MAX_LENGTH) {
+      return (
+        <>
+          {isExpanded
+            ? plainTextContent
+            : plainTextContent.slice(0, MAX_LENGTH) + "..."}
+
+          <button
+            onClick={() =>
+              setExpandedMessages((prev) => ({
+                ...prev,
+                [msgId]: !prev[msgId], // Toggle expanded state for this message
+              }))
+            }
+            className="mt-2 font-bold transition-colors block text-sm"
+          >
+            {isExpanded ? "Show less" : "Read more"}
+          </button>
+        </>
+      );
+    }
 
     return plainTextContent;
   };
@@ -87,9 +114,12 @@ export const MessageArea: FC<{
             return <DeletedMessage isCurrentUser={isCurrentUser} />;
           // if (msg.action !== undefined) return GroupActivityItem({ log: msg });
           if (msg.action !== undefined) {
-              return <GroupActivityItem key={msg.id} log={msg} />;
-            }
+            return <GroupActivityItem key={msg.id} log={msg} />;
+          }
 
+          if (msg?.attachment?.length > 0) {
+            return renderAttachments(msg, isCurrentUser);
+          }
           return (
             <div key={msg.id}>
               {showTimestamp && (
@@ -129,7 +159,7 @@ export const MessageArea: FC<{
                       </p>
                     )}
 
-                    {isCurrentUser && (
+                    {isCurrentUser ? (
                       <div className="flex items-center space-x-2 justify-end">
                         <div>
                           <Trash
@@ -146,21 +176,36 @@ export const MessageArea: FC<{
                           />
                         </div>
                       </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 justify-start">
+                        <div>
+                          <Forward
+                            size={15}
+                            onClick={() => handleForward(msg)}
+                            className="text-gray-400 cursor-pointer justify-start"
+                          />
+                        </div>
+                      </div>
                     )}
 
                     {/* Render message content with mentions replaced */}
                     <div
-                      className={`px-4 py-2 rounded-2xl ${
+                      className={`text-xs mt-1 py-2 px-3 rounded-md  ${
                         isCurrentUser
                           ? "bg-indigo-600 text-white"
                           : "bg-gray-100 text-gray-900"
                       }`}
                     >
-                      <p className="text-sm">
+                      <p className="text-xs ">
                         {forwardedFrom && forwardedFromUser ? (
-                          <ForwardedMessage forwardedFromUser={forwardedFromUser} forwardedFrom={forwardedFrom} msg={msg} />
+                          <ForwardedMessage
+                            forwardedFromUser={forwardedFromUser}
+                            forwardedFrom={forwardedFrom}
+                            msg={msg}
+                          />
                         ) : (
-                          renderMessageContent(msg.content)
+                          // renderMessageContent(msg.content)
+                          renderMessageContent(msg.content, msg.id)
                         )}
                       </p>
                     </div>

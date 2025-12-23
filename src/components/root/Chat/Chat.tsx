@@ -14,6 +14,7 @@ import {
   ChartArea,
   ChartBar,
   User,
+  X,
 } from "lucide-react";
 import { SidebarChat } from "./ChatUserList";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
@@ -29,6 +30,7 @@ import {
   addTemporaryMessage,
   fetchChatGroupLog,
   fetchChatMessage,
+  fetchGroupAttachments,
   fetchLastMessage,
   selectChatGroupLogDetails,
   selectChatMessageDetails,
@@ -38,6 +40,11 @@ import { groupChatData } from "src/utils";
 import MessageArea from "./MessageArea";
 import { ForwardMessageModal } from "./ForwordMessage/ForwordMessage";
 import { GroupMembersModal } from "./GroupMemberModal/GroupMemberModal";
+import { FileData, FilePicker } from "./file-picker";
+import { ImagePicker } from "./Image-picker";
+import { uploadEditorAsset } from "src/redux/assetsSlice";
+import { getFileIcon } from "src/assets/attachment";
+import { FileService } from "src/services/file.service";
 
 interface Message {
   id: string;
@@ -61,7 +68,7 @@ interface Chat {
   unreadCount?: number;
   isOnline?: boolean;
 }
-
+const fileService = new FileService();
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
     undefined
@@ -73,6 +80,7 @@ export const ChatWindow = () => {
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
     new Set()
   );
+  const [files, setFiles] = useState<FileData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { workspace: workspaceSlug } = useParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -120,6 +128,7 @@ export const ChatWindow = () => {
           params: { cursor: null },
         })
       );
+      dispatch(fetchGroupAttachments({ workspaceSlug, chatId: currentChatId , params: { cursor: null }}));
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
     }
     if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
@@ -145,17 +154,50 @@ export const ChatWindow = () => {
     });
   };
 
+   const handleRemove = async (id: string, fileName: string) => {
+      try {
+        // 🧹 1. Remove from UI state first
+        setFiles((prev) => prev.filter((f) => f.id !== id));
+        setUploadedAssetIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+
+        // 2. Delete from server
+        // if (fileName.startsWith("http")) {
+        //   await fileService.deleteOldWorkspaceAsset(
+        //     currentWorkspace?.id || "",
+        //     id
+        //   );
+        // } else {
+        //   const assetUrl = getEditorAssetSrc({
+        //     assetId: id, // if you have project context
+        //     workspaceSlug: currentWorkspace?.slug || "",
+        //     isdelete: true,
+        //   });
+        //   if (assetUrl) {
+        //     await fileService.deleteNewAsset(assetUrl);
+        //   }
+        // }
+      } catch (error) {
+        console.error("Failed to delete asset:", error);
+        // optional: show toast or revert state if deletion fails
+      }
+    };
+
   const handleForward = (message: any) => {
     setSelectedMassage(message);
     setOpenForwardModal(true);
   };
 
   const handleSendMessage = () => {
-    if (!message.trim() || !selectedChat || !chatSocketService) return;
+    // if (!message || !selectedChat || !chatSocketService) return;
+    if (!selectedChat || !chatSocketService) return;
 
     chatSocketService.send({
       type: "message",
-      content: message || "",
+      content: message || "<p></p>",
       group_id: currentChatId,
       reply_to: receiverUserId,
       clientMessageId: uuidv4(),
@@ -165,6 +207,7 @@ export const ChatWindow = () => {
 
     setMessage("");
     setUploadedAssetIds(new Set());
+    setFiles([]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -270,19 +313,112 @@ export const ChatWindow = () => {
               <button className="text-gray-400 hover:text-gray-600">
                 <Smile className="h-5 w-5" />
               </button>
-              <button className="text-gray-400 hover:text-gray-600">
+              {/* <button className="text-gray-400 hover:text-gray-600">
                 <Image className="h-5 w-5" />
-              </button>
-              <button className="text-gray-400 hover:text-gray-600">
-                <Paperclip className="h-5 w-5" />
-              </button>
-              <button className="text-gray-400 hover:text-gray-600">
-                <Plus className="h-5 w-5" />
-              </button>
+              </button> */}
+              {/* <ImagePicker
+                onUploaded={(images) => {
+                  console.log("Selected images:", images);
 
+                  const formData = new FormData();
+                  images.forEach((img) => {
+                    formData.append("images", img.file);
+                  });
+
+                  console.log("formData >>>>.", formData);
+                }}
+              /> */}
+              {/* <ImagePicker
+                onUploaded={async (images) => {
+                  const formData = new FormData();
+                  images.forEach((img) => {
+                    formData.append("images", img.file);
+                  });
+                  console.log("ImagePicker >>>.", formData);
+                }}
+              /> */}
+              <ImagePicker
+                onUploaded={(images) => {
+                  if (!currentChatId || !workspaceSlug) return;
+                  images.forEach((img) => {
+                    dispatch(
+                      uploadEditorAsset({
+                        blockId: currentChatId,
+                        workspaceSlug,
+                        data: {
+                          entity_identifier: currentChatId,
+                          entity_type: "CHAT_ATTACHMENT",
+                        },
+                        file: img.file,
+                      })
+                    );
+                  });
+                }}
+              />
+
+              <button className="text-gray-400 hover:text-gray-600">
+                <FilePicker
+                  onUploaded={(files) => {
+                    console.log("Selected files:", files);
+
+                    // Example: upload via FormData
+                    // const formData = new FormData();
+                    // files.forEach((f) => formData.append("files", f.file));
+                    setUploadedAssetIds((prev) => {
+                      const updated = new Set(prev);
+                      for (const file of files) {
+                        updated.add(file.id);
+                      }
+                      return updated;
+                    });
+                    // setMessage("<p></p>");
+                    setFiles((prev) => [...prev, ...files]);
+                    // fetch("/api/upload", { method: "POST", body: formData });
+                  }}
+                />
+                {/* <Paperclip className="h-5 w-5" /> */}
+              </button>
+              {/* <button className="text-gray-400 hover:text-gray-600">
+                <Plus className="h-5 w-5" />
+              </button> */}
+              {files.length > 0 && (
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {files.map((file) => (
+                    <div
+                      key={file.id}
+                      className="group relative flex items-center justify-between px-3 py-2 bg-custom-background-90  w-[230px] border border-gray-200 rounded-lg transition-all duration-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="flex-shrink-0">
+                          {getFileIcon(file.name.split(".").pop() || "")}
+                        </div>
+
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate max-w-[150px] text-sm font-medium text-gray-700">
+                            {file.name}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(file.id, file.name)}
+                        className="text-red-500 hover:text-red-700 transition"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <input
                 type="text"
-                placeholder="Type a message..."
+                // placeholder="Type a message..."
+                placeholder={
+                  uploadedAssetIds.size
+                    ? `${uploadedAssetIds.size} files are Sending...`
+                    : "Type a message..."
+                }
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}

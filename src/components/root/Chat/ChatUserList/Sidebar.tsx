@@ -15,7 +15,6 @@ import { IChatGroup, IChatMessage, IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
 import { CreateGroupModal } from "../CreateGroup/CreateGroup";
 import { WorkspaceService } from "src/services/workspace.service";
-import { useWorkspaceMembers } from "src/context/WorkspaceMemberContext";
 import { fetchWorkspaceMembers, selectWorkspaceMemberDetails, selectWorkspaceMemberMap } from "src/redux/workspaceMemberSlice";
 interface Chat {
   id: string;

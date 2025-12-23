@@ -269,6 +269,23 @@ export const checkEmailValidity = (email: string): boolean => {
 //   // Trim the string and check if it's empty
 //   return cleanText.trim() === "";
 // };
+export const isEmptyHtmlString = (
+  htmlString: string,
+  allowedHTMLTags: string[] = []
+) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+
+  // Remove disallowed tags
+  doc.body.querySelectorAll("*").forEach((el) => {
+    if (!allowedHTMLTags.includes(el.tagName.toLowerCase())) {
+      el.replaceWith(...el.childNodes);
+    }
+  });
+
+  const text = doc.body.textContent || "";
+  return text.trim() === "";
+};
 
 /**
  * @description this function returns whether a comment is empty or not by checking for the following conditions-
@@ -330,6 +347,7 @@ export const checkURLValidity = (url: string): boolean => {
  * console.log(text); // Some text <img src="test.jpg" />
  */
 export const cleanedHTML = (htmlString: string) => {
+  console.log("htmlString",htmlString)
   let sanitized = htmlString;
 
   sanitized = sanitized.replace(/<p[^>]*>\s*<br[^>]*>\s*<\/p>/gi, "");

@@ -7,3 +7,4 @@ export * from "./combineComponents";
 export * from "./validationSchemas";
 export * from "./chat.helper";
 export * from "./user";
+export * from "./file.helper";
