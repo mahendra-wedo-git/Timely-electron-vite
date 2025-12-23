@@ -5,7 +5,7 @@ import {
   PayloadAction,
 } from "@reduxjs/toolkit";
 import { ChatService } from "src/services";
-import { IChatGroup } from "src/types";
+import { IChatGroup, IChatPin, IMuteChat } from "src/types";
 import { RootState } from "./store";
 
 const chatService = new ChatService();
@@ -25,6 +25,38 @@ export const fetchGroups = createAsyncThunk<IChatGroup[], string>(
     return await chatService.userChats(workspaceSlug);
   }
 );
+
+export const pinGroup = createAsyncThunk<
+  { pin: IChatPin; groupId: string },
+  { workspaceSlug: string; data: Partial<IChatPin> }
+>("chat/pinGroup", async ({ workspaceSlug, data }) => {
+  const response = await chatService.pinChat(workspaceSlug, data);
+  return { pin: response, groupId: data.group as string };
+});
+
+export const unpinGroup = createAsyncThunk<
+  { groupId: string },
+  { workspaceSlug: string; pinId: string; groupId: string }
+>("chat/unpinGroup", async ({ workspaceSlug, pinId, groupId }) => {
+  await chatService.unpinChat(workspaceSlug, pinId);
+  return { groupId };
+});
+
+export const muteGroup = createAsyncThunk<
+  { mute: IMuteChat; groupId: string },
+  { workspaceSlug: string; data: Partial<IMuteChat> }
+>("chat/muteGroup", async ({ workspaceSlug, data }) => {
+  const response = await chatService.muteGroup(workspaceSlug, data);
+  return { mute: response, groupId: data.group as string };
+});
+
+export const unmuteGroup = createAsyncThunk<
+  { groupId: string },
+  { workspaceSlug: string; muteId: string; groupId: string }
+>("chat/unmuteGroup", async ({ workspaceSlug, muteId, groupId }) => {
+  await chatService.unmuteGroup(workspaceSlug, muteId);
+  return { groupId };
+});
 
 /* ------------------ STATE TYPE ------------------ */
 type CurrentSelectedGroup = {
@@ -161,6 +193,101 @@ const chatSlice = createSlice({
       })
       .addCase(fetchGroups.rejected, (state) => {
         state.loader = false;
+      })
+
+      // .addCase(pinGroup.fulfilled, (state, action) => {
+      //   const { pin, groupId } = action.payload;
+      //   console.log("action.payload",action.payload,groupsAdapter)
+      //   const workspaceSlug = action.meta.arg.workspaceSlug;
+
+      //   const group = state.groupMap[workspaceSlug]?.[groupId];
+      //   if (group) {
+      //     group.is_pinned = true;
+      //     group.pin_id = pin.id;
+      //   }
+      // })
+
+      // // Unpin Group
+      // .addCase(unpinGroup.fulfilled, (state, action) => {
+      //   const { groupId } = action.payload;
+      //   const workspaceSlug = action.meta.arg.workspaceSlug;
+
+      //   const group = state.groupMap[workspaceSlug]?.[groupId];
+      //   if (group) {
+      //     group.is_pinned = false;
+      //     group.pin_id = undefined;
+      //   }
+      // })
+
+      // // Mute Group
+      // .addCase(muteGroup.fulfilled, (state, action) => {
+      //   const { mute, groupId } = action.payload;
+      //   const workspaceSlug = action.meta.arg.workspaceSlug;
+
+      //   const group = state.groupMap[workspaceSlug]?.[groupId];
+      //   if (group) {
+      //     group.is_mute = true;
+      //     group.mute_id = mute.id;
+      //   }
+      // })
+
+      // // Unmute Group
+      // .addCase(unmuteGroup.fulfilled, (state, action) => {
+      //   const { groupId } = action.payload;
+      //   const workspaceSlug = action.meta.arg.workspaceSlug;
+
+      //   const group = state.groupMap[workspaceSlug]?.[groupId];
+      //   if (group) {
+      //     group.is_mute = false;
+      //     group.mute_id = undefined;
+      //   }
+      // })
+
+      .addCase(pinGroup.fulfilled, (state, action) => {
+        const { pin, groupId } = action.payload;
+
+        const group = state.entities[groupId]; // Access the group from the state using `entities`
+        if (group) {
+          group.is_pinned = true;
+          group.pin_id = pin.id;
+
+          groupsAdapter.upsertOne(state, group);
+        }
+      })
+
+      .addCase(unpinGroup.fulfilled, (state, action) => {
+        const { groupId } = action.payload;
+        const group = state.entities[groupId]; 
+        if (group) {
+          group.is_pinned = false;
+          group.pin_id = undefined;
+
+          groupsAdapter.upsertOne(state, group);
+        }
+      })
+
+      .addCase(muteGroup.fulfilled, (state, action) => {
+        const { mute, groupId } = action.payload;
+
+        const group = state.entities[groupId]; 
+        if (group) {
+          group.is_mute = true;
+          group.mute_id = mute.id;
+
+          groupsAdapter.upsertOne(state, group);
+        }
+      })
+
+      .addCase(unmuteGroup.fulfilled, (state, action) => {
+        const { groupId } = action.payload;
+
+        const group = state.entities[groupId]; 
+        if (group) {
+          group.is_mute = false;
+          group.mute_id = undefined;
+
+          groupsAdapter.upsertOne(state, group);
+        }
       });
   },
 });
