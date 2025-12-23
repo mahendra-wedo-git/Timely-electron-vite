@@ -42,13 +42,6 @@ export const ChatUserList: FC<IChatUser> = ({
 }) => {
   if (!groups) return null;
   const { data: currentUser, fetchCurrentUser } = useUser();
-  const {
-    workspaceMemberMap,
-    isLoading,
-    error,
-    fetchWorkspaceMember,
-    getWorkspaceMemberDetails,
-  } = useWorkspaceMembers();
 
   const { workspace: workspaceSlug } = useParams();
   const dispatch = useAppDispatch();
@@ -76,17 +69,6 @@ export const ChatUserList: FC<IChatUser> = ({
     dispatch(fetchWorkspaceMembers(workspaceSlug));
   }, [workspaceSlug]);
 
-  const groupName = selectedChat?.group_name || "";
-  const group_avatar = selectedChat?.group_avatar_detail?.asset || null;
-  // const memberId =
-  //   selectedChat?.members?.filter((id) => id !== currentUser?.id)[0] || "";
-  // const memberId = selectedChat?.members?.filter((id) => id !== currentUser?.id)[0];
-  const memberId =
-    selectedChat?.members?.find((id) => id !== currentUser?.id) ?? null;
-  // const currentSelectedGroup = useAppSelector((state) =>
-  //   workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : null
-  // );
-  const memberDetails = getWorkspaceMemberDetails(memberId as string);
 
 
   const handleChatOverview = (chat: IChatGroup) => {

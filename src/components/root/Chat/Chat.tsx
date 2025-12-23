@@ -128,7 +128,7 @@ export const ChatWindow = () => {
           params: { cursor: null },
         })
       );
-      dispatch(fetchGroupAttachments({ workspaceSlug, chatId: currentChatId , params: { cursor: null }}));
+      // dispatch(fetchGroupAttachments({ workspaceSlug, chatId: currentChatId , params: { cursor: null }}));
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
     }
     if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
@@ -154,37 +154,36 @@ export const ChatWindow = () => {
     });
   };
 
-   const handleRemove = async (id: string, fileName: string) => {
-      try {
-        // 🧹 1. Remove from UI state first
-        setFiles((prev) => prev.filter((f) => f.id !== id));
-        setUploadedAssetIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
-        });
+  const handleRemove = async (id: string, fileName: string) => {
+    try {
+      setFiles((prev) => prev.filter((f) => f.id !== id));
+      setUploadedAssetIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
 
-        // 2. Delete from server
-        // if (fileName.startsWith("http")) {
-        //   await fileService.deleteOldWorkspaceAsset(
-        //     currentWorkspace?.id || "",
-        //     id
-        //   );
-        // } else {
-        //   const assetUrl = getEditorAssetSrc({
-        //     assetId: id, // if you have project context
-        //     workspaceSlug: currentWorkspace?.slug || "",
-        //     isdelete: true,
-        //   });
-        //   if (assetUrl) {
-        //     await fileService.deleteNewAsset(assetUrl);
-        //   }
-        // }
-      } catch (error) {
-        console.error("Failed to delete asset:", error);
-        // optional: show toast or revert state if deletion fails
-      }
-    };
+      // 2. Delete from server
+      // if (fileName.startsWith("http")) {
+      //   await fileService.deleteOldWorkspaceAsset(
+      //     currentWorkspace?.id || "",
+      //     id
+      //   );
+      // } else {
+      //   const assetUrl = getEditorAssetSrc({
+      //     assetId: id, // if you have project context
+      //     workspaceSlug: currentWorkspace?.slug || "",
+      //     isdelete: true,
+      //   });
+      //   if (assetUrl) {
+      //     await fileService.deleteNewAsset(assetUrl);
+      //   }
+      // }
+    } catch (error) {
+      console.error("Failed to delete asset:", error);
+      // optional: show toast or revert state if deletion fails
+    }
+  };
 
   const handleForward = (message: any) => {
     setSelectedMassage(message);
@@ -357,13 +356,48 @@ export const ChatWindow = () => {
               />
 
               <button className="text-gray-400 hover:text-gray-600">
-                <FilePicker
+                {/* <FilePicker
+                currentChatId={currentChatId || ""}
                   onUploaded={(files) => {
+                    if (!currentChatId || !workspaceSlug) return;
                     console.log("Selected files:", files);
 
                     // Example: upload via FormData
                     // const formData = new FormData();
                     // files.forEach((f) => formData.append("files", f.file));
+                    setUploadedAssetIds((prev) => {
+                      !currentChatId &&
+                        console.log("currentChatId", currentChatId);
+                      const updated = new Set(prev);
+                      for (const file of files) {
+                        updated.add(file.id);
+                      }
+                      dispatch(
+                        uploadEditorAsset({
+                          blockId: currentChatId,
+                          workspaceSlug,
+                          data: {
+                            entity_identifier: currentChatId,
+                            entity_type: "CHAT_ATTACHMENT",
+                          },
+                          file: files[0].file,
+                        })
+                      );
+                      return updated;
+                    });
+                    // setMessage("<p></p>");
+                    setFiles((prev) => [...prev, ...files]);
+                    // fetch("/api/upload", { method: "POST", body: formData });
+                  }}
+                /> */}
+
+                <FilePicker
+                  currentChatId={currentChatId || ""}
+                  workspaceSlug={workspaceSlug || ""}
+                  onUploaded={(files) => {
+                    if (!currentChatId || !workspaceSlug) return;
+                    console.log("Selected files:", files);
+
                     setUploadedAssetIds((prev) => {
                       const updated = new Set(prev);
                       for (const file of files) {
@@ -371,9 +405,8 @@ export const ChatWindow = () => {
                       }
                       return updated;
                     });
-                    // setMessage("<p></p>");
+
                     setFiles((prev) => [...prev, ...files]);
-                    // fetch("/api/upload", { method: "POST", body: formData });
                   }}
                 />
                 {/* <Paperclip className="h-5 w-5" /> */}

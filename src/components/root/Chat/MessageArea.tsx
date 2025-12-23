@@ -87,7 +87,7 @@ export const MessageArea: FC<{
                 [msgId]: !prev[msgId], // Toggle expanded state for this message
               }))
             }
-            className="mt-2 font-bold transition-colors block text-sm"
+            className="px-2 transition-colors  text-xs"
           >
             {isExpanded ? "Show less" : "Read more"}
           </button>

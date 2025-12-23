@@ -347,7 +347,6 @@ export const checkURLValidity = (url: string): boolean => {
  * console.log(text); // Some text <img src="test.jpg" />
  */
 export const cleanedHTML = (htmlString: string) => {
-  console.log("htmlString",htmlString)
   let sanitized = htmlString;
 
   sanitized = sanitized.replace(/<p[^>]*>\s*<br[^>]*>\s*<\/p>/gi, "");

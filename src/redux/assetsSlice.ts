@@ -119,8 +119,7 @@ export const uploadEditorAsset = createAsyncThunk<
         const progress = Math.round((e.progress ?? 0) * 100);
         getDebouncedProgress(uploadKey, dispatch)(progress);
       };
-
-      return projectId
+      const response = projectId
         ? await fileService.uploadProjectAsset(
             workspaceSlug,
             projectId,
@@ -134,6 +133,7 @@ export const uploadEditorAsset = createAsyncThunk<
             file,
             progressHandler
           );
+      return response;
     } finally {
       //   dispatch(finishUpload(blockId));
       dispatch(finishUpload(uploadKey));
