@@ -1,20 +1,10 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from "electron";
 
-// Define the API interface
-interface ElectronAPI {
-  ping: () => string;
-}
+console.log("✅ preload loaded");
 
-// Expose API to renderer process
-contextBridge.exposeInMainWorld('api', {
-  ping: (): string => 'pong'
-} as ElectronAPI);
-
-// Type declaration for window object (create a separate file window.d.ts for better organization)
-declare global {
-  interface Window {
-    api: ElectronAPI;
-  }
-}
-
-export {};
+contextBridge.exposeInMainWorld("api", {
+  ping: () => "pong",
+  getStore: (key: string) => ipcRenderer.invoke("store:get", key),
+  setStore: (key: string, value: any) =>
+    ipcRenderer.invoke("store:set", key, value),
+});

@@ -1,7 +1,9 @@
-// Type declarations for Electron API exposed to renderer
-
+export {};
 export interface ElectronAPI {
-  ping: () => string;
+  getStore(key: string): Promise<any>;
+  setStore(key: string, value: any): Promise<boolean>;
+  deleteStore(key: string): Promise<boolean>;
+  clearStore(): Promise<boolean>;
 }
 
 declare global {
@@ -9,5 +11,3 @@ declare global {
     api: ElectronAPI;
   }
 }
-
-export {};

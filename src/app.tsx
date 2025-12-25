@@ -8,16 +8,26 @@ import { AuthWrapper } from "./components/root/Auth/AuthWrapper";
 import { DashboardPage } from "./pages/Dashboard";
 import { ChatPage } from "./pages/Chat";
 import { WorkspaceLayout } from "./workspaceLayout";
+import { useEffect, useState } from "react";
 
 const App = () => {
   const isLogin = Boolean(localStorage.getItem("userEmail"));
+  const [initialRoute, setInitialRoute] = useState("");
+  const localRoute = localStorage.getItem("lastRoute");
   const workspace = localStorage.getItem("workspace") || "wedo";
+  useEffect(() => {
+    const fetchRoute = async () => {
+      const lastRoute = await window.api.getStore("lastRoute");
+      setInitialRoute(lastRoute ? lastRoute : localRoute);
+    }
+    fetchRoute();
+  }, [workspace]);
 
   return isLogin ? (
     <Routes>
       <Route
         path="/"
-        element={<Navigate to={`/${workspace}/dashboard`} replace />}
+        element={<Navigate to={ initialRoute ? initialRoute : `/${workspace}/dashboard`} replace />}
       />
 
       {/* LAYOUT ROUTE */}
