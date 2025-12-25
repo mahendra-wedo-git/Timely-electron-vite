@@ -44,6 +44,7 @@ const config = {
       platforms: ['darwin'],
       config: {
         format: 'ULFO',
+        icon: './assets/icon.icns',
       },
     },
     {
