@@ -3,6 +3,8 @@ import { Search, X, Check } from "lucide-react";
 import { useAppSelector } from "src/redux/hooks";
 import { selectAllGroups } from "src/redux/chatSlice";
 import { useChatSocket } from "src/context/chatContext";
+import { formatDateLabel } from "src/utils";
+import { selectMemberMap } from "src/redux/memberRootSlice";
 
 interface User {
   id: string;
@@ -34,64 +36,12 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const chatSocketService = useChatSocket();
-//   console.log("selectedMembersselectedMembers", selectedMembers);
+  //   console.log("selectedMembersselectedMembers", selectedMembers);
   const [note, setNote] = useState("");
   const [isForwarding, setIsForwarding] = useState(false);
   const WorkspaceMember = useAppSelector(selectAllGroups);
-  const users: User[] = [
-    {
-      id: "1",
-      name: "Admin Timely",
-      email: "admin.timely@yogmail.com",
-      avatar: "",
-      avatarColor: "bg-gray-400",
-      avatarImage: "https://via.placeholder.com/40",
-    },
-    {
-      id: "2",
-      name: "Vyom Patel",
-      email: "vyom.wedowebapps@gmail.com",
-      avatar: "",
-      avatarColor: "bg-gray-400",
-      avatarImage: "https://via.placeholder.com/40/333333",
-    },
-    {
-      id: "3",
-      name: "Niraj Parmar",
-      email: "niraj.wedowebapps@gmail.com",
-      avatar: "N",
-      avatarColor: "bg-indigo-600",
-    },
-    {
-      id: "4",
-      name: "Timely Admin",
-      email: "admin@timely.com",
-      avatar: "A",
-      avatarColor: "bg-indigo-600",
-    },
-    {
-      id: "5",
-      name: "Bhagy Detroja",
-      email: "bhagy.wedowebapps@gmail.com",
-      avatar: "B",
-      avatarColor: "bg-indigo-700",
-    },
-    {
-      id: "6",
-      name: "Bhavesh Rajpurohit",
-      email: "bhaveshr.wedowebapps@gmail.com",
-      avatar: "B",
-      avatarColor: "bg-indigo-700",
-    },
-    {
-      id: "7",
-      name: "Chirag Patel",
-      email: "chirag@wedowebapps.com",
-      avatar: "C",
-      avatarColor: "bg-blue-600",
-    },
-  ];
-
+  const memberMap = useAppSelector(selectMemberMap)
+  const senderDetails = memberMap[selectedMassage?.sender]; 
   const filteredUsers = WorkspaceMember.filter((user) =>
     user.group_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -247,15 +197,15 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
             <div className="border-l-4 border-gray-300 bg-gray-50 rounded-lg p-4">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
-                  M
+                  {senderDetails?.display_name?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className="text-xs font-semibold text-gray-900">
-                      {originalMessage.sender}
+                      {senderDetails?.first_name && senderDetails?.first_name + " " + senderDetails?.last_name}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {originalMessage.timestamp}
+                      {formatDateLabel(selectedMassage?.created_at)}
                     </span>
                   </div>
                   <p className="text-xs text-gray-700">
