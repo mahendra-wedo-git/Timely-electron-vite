@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, Notification } from "electron";
 import { fileURLToPath } from "url";
 import path from "path";
 import Store from "electron-store";
@@ -8,6 +8,11 @@ const store = new Store();
 if (started) {
   app.quit();
 }
+
+let mainWindow: BrowserWindow | null = null;
+
+// REQUIRED for Windows notifications
+app.setAppUserModelId("com.wedowebapps.timely");
 
 // IPC handlers for store
 ipcMain.handle("store:get", (_, key) => store.get(key));
@@ -32,47 +37,89 @@ declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 declare const MAIN_WINDOW_VITE_NAME: string | undefined;
 
 const createWindow = (): void => {
-    const isDev = !app.isPackaged;
+  const isDev = !app.isPackaged;
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-       preload: path.join(__dirname, '.vite/build/preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       //  preload: path.join(__dirname, '.vite/build/preload.js'),
-        // preload: isDev
-        // ? path.join(__dirname, "./preload.ts")   // DEV
-        // : path.join(__dirname, ".vite/build/preload.js"), // PROD
+      //  preload: path.join(__dirname, '.vite/build/preload.js'),
+      // preload: isDev
+      // ? path.join(__dirname, "./preload.ts")   // DEV
+      // : path.join(__dirname, ".vite/build/preload.js"), // PROD
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
     },
   });
 
-
   const devServer = MAIN_WINDOW_VITE_DEV_SERVER_URL;
-  const viteName = MAIN_WINDOW_VITE_NAME ?? 'main_window';
+  const viteName = MAIN_WINDOW_VITE_NAME ?? "main_window";
 
   if (isDev && devServer) {
     mainWindow.loadURL(devServer);
     // Open DevTools in development
     // mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${viteName}/index.html`));
+    mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${viteName}/index.html`)
+    );
   }
 };
 
 app.whenReady().then(() => {
   createWindow();
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
     }
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
+});
+
+// ipcMain.handle("notification:show", (_, payload) => {
+//   console.log("🔔 Notification.isSupported()",payload);
+
+//   // On Windows this should be true now
+//   if (!Notification.isSupported()) return;
+
+//   const notification = new Notification({
+//     title: payload.title || "Notification",
+//     body: payload.body || "",
+//     silent: false,
+//   });
+
+//   notification.on("click", () => {
+//     if (mainWindow) {
+//       mainWindow.show();
+//       mainWindow.focus();
+//     }
+//   });
+
+//   notification.show();
+// });
+
+ipcMain.handle("notification:show", (_, payload) => {
+  const supported = Notification.isSupported();
+  console.log("🔔 Notification supported:", supported);
+
+  if (!supported) {
+    console.log("Notifications not supported on this system");
+    return;
+  }
+
+  const notification = new Notification({
+    title: payload.title,
+    body: payload.body,
+     icon: path.join(__dirname, 'assets/icon.png') 
+  });
+
+  notification.show();
 });

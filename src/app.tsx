@@ -1,4 +1,4 @@
-import Sidebar from "./components/root/Sidebar/Sidebar";
+import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { WorkLogPage } from "./pages/WorkLog";
 import { ProjectsPage } from "./pages/Projects";
@@ -8,26 +8,55 @@ import { AuthWrapper } from "./components/root/Auth/AuthWrapper";
 import { DashboardPage } from "./pages/Dashboard";
 import { ChatPage } from "./pages/Chat";
 import { WorkspaceLayout } from "./workspaceLayout";
-import { useEffect, useState } from "react";
+import { isElectron } from "./utils";
 
 const App = () => {
   const isLogin = Boolean(localStorage.getItem("userEmail"));
   const [initialRoute, setInitialRoute] = useState("");
+  const [loading, setLoading] = useState(true); // State to handle loading
   const localRoute = localStorage.getItem("lastRoute");
   const workspace = localStorage.getItem("workspace") || "wedo";
   useEffect(() => {
     const fetchRoute = async () => {
       const lastRoute = await window.api.getStore("lastRoute");
-      setInitialRoute(lastRoute ? lastRoute : localRoute);
-    }
+      console.log("lastRoute from electron store", lastRoute);
+
+      // If lastRoute exists in the electron store, update the state
+      if (lastRoute) {
+        setInitialRoute(lastRoute);
+      } else {
+        // Otherwise, fallback to localStorage lastRoute or workspace dashboard
+        setInitialRoute(localRoute || `/${workspace}/dashboard`);
+      }
+
+      // Stop loading after fetching the route
+      setLoading(false);
+    };
+
     fetchRoute();
+    // setInterval(() => {
+    //   console.log("isElectron >>.", isElectron());
+    //   if (isElectron()) {
+    //     // window.api?.showNotification({
+    //     //   title: "Final Test",
+    //     //   body: "OS notification is working 🎉",
+    //     // });
+    //   }
+    // }, 10000);
   }, [workspace]);
+
+  // Render a loading screen if initialRoute is not set yet
+  // if (loading) {
+  //   return <div>Loading...</div>; // Or you can use a spinner or any loading UI
+  // }
 
   return isLogin ? (
     <Routes>
       <Route
         path="/"
-        element={<Navigate to={ initialRoute ? initialRoute : `/${workspace}/dashboard`} replace />}
+        element={
+          <Navigate to={initialRoute || `/${workspace}/dashboard`} replace />
+        }
       />
 
       {/* LAYOUT ROUTE */}

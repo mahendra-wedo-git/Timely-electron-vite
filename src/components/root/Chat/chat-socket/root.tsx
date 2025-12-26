@@ -1,7 +1,6 @@
-
 import { useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { useAppDispatch } from "src/redux/hooks";
+import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import {
   removeGroup,
   updateGroup,
@@ -15,6 +14,7 @@ import {
   updateChatGroupLog,
   updateMessages,
 } from "src/redux/massagesSlice";
+import { selectMemberMap } from "src/redux/memberRootSlice";
 
 export function ChatSocketContainer() {
   const { workspace: workspaceSlug } = useParams();
@@ -23,6 +23,16 @@ export function ChatSocketContainer() {
   const { data: currentUser } = useUser();
 
   const connectedWorkspaceRef = useRef<string | null>(null);
+  const memberMap = useAppSelector(selectMemberMap);
+  const shouldShowOSNotification = (
+    senderId: string,
+    currentUserId: string
+  ) => {
+    console.log("shouldShowOSNotification called", senderId, currentUserId);
+    if (senderId === currentUserId) return false;
+    if (document.hasFocus()) return false;
+    return true;
+  };
 
   useEffect(() => {
     if (!workspaceSlug || !currentUser?.id) return;
@@ -37,41 +47,6 @@ export function ChatSocketContainer() {
         if (parsed.workspace && parsed.workspace !== workspaceSlug) return;
 
         switch (parsed.type) {
-          // case "group":
-          //   if (
-          //     parsed.intent === "remove_member" &&
-          //     currentUser.id === parsed.member
-          //   ) {
-          //     console.log("remove group call", parsed);
-          //     const groupId = parsed.id;
-          //     if (!groupId) return;
-          //     socket?.send({
-          //       type: "group",
-          //       intent: "discard_group",
-          //       group_id: groupId,
-          //     });
-          //     dispatch(removeGroup(groupId));
-          //     return;
-          //   } else if (parsed.intent === "new_log") {
-          //     const groupId = parsed.id;
-          //     dispatch(
-          //       updateChatGroupLog({
-          //         workspaceSlug,
-          //         chatId: groupId,
-          //         log: parsed,
-          //       })
-          //     );
-          //     return;
-          //   } else {
-          //     dispatch(updateGroup(parsed.result));
-          //     dispatch(updateGroupMembers(parsed.result));
-          //     socket?.send({
-          //       type: "group",
-          //       intent: "join_group",
-          //       group_id: parsed.result.id,
-          //     });
-          //   }
-
           case "group": {
             if (
               parsed.intent === "remove_member" &&
@@ -113,62 +88,23 @@ export function ChatSocketContainer() {
             break;
           }
 
-          // case "group":
-          //   const groupId = parsed.id || parsed.group_id;
-          //   if (!groupId) return;
-
-          //   // YOU were removed
-          //   if (
-          //     parsed.intent === "remove_member" &&
-          //     parsed.member === currentUser.id
-          //   ) {
-          //     socket.send({
-          //       type: "group",
-          //       intent: "discard_group",
-          //       group_id: groupId,
-          //     });
-
-          //     dispatch(removeGroup(groupId));
-          //     return;
-          //   }
-
-          //   // SOMEONE ELSE removed → update group members
-          //   if (parsed.intent === "remove_member") {
-          //     dispatch(
-          //       updateGroupMembers({
-          //         groupId,
-          //         members: parsed.members,
-          //         member_count: parsed.member_count,
-          //       })
-          //     );
-
-          //     // optional: add system log
-          //     dispatch(
-          //       updateChatGroupLog({
-          //         workspaceSlug,
-          //         chatId: groupId,
-          //         log: {
-          //           ...parsed,
-          //           created_at: new Date().toISOString(),
-          //           isSystem: true,
-          //         },
-          //       })
-          //     );
-
-          //     return;
-          //   }
-
-          //   // Normal group updates
-          //   if (parsed.result?.id) {
-          //     dispatch(updateGroup(parsed.result));
-          //   }
-
-          //   return;
-
           case "message":
             const chatId = parsed.group || parsed.group_id;
+            // added for OS notification
+            if (
+              parsed.intent !== "replaceTempData" &&
+              parsed.intent !== "delete" &&
+              shouldShowOSNotification(parsed.sender, currentUser.id)
+            ) {
+              const senderDetails = memberMap[parsed.sender];
+              console.log("showOSNotification parsed", parsed);
+              window.api?.showNotification({
+                title: parsed.content ? senderDetails?.first_name + senderDetails?.last_name  : `New message`,
+                body:
+                  parsed.content || parsed.content || "New message received",
+              });
+            }
             if (parsed.intent === "replaceTempData") {
-              console.log("replaceTemporaryMessage parsed",parsed)
               dispatch(
                 replaceTemporaryMessage({
                   workspaceSlug,

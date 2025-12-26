@@ -4,6 +4,10 @@ export interface ElectronAPI {
   setStore(key: string, value: any): Promise<boolean>;
   deleteStore(key: string): Promise<boolean>;
   clearStore(): Promise<boolean>;
+  showNotification(data: {
+    title: string;
+    body: string;
+  }): Promise<void>;
 }
 
 declare global {

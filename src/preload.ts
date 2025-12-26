@@ -7,4 +7,6 @@ contextBridge.exposeInMainWorld("api", {
   getStore: (key: string) => ipcRenderer.invoke("store:get", key),
   setStore: (key: string, value: any) =>
     ipcRenderer.invoke("store:set", key, value),
+  showNotification: (data: { title: string; body: string }) =>
+    ipcRenderer.invoke("notification:show", data),
 });

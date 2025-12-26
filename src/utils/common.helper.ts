@@ -64,3 +64,8 @@ export function convertCamelCaseToWords(camelCaseString: string) {
     .toLowerCase()
     .replace(/^./, (str) => str.toUpperCase());
 }
+
+
+export const isElectron = () => {
+  return !!window.api;
+};

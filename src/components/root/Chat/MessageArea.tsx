@@ -42,7 +42,7 @@ export const MessageArea: FC<{
   handleForward,
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
-  console.log("groupedMessages >>>", groupedMessages);
+  // console.log("groupedMessages >>>", groupedMessages);
   const [expandedMessages, setExpandedMessages] = useState<Record<string, boolean>>({});
   const Mention: FC<MentionProps> = ({ entityIdentifier, entityName }) => {
     return <span className="text-indigo-600">@{entityName}</span>;
