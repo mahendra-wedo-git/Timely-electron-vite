@@ -1,7 +1,7 @@
 {
   "name": "electron-app",
   "productName": "ElectronApp",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Desktop application with work log and project management",
   "main": ".vite/build/main.js",
   "scripts": {

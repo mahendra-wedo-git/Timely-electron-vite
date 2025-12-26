@@ -5,7 +5,11 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config = {
   packagerConfig: {
     asar: true,
-    icon: './assets/icon',
+    // icon: './assets/icon',
+    icon: './assets/icon.icns',
+    extraResource: [
+      './assets/icon.png',
+    ],
     name: 'ElectronApp',
     executableName: 'electron-app',
   },

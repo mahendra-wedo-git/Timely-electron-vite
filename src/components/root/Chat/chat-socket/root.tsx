@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import {
   removeGroup,
+  selectAllGroups,
   updateGroup,
   updateGroupMembers,
 } from "src/redux/chatSlice";
@@ -15,6 +16,8 @@ import {
   updateMessages,
 } from "src/redux/massagesSlice";
 import { selectMemberMap } from "src/redux/memberRootSlice";
+import { IChatGroup } from "src/types";
+import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
 
 export function ChatSocketContainer() {
   const { workspace: workspaceSlug } = useParams();
@@ -24,12 +27,14 @@ export function ChatSocketContainer() {
 
   const connectedWorkspaceRef = useRef<string | null>(null);
   const memberMap = useAppSelector(selectMemberMap);
+  const groupsDetails: any = useAppSelector(selectAllGroups);
   const shouldShowOSNotification = (
     senderId: string,
     currentUserId: string
   ) => {
     console.log("shouldShowOSNotification called", senderId, currentUserId);
-    if (senderId === currentUserId) return false;
+    // if (senderId) return false;
+    // if (senderId === currentUserId) return false;
     if (document.hasFocus()) return false;
     return true;
   };
@@ -96,12 +101,29 @@ export function ChatSocketContainer() {
               parsed.intent !== "delete" &&
               shouldShowOSNotification(parsed.sender, currentUser.id)
             ) {
-              const senderDetails = memberMap[parsed.sender];
-              console.log("showOSNotification parsed", parsed);
+              const senderDetails = Array.from(groupsDetails).find(
+                (group: any) => group.id === parsed.group
+              ) as IChatGroup;
+              const Attachments = parsed?.attachments?.length > 0;
+              const isGroupChat = senderDetails.members.length > 1;
+              const sanitizedMessageContent = cleanedHTML(parsed.content);
+                  const plainTextContent = extractPlainText(sanitizedMessageContent);
+                  const Messages = plainTextContent.length > 100 ? plainTextContent.slice(0, 100) + "..." : plainTextContent;
+              console.log("showOSNotification parsed", parsed, senderDetails);
+              console.log("showOSNotification Attachments", Attachments);
+              console.log(
+                "groupsDetails",
+                Array.from(groupsDetails).find(
+                  (group: any) => group.id === parsed.group
+                )
+              );
               window.api?.showNotification({
-                title: parsed.content ? senderDetails?.first_name + senderDetails?.last_name  : `New message`,
-                body:
-                  parsed.content || parsed.content || "New message received",
+                title: parsed.group ? senderDetails.group_name : `New message`,
+                body: isGroupChat
+                  ? `${memberMap[parsed.sender]?.display_name} : ${
+                      Attachments ? "Sent a file" : Messages
+                    }`
+                  : Messages
               });
             }
             if (parsed.intent === "replaceTempData") {
