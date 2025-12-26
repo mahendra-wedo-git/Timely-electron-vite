@@ -36,6 +36,12 @@ const Sidebar: React.FC = () => {
       path: `/${workspace}/dashboard`,
     },
     {
+      id: "chat",
+      label: "Chat",
+      icon: <MessageSquare />,
+      path: `/${workspace}/chat`,
+    },
+    {
       id: "worklog",
       label: "Work Log",
       icon: <ClipboardList />,
@@ -47,24 +53,18 @@ const Sidebar: React.FC = () => {
       icon: <FolderKanban />,
       path: `/${workspace}/projects`,
     },
-    {
-      id: "chat",
-      label: "Chat",
-      icon: <MessageSquare />,
-      path: `/${workspace}/chat`,
-    },
-    {
-      id: "analytics",
-      label: "Analytics",
-      icon: <ChartBar />,
-      path: `/${workspace}/analytics`,
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <Settings />,
-      path: `/${workspace}/settings`,
-    },
+    // {
+    //   id: "analytics",
+    //   label: "Analytics",
+    //   icon: <ChartBar />,
+    //   path: `/${workspace}/analytics`,
+    // },
+    // {
+    //   id: "settings",
+    //   label: "Settings",
+    //   icon: <Settings />,
+    //   path: `/${workspace}/settings`,
+    // },
   ];
 
   const handleNavClick = (path: string): void => {

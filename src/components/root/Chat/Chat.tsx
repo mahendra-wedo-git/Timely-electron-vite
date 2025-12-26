@@ -332,41 +332,7 @@ export const ChatWindow = () => {
                 }}
               />
 
-              <button className="text-gray-400 hover:text-gray-600">
-                {/* <FilePicker
-                currentChatId={currentChatId || ""}
-                  onUploaded={(files) => {
-                    if (!currentChatId || !workspaceSlug) return;
-                    console.log("Selected files:", files);
-
-                    // Example: upload via FormData
-                    // const formData = new FormData();
-                    // files.forEach((f) => formData.append("files", f.file));
-                    setUploadedAssetIds((prev) => {
-                      !currentChatId &&
-                        console.log("currentChatId", currentChatId);
-                      const updated = new Set(prev);
-                      for (const file of files) {
-                        updated.add(file.id);
-                      }
-                      dispatch(
-                        uploadEditorAsset({
-                          blockId: currentChatId,
-                          workspaceSlug,
-                          data: {
-                            entity_identifier: currentChatId,
-                            entity_type: "CHAT_ATTACHMENT",
-                          },
-                          file: files[0].file,
-                        })
-                      );
-                      return updated;
-                    });
-                    // setMessage("<p></p>");
-                    setFiles((prev) => [...prev, ...files]);
-                    // fetch("/api/upload", { method: "POST", body: formData });
-                  }}
-                /> */}
+              <button className="text-gray-400 hover:text-gray-600">                
 
                 <FilePicker
                   currentChatId={currentChatId || ""}
