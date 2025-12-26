@@ -312,8 +312,8 @@ export const ChatUserList: FC<IChatUser> = ({
                 {/* )} */}
               </div>
               <div className="ml-3 flex-1 text-left">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-gray-900">
+                <div className="flex items-center justify-between py-1">
+                  <h3 className="text-sm capitalize font-semibold text-gray-900">
                     {chat.group_name}
                   </h3>
 

@@ -39,7 +39,7 @@ export function GroupActivityItem({ log }: Props) {
   };
 
   return (
-    <div className="flex items-center gap-3 py-1 pl-[8px] text-xs text-custom-text-400">
+    <div className="flex items-center gap-3 py-1 pl-[8px] text-sm text-custom-text-400">
       <div className="text-custom-text-400">{actionIcons[log.action as GroupActionType]}</div>
 
       {/* inject bold text safely */}

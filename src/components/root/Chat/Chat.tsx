@@ -241,7 +241,7 @@ export const ChatWindow = () => {
       {selectedChat ? (
         <div className="flex-1 flex flex-col">
           {/* Chat Header */}
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className=" border-b border-gray-200 px-10 py-4 flex items-center justify-between">
             <div className="flex items-center">
               <div className="relative">
                 <div className="w-8 h-8 rounded-full capitalize bg-indigo-600 flex items-center justify-center text-white font-semibold">
@@ -252,7 +252,7 @@ export const ChatWindow = () => {
                 {/* )} */}
               </div>
               <div className="ml-3">
-                <h2 className="text-sm capitalize font-semibold text-gray-900">
+                <h2 className="text-md capitalize font-semibold text-gray-900">
                   {selectedChat.group_name}
                 </h2>
               </div>
@@ -308,55 +308,8 @@ export const ChatWindow = () => {
           )}
 
           {/* Message Input */}
-          <div className="bg-white border-t border-gray-200 p-4">
-            <div className="flex items-center space-x-2">
-              <button className="text-gray-400 hover:text-gray-600">
-                <Smile className="h-5 w-5" />
-              </button>
-              <ImagePicker
-                onUploaded={(images) => {
-                  if (!currentChatId || !workspaceSlug) return;
-                  images.forEach((img) => {
-                    dispatch(
-                      uploadEditorAsset({
-                        blockId: currentChatId,
-                        workspaceSlug,
-                        data: {
-                          entity_identifier: currentChatId,
-                          entity_type: "CHAT_ATTACHMENT",
-                        },
-                        file: img.file,
-                      })
-                    );
-                  });
-                }}
-              />
-
-              <button className="text-gray-400 hover:text-gray-600">                
-
-                <FilePicker
-                  currentChatId={currentChatId || ""}
-                  workspaceSlug={workspaceSlug || ""}
-                  onUploaded={(files) => {
-                    if (!currentChatId || !workspaceSlug) return;
-                    console.log("Selected files:", files);
-
-                    setUploadedAssetIds((prev) => {
-                      const updated = new Set(prev);
-                      for (const file of files) {
-                        updated.add(file.id);
-                      }
-                      return updated;
-                    });
-
-                    setFiles((prev) => [...prev, ...files]);
-                  }}
-                />
-                {/* <Paperclip className="h-5 w-5" /> */}
-              </button>
-              {/* <button className="text-gray-400 hover:text-gray-600">
-                <Plus className="h-5 w-5" />
-              </button> */}
+          <div className=" border-gray-200 p-6 px-[150px]">
+            <div className="flex border border-gray-200 rounded-lg items-center space-x-2 p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               {files.length > 0 && (
                 <div className="flex flex-wrap gap-3 mt-2">
                   {files.map((file) => (
@@ -398,9 +351,51 @@ export const ChatWindow = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-4 py-2 bg-transparent rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-transparent"
+              />
+              <button className="text-gray-400 hover:text-gray-600">
+                <Smile className="h-5 w-5" />
+              </button>
+              <ImagePicker
+                onUploaded={(images) => {
+                  if (!currentChatId || !workspaceSlug) return;
+                  images.forEach((img) => {
+                    dispatch(
+                      uploadEditorAsset({
+                        blockId: currentChatId,
+                        workspaceSlug,
+                        data: {
+                          entity_identifier: currentChatId,
+                          entity_type: "CHAT_ATTACHMENT",
+                        },
+                        file: img.file,
+                      })
+                    );
+                  });
+                }}
               />
 
+              <button className="text-gray-400 hover:text-gray-600">
+                <FilePicker
+                  currentChatId={currentChatId || ""}
+                  workspaceSlug={workspaceSlug || ""}
+                  onUploaded={(files) => {
+                    if (!currentChatId || !workspaceSlug) return;
+                    console.log("Selected files:", files);
+
+                    setUploadedAssetIds((prev) => {
+                      const updated = new Set(prev);
+                      for (const file of files) {
+                        updated.add(file.id);
+                      }
+                      return updated;
+                    });
+
+                    setFiles((prev) => [...prev, ...files]);
+                  }}
+                />
+                {/* <Paperclip className="h-5 w-5" /> */}
+              </button>
               <button
                 onClick={handleSendMessage}
                 className="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition"

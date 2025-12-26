@@ -43,7 +43,9 @@ export const MessageArea: FC<{
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
   // console.log("groupedMessages >>>", groupedMessages);
-  const [expandedMessages, setExpandedMessages] = useState<Record<string, boolean>>({});
+  const [expandedMessages, setExpandedMessages] = useState<
+    Record<string, boolean>
+  >({});
   const Mention: FC<MentionProps> = ({ entityIdentifier, entityName }) => {
     return <span className="text-indigo-600">@{entityName}</span>;
   };
@@ -57,7 +59,7 @@ export const MessageArea: FC<{
           className={`px-4 py-2 rounded-2xl w-100 italic flex ${
             isCurrentUser
               ? "bg-indigo-600 text-white justify-end"
-              : "bg-gray-100 text-gray-900 justify-start"
+              : "bg-gray-600 text-gray-900 justify-start"
           }`}
         >
           <p className="text-xs">This message was deleted</p>
@@ -66,7 +68,7 @@ export const MessageArea: FC<{
     </div>
   );
 
-   const renderMessageContent = (content: string, msgId: string) => {
+  const renderMessageContent = (content: string, msgId: string) => {
     const sanitizedMessageContent = cleanedHTML(content);
     const plainTextContent = extractPlainText(sanitizedMessageContent);
     const MAX_LENGTH = 800;
@@ -98,7 +100,7 @@ export const MessageArea: FC<{
     return plainTextContent;
   };
   return (
-    <div className="flex-1 overflow-y-auto py-6 px-6 space-y-4">
+    <div className="flex-1 overflow-y-auto py-6 px-[150px] space-y-6">
       {Object.entries(groupedMessages).map(([date, messages]) => {
         return messages.map((msg, index) => {
           const userDetail = memberMap[msg?.sender];
@@ -134,10 +136,14 @@ export const MessageArea: FC<{
               )}
 
               <div
-                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                className={`group flex items-center ${
+                  isCurrentUser ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
-                  className={`flex ${isCurrentUser ? "flex-row-reverse" : "flex-row"} items-start max-w-xl`}
+                  className={`flex items-start gap-2 ${
+                    isCurrentUser ? "flex-row-reverse" : "flex-row"
+                  }`}
                 >
                   {!isCurrentUser && (
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
@@ -149,54 +155,51 @@ export const MessageArea: FC<{
                     </div>
                   )}
 
-                  <div className={`${isCurrentUser ? "mr-2" : "ml-2"}`}>
+                  <div
+                    className={`${isCurrentUser ? "mr-2" : "ml-2"} flex flex-col`}
+                  >
                     {!isCurrentUser && (
                       <p className="text-xs font-semibold text-gray-900 mb-1">
                         {userDetail?.first_name && userDetail?.last_name
                           ? `${userDetail.first_name} ${userDetail.last_name}`
                           : userDetail?.display_name}
-                        {/* {msg.sender} */}
                       </p>
                     )}
 
-                    {isCurrentUser ? (
-                      <div className="flex items-center space-x-2 justify-end">
-                        <div>
-                          <Trash
-                            size={15}
-                            className="text-red-400 cursor-pointer justify-end"
-                            onClick={() => deleteMassages(msg)}
-                          />
-                        </div>
-                        <div>
-                          <Forward
-                            size={15}
-                            onClick={() => handleForward(msg)}
-                            className="text-gray-400 cursor-pointer justify-end"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2 justify-start">
-                        <div>
-                          <Forward
-                            size={15}
-                            onClick={() => handleForward(msg)}
-                            className="text-gray-400 cursor-pointer justify-start"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Render message content with mentions replaced */}
                     <div
-                      className={`text-xs mt-1 py-2 px-3 rounded-md  ${
-                        isCurrentUser
-                          ? "bg-indigo-600 text-white"
-                          : "bg-gray-100 text-gray-900"
+                      className={`flex items-end gap-2 ${
+                        isCurrentUser ? "flex-row-reverse" : "flex-row"
                       }`}
                     >
-                      <p className="text-xs ">
+                      <div
+                        className={`relative text-xs py-2 px-3 rounded-md ${isCurrentUser ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}
+                      >
+                        <div
+                          className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-bg-indigo-600 rounded-md px-5 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${isCurrentUser ? "right-0 translate-x-0" : "left-0 translate-x-0"}`}
+                        >
+                          <button className="bg-white border rounded-full p-1">
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleForward(msg)}
+                            className="bg-white border rounded-full p-1"
+                          >
+                            <Forward
+                              size={15}
+                              onClick={() => handleForward(msg)}
+                              className="text-gray-400 cursor-pointer justify-start"
+                            />
+                          </button>
+                          {isCurrentUser && (
+                            <button
+                              onClick={() => deleteMassages(msg)}
+                              className="bg-white border rounded-full p-1"
+                            >
+                              <Trash size={14} className="text-red-500" />
+                            </button>
+                          )}
+                        </div>
+
                         {forwardedFrom && forwardedFromUser ? (
                           <ForwardedMessage
                             forwardedFromUser={forwardedFromUser}
@@ -205,26 +208,29 @@ export const MessageArea: FC<{
                           />
                         ) : (
                           // renderMessageContent(msg.content)
-                          renderMessageContent(msg.content, msg.id)
+                          <p className="text-sm">
+                            {renderMessageContent(msg.content, msg.id)}
+                          </p>
                         )}
-                      </p>
-                    </div>
+                      </div>
 
-                    <div
-                      className={`flex items-center mt-1 space-x-1 ${isCurrentUser ? "justify-end" : ""}`}
-                    >
-                      <span className="text-xs text-gray-500">
+                      <span className="text-[11px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                         {new Date(msg.created_at).toLocaleTimeString("en-US", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
                       </span>
-                      {isCurrentUser &&
-                        (msg.isRead ? (
-                          <CheckCheckIcon className="h-3 w-3 text-indigo-600" />
-                        ) : (
-                          <Check className="h-3 w-3 text-gray-400" />
-                        ))}
+
+                      {/* Read Status */}
+                      {isCurrentUser && (
+                        <span className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          {msg.isRead ? (
+                            <CheckCheckIcon className="h-3 w-3 text-indigo-600" />
+                          ) : (
+                            <Check className="h-3 w-3 text-gray-400" />
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

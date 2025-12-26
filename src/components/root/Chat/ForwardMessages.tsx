@@ -25,7 +25,7 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
     : content.slice(0, MAX_LENGTH) + "...";
 
   return (
-    <div className={` ${currentUser?.data?.id === forwardedFromUser.id ? "bg-indigo-600 text-white" : "bg-gray-100"}  w-full max-w-md rounded-2xl font-sans`}>
+    <div className={` ${currentUser?.data?.id === forwardedFromUser.id ? "bg-indigo-600 text-white" : " text-white"}  w-full max-w-md rounded-2xl font-sans`}>
       <div className="bg-white text-gray-800 rounded-lg p-3 mb-1 flex flex-col gap-1 relative border-l-4 border-gray-300">
         <div className="flex items-center gap-2 text-xs text-gray-500">
           {/* <span className="text-lg">↪</span> */}
