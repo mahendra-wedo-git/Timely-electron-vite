@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import {
   removeGroup,
+  reorderGroupsBasedOnSender,
   selectAllGroups,
   updateGroup,
   updateGroupMembers,
@@ -107,8 +108,13 @@ export function ChatSocketContainer() {
               const Attachments = parsed?.attachments?.length > 0;
               const isGroupChat = senderDetails.members.length > 1;
               const sanitizedMessageContent = cleanedHTML(parsed.content);
-                  const plainTextContent = extractPlainText(sanitizedMessageContent);
-                  const Messages = plainTextContent.length > 100 ? plainTextContent.slice(0, 100) + "..." : plainTextContent;
+              const plainTextContent = extractPlainText(
+                sanitizedMessageContent
+              );
+              const Messages =
+                plainTextContent.length > 100
+                  ? plainTextContent.slice(0, 100) + "..."
+                  : plainTextContent;
               console.log("showOSNotification parsed", parsed, senderDetails);
               console.log("showOSNotification Attachments", Attachments);
               console.log(
@@ -123,7 +129,7 @@ export function ChatSocketContainer() {
                   ? `${memberMap[parsed.sender]?.display_name} : ${
                       Attachments ? "Sent a file" : Messages
                     }`
-                  : Messages
+                  : Messages,
               });
             }
             if (parsed.intent === "replaceTempData") {
@@ -143,9 +149,23 @@ export function ChatSocketContainer() {
                   messageId: parsed.message_id,
                 })
               );
+            } else if (parsed.intent === "update") {
+              dispatch(
+                updateMessages({
+                  workspaceSlug,
+                  chatId,
+                  msgs: [parsed],
+                  message_id: parsed.message_id || parsed.id,
+                  currentUserId: currentUser.id,
+                })
+              );
             } else {
               const chatId = parsed.id || parsed.group;
-              console.log("groupedMessages update socket called", parsed);
+              console.log(
+                "groupedMessages update socket called",
+                parsed,
+                chatId
+              );
               dispatch(
                 updateMessages({
                   workspaceSlug,
@@ -155,13 +175,9 @@ export function ChatSocketContainer() {
                 })
               );
             }
-            // dispatch(replaceTemporaryMessage({
-            //   workspaceSlug,
-            //   message: parsed.content,
-            //   chatId: parsed.group,
-            //   messageId: parsed.clientMessageId
-            // }));
-            // dispatch({ type: "chat/addMessages", payload: parsed });
+            if (parsed.intent !== "update") {
+              dispatch(reorderGroupsBasedOnSender(chatId));
+            }
             break;
           case "reaction":
             dispatch({ type: "chat/updateReaction", payload: parsed });

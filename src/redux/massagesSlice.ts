@@ -177,23 +177,21 @@ const messageSlice = createSlice({
         state.chatMessages[workspaceSlug][chatId] = [];
       }
 
-      // msgs.forEach((msg) => {
-      //   const existingIndex = state.chatMessages[workspaceSlug][chatId].findIndex((m) => m.id === message_id);
-      //   // const existingIndex = state.chatMessages[workspaceSlug][chatId].findIndex((m) =>(msg.id && m.id === msg.id) ||(msg.clientMessageId && m.clientMessageId === msg.clientMessageId));
-      //   if (existingIndex !== -1) {
-      //     state.chatMessages[workspaceSlug][chatId][existingIndex] = msg;
-      //   } else {
-      //     state.chatMessages[workspaceSlug][chatId].push(msg);
-      //   }
-      // });
+    
 
       msgs.forEach((msg) => {
-  const existingIndex =
-    state.chatMessages[workspaceSlug][chatId].findIndex(
-      (m) =>
-        (msg.id && m.id === msg.id) ||
-        (msg.clientMessageId && m.clientMessageId === msg.clientMessageId)
-    );
+  // const existingIndex =
+  //   state.chatMessages[workspaceSlug][chatId].findIndex(
+  //     (m) =>
+  //       (msg.id && m.id === msg.id) ||
+  //       (msg.clientMessageId && m.clientMessageId === msg.clientMessageId)
+  //   );
+    const existingIndex = state.chatMessages[workspaceSlug][chatId].findIndex(
+  (m) =>
+    (message_id && m.id === message_id) ||
+    (msg.id && m.id === msg.id) ||
+    (msg.clientMessageId && m.clientMessageId === msg.clientMessageId)
+);
 
   if (existingIndex !== -1) {
     state.chatMessages[workspaceSlug][chatId][existingIndex] = msg;

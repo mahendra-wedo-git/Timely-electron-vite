@@ -147,9 +147,9 @@ export const SidebarChat: FC<ISidebarChat> = ({
   // }, [workspaceSlug]);
 
   //   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const pinnedGroups = groups && groups.filter((group: any) => group.is_pinned);
+  const pinnedGroups = groups && groups.filter((group: any) => group?.is_pinned);
   const recentGroups =
-    groups && groups.filter((group: any) => !group.is_pinned);
+    groups && groups.filter((group: any) => group && !group?.is_pinned);
   return (
     <>
       <div className="w-[25%] bg-white border-r border-gray-200 flex flex-col">

@@ -5,6 +5,7 @@ import { selectAllGroups } from "src/redux/chatSlice";
 import { useChatSocket } from "src/context/chatContext";
 import { formatDateLabel } from "src/utils";
 import { selectMemberMap } from "src/redux/memberRootSlice";
+import { PreviewMessage } from "../PreviewMessage";
 
 interface User {
   id: string;
@@ -194,7 +195,7 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
             />
 
             {/* Original Message Preview */}
-            <div className="border-l-4 border-gray-300 bg-gray-50 rounded-lg p-4">
+            {/* <div className="border-l-4 border-gray-300 bg-gray-50 rounded-lg p-4">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                   {senderDetails?.display_name?.charAt(0).toUpperCase()}
@@ -215,7 +216,11 @@ export const ForwardMessageModal: FC<ForwardMessageModalProps> = ({
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
+            <PreviewMessage
+              memberMap={memberMap}
+              selectedMassage={selectedMassage}
+            />
           </div>
         </div>
 

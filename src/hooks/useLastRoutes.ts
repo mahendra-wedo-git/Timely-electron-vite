@@ -6,11 +6,11 @@ export const useLastRoute = () => {
 
   useEffect(() => {
     const keys = Object.keys(localStorage);
-    console.log("useLastRoute 111 keys", keys);
+    // console.log("useLastRoute 111 keys", keys);
     // if (!window.api) return;
     if (!location.pathname) return;
     localStorage.setItem("lastRoute", location.pathname);
-    console.log("useLastRoute 222", location);
+    // console.log("useLastRoute 222", location);
 
     if (!window.api) {
       console.warn("Electron API not available yet");

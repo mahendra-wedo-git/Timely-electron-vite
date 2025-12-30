@@ -46,6 +46,8 @@ import { ImagePicker } from "./Image-picker";
 import { uploadEditorAsset } from "src/redux/assetsSlice";
 import { getFileIcon } from "src/assets/attachment";
 import { FileService } from "src/services/file.service";
+import { PreviewMessage } from "./PreviewMessage";
+import { selectMemberMap } from "src/redux/memberRootSlice";
 
 interface Message {
   id: string;
@@ -78,6 +80,8 @@ export const ChatWindow = () => {
   const [openForwardModal, setOpenForwardModal] = useState(false);
   const [openMemberModal, setOpenMemberModal] = useState(false);
   const [selectedMassage, setSelectedMassage] = useState();
+  const [replyTo , setReplyTo ] = useState<IChatGroup | null>(null);
+  const memberDetails = useAppSelector(selectMemberMap);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
     new Set()
   );
@@ -145,6 +149,7 @@ export const ChatWindow = () => {
   }, [groupedMessages]);
 
   const deleteMassages = (message: any) => {
+    console.log("deleteMassages called",message)
     chatSocketService?.send({
       type: "message",
       intent: "delete",
@@ -153,6 +158,14 @@ export const ChatWindow = () => {
       sender: message.sender,
     });
   };
+   const inputRef = useRef(null);
+
+  // Focus the input box when replyTo has a value
+  useEffect(() => {
+    if (replyTo && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [replyTo]);
 
   const handleRemove = async (id: string, fileName: string) => {
     try {
@@ -189,7 +202,14 @@ export const ChatWindow = () => {
     setSelectedMassage(message);
     setOpenForwardModal(true);
   };
-
+  const handleReplay = (message: any) => {
+    console.log("handleReplay called", message);
+    if (message) {
+      setSelectedMassage(message);
+    }
+    setReplyTo (message ? message : null as IChatGroup | null);
+  };
+  console.log("groupedMessagesgroupedMessages", groupedMessages);
   const handleSendMessage = () => {
     // if (!message || !selectedChat || !chatSocketService) return;
     if (!selectedChat || !chatSocketService) return;
@@ -198,17 +218,37 @@ export const ChatWindow = () => {
       type: "message",
       content: message || "<p></p>",
       group_id: currentChatId,
-      reply_to: receiverUserId,
+      reply_to: replyTo  ? selectedMassage?.id : null,
       clientMessageId: uuidv4(),
       attachments: Array.from(uploadedAssetIds),
       browser_data: browserData,
     });
     //order chat list by sender
+    setReplyTo(null);
     dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
     setMessage("");
     setUploadedAssetIds(new Set());
     setFiles([]);
   };
+
+  const handleEditMessage = (message: any, newContent: string) => {
+  console.log("handleEditMessage called", message, newContent);
+  
+  if (!chatSocketService || !newContent.trim()) return;
+
+  chatSocketService.send({
+    type: "message",
+    content: newContent,
+    message_id: message.id,
+    intent: "update", // or "edit" depending on your backend API
+    group_id: currentChatId,
+    is_forwarded: message.is_forwarded,
+    reply_to: replyTo?.id,
+    attachments: uploadedAssetIds,
+    browser_data: browserData,
+  });
+  // dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
+};
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -275,9 +315,9 @@ export const ChatWindow = () => {
                   <User className="h-5 w-5" />
                 </button>
               )}
-              <button className="text-gray-400 hover:text-gray-600">
+              {/* <button className="text-gray-400 hover:text-gray-600">
                 <Search className="h-5 w-5" />
-              </button>
+              </button> */}
               <button className="text-gray-400 hover:text-gray-600">
                 <MoreVertical className="h-5 w-5" />
               </button>
@@ -304,58 +344,87 @@ export const ChatWindow = () => {
               messagesEndRef={messagesEndRef}
               deleteMassages={deleteMassages}
               handleForward={handleForward}
+              handleReplay={handleReplay}
+               handleEditMessage={handleEditMessage} 
             />
           )}
 
           {/* Message Input */}
-          <div className=" border-gray-200 p-6 px-[150px]">
-            <div className="flex border border-gray-200 rounded-lg items-center space-x-2 p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              {files.length > 0 && (
-                <div className="flex flex-wrap gap-3 mt-2">
+          <div className=" p-4 bg-transparent">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white border shadow-xl border-gray-100 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
+                {/* Preview Message - Shows when replying */}
+                {replyTo  && selectedMassage && (
+                  <div className="px-4 pt-3 pb-2 ">
+                    <PreviewMessage
+                      memberMap={memberDetails}
+                      selectedMassage={selectedMassage}
+                      handleReplay={handleReplay}
+                      reply
+                    />
+                  </div>
+                )}
+
+                {/* File Attachments Preview */}
+          {files.length > 0 && (
+            <div className="px-4 pt-3 pb-2 border-b border-gray-200">
+              <div className="flex flex-wrap gap-2">
                   {files.map((file) => (
                     <div
                       key={file.id}
-                      className="group relative flex items-center justify-between px-3 py-2 bg-custom-background-90  w-[230px] border border-gray-200 rounded-lg transition-all duration-200"
+                      className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg transition-all duration-200 hover:bg-gray-100 group"
                     >
                       <div className="flex items-center gap-2">
                         <div className="flex-shrink-0">
                           {getFileIcon(file.name.split(".").pop() || "")}
                         </div>
-
                         <div className="flex flex-col min-w-0">
                           <span className="truncate max-w-[150px] text-xs font-medium text-gray-700">
                             {file.name}
                           </span>
                         </div>
                       </div>
-
                       <button
                         type="button"
                         onClick={() => handleRemove(file.id, file.name)}
-                        className="text-red-500 hover:text-red-700 transition"
+                        className="ml-2 text-gray-400 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
                       >
                         <X size={14} />
                       </button>
                     </div>
                   ))}
                 </div>
+                </div>
               )}
+
+          {/* Input Area */}
+          <div className="flex items-center gap-2 px-4 py-1">
+            {/* Text Input */}
               <input
+                ref={inputRef}
                 type="text"
-                // placeholder="Type a message..."
                 placeholder={
                   uploadedAssetIds.size
-                    ? `${uploadedAssetIds.size} files are Sending...`
+                    ? `${uploadedAssetIds.size} files are sending...`
                     : "Type a message..."
                 }
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 px-4 py-2 bg-transparent rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-transparent"
-              />
-              <button className="text-gray-400 hover:text-gray-600">
+                className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+            />
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1">
+              {/* Emoji Button */}
+              <button
+                type="button"
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
+              >
                 <Smile className="h-5 w-5" />
               </button>
+              {/* Image Picker */}
+            <div className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
               <ImagePicker
                 onUploaded={(images) => {
                   if (!currentChatId || !workspaceSlug) return;
@@ -374,15 +443,15 @@ export const ChatWindow = () => {
                   });
                 }}
               />
+            </div>
 
-              <button className="text-gray-400 hover:text-gray-600">
+              {/* File Picker */}
+              <div className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
                 <FilePicker
                   currentChatId={currentChatId || ""}
                   workspaceSlug={workspaceSlug || ""}
                   onUploaded={(files) => {
                     if (!currentChatId || !workspaceSlug) return;
-                    console.log("Selected files:", files);
-
                     setUploadedAssetIds((prev) => {
                       const updated = new Set(prev);
                       for (const file of files) {
@@ -390,18 +459,22 @@ export const ChatWindow = () => {
                       }
                       return updated;
                     });
-
                     setFiles((prev) => [...prev, ...files]);
                   }}
                 />
-                {/* <Paperclip className="h-5 w-5" /> */}
-              </button>
+              </div>
+
+              {/* Send Button */}
               <button
                 onClick={handleSendMessage}
-                className="bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition"
+                disabled={!message.trim() && uploadedAssetIds.size === 0}
+                className="ml-1 p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="h-5 w-5" />
+                <Send className="h-4 w-4" />
               </button>
+            </div>
+          </div>
+        </div>
             </div>
           </div>
         </div>

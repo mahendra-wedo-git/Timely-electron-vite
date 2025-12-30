@@ -4,10 +4,14 @@ import {
   CheckCheckIcon,
   Delete,
   DeleteIcon,
+  Edit2,
   Forward,
   Move3DIcon,
   Recycle,
+  ReplyAllIcon,
+  ReplyIcon,
   Trash,
+  X,
 } from "lucide-react";
 import { formatDateLabel } from "src/utils";
 import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
@@ -34,14 +38,21 @@ export const MessageArea: FC<{
   messagesEndRef?: any;
   deleteMassages?: any;
   handleForward?: any;
+  handleReplay?: any;
+  handleEditMessage?: any
 }> = ({
   groupedMessages,
   currentUserId,
   messagesEndRef,
   deleteMassages,
   handleForward,
+  handleReplay,
+  handleEditMessage
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
+
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState("");
   // console.log("groupedMessages >>>", groupedMessages);
   const [expandedMessages, setExpandedMessages] = useState<
     Record<string, boolean>
@@ -49,7 +60,34 @@ export const MessageArea: FC<{
   const Mention: FC<MentionProps> = ({ entityIdentifier, entityName }) => {
     return <span className="text-indigo-600">@{entityName}</span>;
   };
+const handleStartEdit = (msg: any) => {
+  console.log("handleStartEdithandleStartEdit",msg)
+    setEditingMessageId(msg?.id);
+    const sanitizedContent = cleanedHTML(msg.content);
+    const plainText = extractPlainText(sanitizedContent);
+    setEditedContent(plainText);
+  };
 
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditedContent("");
+  };
+    const handleKeyPress = (e: React.KeyboardEvent, msg: any) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSaveEdit(msg);
+    } else if (e.key === "Escape") {
+      handleCancelEdit();
+    }
+  };
+
+  const handleSaveEdit = (msg: any) => {
+    if (editedContent.trim() && handleEditMessage) {
+      handleEditMessage(msg, editedContent);
+      setEditingMessageId(null);
+      setEditedContent("");
+    }
+  };
   const DeletedMessage = ({ isCurrentUser }: { isCurrentUser: boolean }) => (
     <div>
       <div
@@ -59,7 +97,7 @@ export const MessageArea: FC<{
           className={`px-4 py-2 rounded-2xl w-100 italic flex ${
             isCurrentUser
               ? "bg-indigo-600 text-white justify-end"
-              : "bg-gray-600 text-gray-900 justify-start"
+              : "bg-gray-200 text-gray-900 justify-start"
           }`}
         >
           <p className="text-xs">This message was deleted</p>
@@ -100,12 +138,16 @@ export const MessageArea: FC<{
     return plainTextContent;
   };
   return (
-    <div className="flex-1 overflow-y-auto py-6 px-[150px] space-y-6">
+    <div className="flex-1 overflow-y-auto py-6 px-[150px] space-y-5">
       {Object.entries(groupedMessages).map(([date, messages]) => {
         return messages.map((msg, index) => {
+          if(!msg.id) return null
           const userDetail = memberMap[msg?.sender];
           const forwardedFrom = msg?.forwarded_from || null;
+          const replayedFrom = msg?.reply_to || null;
           const forwardedFromUser = memberMap[forwardedFrom?.sender];
+          const replayedFromUser = memberMap[msg?.reply_to?.sender];
+           const isEditing = editingMessageId === msg.id;
           const showTimestamp =
             index === 0 ||
             new Date(messages[index - 1].created_at).toDateString() !==
@@ -146,7 +188,7 @@ export const MessageArea: FC<{
                   }`}
                 >
                   {!isCurrentUser && (
-                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs  flex-shrink-0">
                       {userDetail?.first_name && userDetail?.last_name
                         ? userDetail.first_name.charAt(0) +
                           userDetail.last_name.charAt(0)
@@ -165,52 +207,114 @@ export const MessageArea: FC<{
                           : userDetail?.display_name}
                       </p>
                     )}
-
+                    {msg?.updated_at &&
+                  new Date(msg.updated_at).getTime() - new Date(msg.created_at).getTime() > 2000 && (
+                    <span
+                      className={`text-[10px] text-custom-text-300 ${isCurrentUser ? "text-end" : "text-start"}`}
+                    >
+                      Edited
+                    </span>
+                  )}
+                  {isEditing ? (
+                    <div className="bg-white border-2 border-gray-200 rounded-md shadow-lg p-3 min-w-[300px]">
+                        <div className="mb-2">
+                          <p className="text-xs text-gray-500 mb-2">Edit message</p>
+                          <input
+                            type="text"
+                            value={editedContent}
+                            onChange={(e) => setEditedContent(e.target.value)}
+                            onKeyDown={(e) => handleKeyPress(e, msg)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={handleCancelEdit}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleSaveEdit(msg)}
+                            disabled={!editedContent.trim()}
+                            className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                  ) : (
                     <div
                       className={`flex items-end gap-2 ${
                         isCurrentUser ? "flex-row-reverse" : "flex-row"
                       }`}
                     >
                       <div
-                        className={`relative text-xs py-2 px-3 rounded-md ${isCurrentUser ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-900"}`}
+                        className={`relative text-xs py-2 px-3 rounded-xl  ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-900 rounded-tl-none"}`}
                       >
                         <div
-                          className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-bg-indigo-600 rounded-md px-5 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${isCurrentUser ? "right-0 translate-x-0" : "left-0 translate-x-0"}`}
+                          className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-white rounded-md px-5 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${isCurrentUser ? "right-0 translate-x-0" : "left-0 translate-x-0"}`}
                         >
-                          <button className="bg-white border rounded-full p-1">
+                          {/* <button className="bg-white border rounded-full p-1">
                             ✏️
-                          </button>
-                          <button
-                            onClick={() => handleForward(msg)}
-                            className="bg-white border rounded-full p-1"
-                          >
-                            <Forward
-                              size={15}
-                              onClick={() => handleForward(msg)}
-                              className="text-gray-400 cursor-pointer justify-start"
-                            />
-                          </button>
+                          </button> */}
                           {isCurrentUser && (
+                              <button
+                                onClick={() => handleStartEdit(msg)}
+                                className="p-1.5 border hover:bg-gray-100 rounded-full transition"
+                                title="Edit message"
+                              >
+                                <Edit2 size={14} className="text-gray-600" />
+                              </button>
+                            )}
                             <button
-                              onClick={() => deleteMassages(msg)}
-                              className="bg-white border rounded-full p-1"
+                              onClick={() => handleForward(msg)}
+                              className="p-1.5 border hover:bg-gray-100 rounded-full transition"
+                              title="Forward message"
                             >
-                              <Trash size={14} className="text-red-500" />
+                              <Forward size={14} className="text-gray-600" />
                             </button>
-                          )}
+                            {isCurrentUser && (
+                              <button
+                                onClick={() => deleteMassages(msg)}
+                                className="p-1.5 border hover:bg-red-50 rounded-full transition"
+                                title="Delete message"
+                              >
+                                <Trash size={14} className="text-red-500" />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleReplay(msg)}
+                              className="p-1.5 border hover:bg-gray-100 rounded-full transition"
+                              title="Reply to message"
+                            >
+                              <ReplyIcon size={14} className="text-gray-600" />
+                            </button>
                         </div>
 
-                        {forwardedFrom && forwardedFromUser ? (
+                        {msg.forwarded_from && forwardedFromUser ? (
                           <ForwardedMessage
                             forwardedFromUser={forwardedFromUser}
                             forwardedFrom={forwardedFrom}
                             msg={msg}
                           />
-                        ) : (
-                          // renderMessageContent(msg.content)
+                        ) : 
+                        msg?.reply_to && replayedFromUser? (
+                          <ForwardedMessage
+                            forwardedFromUser={replayedFromUser}
+                            forwardedFrom={replayedFrom}
+                            msg={msg}
+                            reply={true}
+                          />
+                        ):
+                        (
+                          <>
+                          {/* // renderMessageContent(msg.content) */}
                           <p className="text-sm">
                             {renderMessageContent(msg.content, msg.id)}
                           </p>
+                          </>
                         )}
                       </div>
 
@@ -232,6 +336,7 @@ export const MessageArea: FC<{
                         </span>
                       )}
                     </div>
+                    )}
                   </div>
                 </div>
               </div>

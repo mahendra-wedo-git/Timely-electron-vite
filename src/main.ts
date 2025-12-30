@@ -108,7 +108,7 @@ app.on("window-all-closed", () => {
 
 ipcMain.handle("notification:show", (_, payload) => {
   const supported = Notification.isSupported();
-  console.log("🔔 Notification supported:", supported);
+  // console.log("🔔 Notification supported:", supported);
 
   if (!supported) {
     console.log("Notifications not supported on this system");
