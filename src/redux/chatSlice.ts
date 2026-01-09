@@ -325,51 +325,51 @@ export const getGroup = (state: RootState, groupId: string) => {
 };
 
 // Selector to get the search results
-export const selectFilteredGroupIds = (state: RootState) => {
-  const searchQuery = state.chat.searchQuery.trim().toLowerCase();
-  const workspaceSlug = state.chat.selectedGroupId;
+// export const selectFilteredGroupIds = (state: RootState) => {
+//   const searchQuery = state.chat.searchQuery.trim().toLowerCase();
+//   const workspaceSlug = state.chat.selectedGroupId;
 
-  if (!workspaceSlug) return [];
+//   if (!workspaceSlug) return [];
 
-  const groups = Object.values(state.chat.entities).filter((group) => {
-    return group?.workspace_slug === workspaceSlug;
-  });
+//   const groups = Object.values(state.chat.entities).filter((group) => {
+//     return group?.workspace_slug === workspaceSlug;
+//   });
 
-  let ids = groups.map((group) => group?.id).filter((id) => !!id);
+//   let ids = groups.map((group) => group?.id).filter((id) => !!id);
 
-  if (searchQuery) {
-    ids = ids.filter((groupId) =>
-      groups.find((group) =>
-        group?.group_name.toLowerCase().includes(searchQuery)
-      )
-    );
-  }
+//   if (searchQuery) {
+//     ids = ids.filter((groupId) =>
+//       groups.find((group) =>
+//         group?.group_name.toLowerCase().includes(searchQuery)
+//       )
+//     );
+//   }
 
-  // Sort by pinned status, last message timestamp, and unread count
-  return ids.sort((a, b) => {
-    const groupA = state.chat.entities[a];
-    const groupB = state.chat.entities[b];
+//   // Sort by pinned status, last message timestamp, and unread count
+//   return ids.sort((a, b) => {
+//     const groupA = state.chat.entities[a];
+//     const groupB = state.chat.entities[b];
 
-    const pinnedA = groupA?.is_pinned ? 1 : 0;
-    const pinnedB = groupB?.is_pinned ? 1 : 0;
+//     const pinnedA = groupA?.is_pinned ? 1 : 0;
+//     const pinnedB = groupB?.is_pinned ? 1 : 0;
 
-    if (pinnedA !== pinnedB) {
-      return pinnedB - pinnedA;
-    }
+//     if (pinnedA !== pinnedB) {
+//       return pinnedB - pinnedA;
+//     }
 
-    const messageA = groupA?.last_message;
-    const messageB = groupB?.last_message;
+//     const messageA = groupA?.last_message;
+//     const messageB = groupB?.last_message;
 
-    const timestampA = messageA ? new Date(messageA.created_at).getTime() : 0;
-    const timestampB = messageB ? new Date(messageB.created_at).getTime() : 0;
+//     const timestampA = messageA ? new Date(messageA.created_at).getTime() : 0;
+//     const timestampB = messageB ? new Date(messageB.created_at).getTime() : 0;
 
-    if (timestampA !== timestampB) {
-      return timestampB - timestampA;
-    }
+//     if (timestampA !== timestampB) {
+//       return timestampB - timestampA;
+//     }
 
-    const unreadA = state.chat.unreadCounts[a] ?? 0;
-    const unreadB = state.chat.unreadCounts[b] ?? 0;
+//     const unreadA = state.chat.unreadCounts[a] ?? 0;
+//     const unreadB = state.chat.unreadCounts[b] ?? 0;
 
-    return unreadB - unreadA;
-  });
-};
+//     return unreadB - unreadA;
+//   });
+// };

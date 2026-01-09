@@ -56,7 +56,9 @@ const createWindow = (): void => {
 
   const devServer = MAIN_WINDOW_VITE_DEV_SERVER_URL;
   const viteName = MAIN_WINDOW_VITE_NAME ?? "main_window";
-
+console.log("devServer",devServer)
+console.log("isDev",isDev)
+console.log("viteName",viteName)
   if (isDev && devServer) {
     mainWindow.loadURL(devServer);
     // Open DevTools in development
@@ -84,31 +86,8 @@ app.on("window-all-closed", () => {
   }
 });
 
-// ipcMain.handle("notification:show", (_, payload) => {
-//   console.log("🔔 Notification.isSupported()",payload);
-
-//   // On Windows this should be true now
-//   if (!Notification.isSupported()) return;
-
-//   const notification = new Notification({
-//     title: payload.title || "Notification",
-//     body: payload.body || "",
-//     silent: false,
-//   });
-
-//   notification.on("click", () => {
-//     if (mainWindow) {
-//       mainWindow.show();
-//       mainWindow.focus();
-//     }
-//   });
-
-//   notification.show();
-// });
-
 ipcMain.handle("notification:show", (_, payload) => {
   const supported = Notification.isSupported();
-  // console.log("🔔 Notification supported:", supported);
 
   if (!supported) {
     console.log("Notifications not supported on this system");

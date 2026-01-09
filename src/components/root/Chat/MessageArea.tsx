@@ -2,13 +2,8 @@ import { FC, useState } from "react";
 import {
   Check,
   CheckCheckIcon,
-  Delete,
-  DeleteIcon,
   Edit2,
   Forward,
-  Move3DIcon,
-  Recycle,
-  ReplyAllIcon,
   ReplyIcon,
   Trash,
   X,
@@ -17,12 +12,9 @@ import { formatDateLabel } from "src/utils";
 import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
 import { useAppSelector } from "src/redux/hooks";
 import { selectMemberMap } from "src/redux/memberRootSlice";
-import { IoRemove } from "react-icons/io5";
-import { BiTab } from "react-icons/bi";
-import { IChatMessage } from "src/types";
 import { ForwardedMessage } from "./ForwardMessages";
 import { GroupActivityItem } from "./group-activity";
-import { renderAttachments } from "./file-details";
+import { RenderAttachments } from "./file-details";
 
 interface MentionProps {
   entityIdentifier: string;
@@ -61,7 +53,6 @@ export const MessageArea: FC<{
     return <span className="text-indigo-600">@{entityName}</span>;
   };
 const handleStartEdit = (msg: any) => {
-  console.log("handleStartEdithandleStartEdit",msg)
     setEditingMessageId(msg?.id);
     const sanitizedContent = cleanedHTML(msg.content);
     const plainText = extractPlainText(sanitizedContent);
@@ -162,7 +153,7 @@ const handleStartEdit = (msg: any) => {
           }
 
           if (msg?.attachment?.length > 0) {
-            return renderAttachments(msg, isCurrentUser);
+            return <RenderAttachments key={msg.id} message={msg} isCurrentUser={isCurrentUser} />;
           }
           return (
             <div key={msg.id}>
@@ -251,7 +242,7 @@ const handleStartEdit = (msg: any) => {
                       }`}
                     >
                       <div
-                        className={`relative text-xs py-2 px-3 rounded-xl  ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-900 rounded-tl-none"}`}
+                        className={`relative text-xs py-2 px-3 rounded-xl w-[50%] ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-900 rounded-tl-none"}`}
                       >
                         <div
                           className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-white rounded-md px-5 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${isCurrentUser ? "right-0 translate-x-0" : "left-0 translate-x-0"}`}

@@ -1,28 +1,28 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
-  Search,
-  Plus,
   Users,
   MoreVertical,
-  Paperclip,
   Send,
   Smile,
-  File,
-  Check,
-  CheckCheck,
-  Image,
-  ChartArea,
   ChartBar,
   User,
   X,
+  Volume2,
+  VolumeX,
+  Pin,
+  Image,
 } from "lucide-react";
 import { SidebarChat } from "./ChatUserList";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import { v4 as uuidv4 } from "uuid";
 import {
+  muteGroup,
+  pinGroup,
   reorderGroupsBasedOnSender,
   selectCurrentSelectedGroup,
   selectGroupById,
+  unmuteGroup,
+  unpinGroup,
 } from "src/redux/chatSlice";
 import { IChatGroup, IChatGroupLog, IChatMessage } from "src/types";
 import { useParams } from "react-router-dom";
@@ -35,6 +35,7 @@ import {
   fetchLastMessage,
   selectChatGroupLogDetails,
   selectChatMessageDetails,
+  selectGroupAttachments,
   selectLastMessage,
 } from "src/redux/massagesSlice";
 import { groupChatData } from "src/utils";
@@ -45,33 +46,11 @@ import { FileData, FilePicker } from "./file-picker";
 import { ImagePicker } from "./Image-picker";
 import { uploadEditorAsset } from "src/redux/assetsSlice";
 import { getFileIcon } from "src/assets/attachment";
-import { FileService } from "src/services/file.service";
 import { PreviewMessage } from "./PreviewMessage";
 import { selectMemberMap } from "src/redux/memberRootSlice";
+import { QuickActionsMenu } from "./QuickActionsMenu";
+import { ChatFileList } from "./FilesListing";
 
-interface Message {
-  id: string;
-  senderId: string;
-  senderName?: string;
-  content: string;
-  timestamp: Date;
-  type: "text" | "image" | "file";
-  fileUrl?: string;
-  fileName?: string;
-  fileSize?: string;
-  isRead?: boolean;
-}
-
-interface Chat {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount?: number;
-  isOnline?: boolean;
-}
-const fileService = new FileService();
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
     undefined
@@ -80,34 +59,45 @@ export const ChatWindow = () => {
   const [openForwardModal, setOpenForwardModal] = useState(false);
   const [openMemberModal, setOpenMemberModal] = useState(false);
   const [selectedMassage, setSelectedMassage] = useState();
-  const [replyTo , setReplyTo ] = useState<IChatGroup | null>(null);
+  const [replyTo, setReplyTo] = useState<IChatGroup | null>(null);
   const memberDetails = useAppSelector(selectMemberMap);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
     new Set()
+  );
+  const [openQuickActions, setOpenQuickActions] = useState<boolean | null>(
+    false
   );
   const [files, setFiles] = useState<FileData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const { workspace: workspaceSlug } = useParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatSocketService = useChatSocket();
-  // const currentGroup = currentSelectedGroup[workspaceSlug as string];
   const selectedChatGroup = useAppSelector((state) =>
     selectedChat?.id !== undefined
       ? selectGroupById(state, selectedChat.id)
       : undefined
   );
-  // const allMessages = getchatMessageDetails(currentChatId || "") || [];
-
-  // const currentChatId = currentChat?.groupId;
 
   const currentSelectedGroup = useAppSelector((state) =>
     workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : undefined
+  );
+  const [activeTab, setActiveTab] = useState<"chat" | "files" | "photos">(
+    "chat"
   );
   const currentChatId = currentSelectedGroup?.groupId;
   const receiverUserId = currentSelectedGroup?.userId;
   const groupName = currentSelectedGroup?.group_name;
 
   const lastMessage = useAppSelector((state) => selectLastMessage(state));
+
+  const chatFiles = useAppSelector(selectGroupAttachments);
+  const currentChatFiles =
+    chatFiles[workspaceSlug || ""]?.[currentChatId || ""] || [];
+
+  console.log(
+    "chatFileschatFileschatFiles",
+    chatFiles[workspaceSlug || ""]?.[currentChatId || ""]
+  );
 
   const dispatch = useAppDispatch();
   const messages_ = useAppSelector(
@@ -129,10 +119,16 @@ export const ChatWindow = () => {
         fetchChatMessage({
           workspaceSlug,
           chatId: currentChatId,
+          params: { cursor: null as string | null },
+        })
+      );
+      dispatch(
+        fetchGroupAttachments({
+          workspaceSlug,
+          chatId: currentChatId,
           params: { cursor: null },
         })
       );
-      // dispatch(fetchGroupAttachments({ workspaceSlug, chatId: currentChatId , params: { cursor: null }}));
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
     }
     if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
@@ -149,7 +145,7 @@ export const ChatWindow = () => {
   }, [groupedMessages]);
 
   const deleteMassages = (message: any) => {
-    console.log("deleteMassages called",message)
+    console.log("deleteMassages called", message);
     chatSocketService?.send({
       type: "message",
       intent: "delete",
@@ -158,7 +154,7 @@ export const ChatWindow = () => {
       sender: message.sender,
     });
   };
-   const inputRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Focus the input box when replyTo has a value
   useEffect(() => {
@@ -207,9 +203,9 @@ export const ChatWindow = () => {
     if (message) {
       setSelectedMassage(message);
     }
-    setReplyTo (message ? message : null as IChatGroup | null);
+    setReplyTo(message ? message : (null as IChatGroup | null));
   };
-  console.log("groupedMessagesgroupedMessages", groupedMessages);
+  // console.log("groupedMessagesgroupedMessages", groupedMessages);
   const handleSendMessage = () => {
     // if (!message || !selectedChat || !chatSocketService) return;
     if (!selectedChat || !chatSocketService) return;
@@ -218,7 +214,7 @@ export const ChatWindow = () => {
       type: "message",
       content: message || "<p></p>",
       group_id: currentChatId,
-      reply_to: replyTo  ? selectedMassage?.id : null,
+      reply_to: replyTo ? selectedMassage?.id : null,
       clientMessageId: uuidv4(),
       attachments: Array.from(uploadedAssetIds),
       browser_data: browserData,
@@ -232,23 +228,22 @@ export const ChatWindow = () => {
   };
 
   const handleEditMessage = (message: any, newContent: string) => {
-  console.log("handleEditMessage called", message, newContent);
-  
-  if (!chatSocketService || !newContent.trim()) return;
 
-  chatSocketService.send({
-    type: "message",
-    content: newContent,
-    message_id: message.id,
-    intent: "update", // or "edit" depending on your backend API
-    group_id: currentChatId,
-    is_forwarded: message.is_forwarded,
-    reply_to: replyTo?.id,
-    attachments: uploadedAssetIds,
-    browser_data: browserData,
-  });
-  // dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
-};
+    if (!chatSocketService || !newContent.trim()) return;
+
+    chatSocketService.send({
+      type: "message",
+      content: newContent,
+      message_id: message.id,
+      intent: "update", // or "edit" depending on your backend API
+      group_id: currentChatId,
+      is_forwarded: message.is_forwarded,
+      reply_to: replyTo?.id,
+      attachments: uploadedAssetIds,
+      browser_data: browserData,
+    });
+    // dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -267,6 +262,62 @@ export const ChatWindow = () => {
     language: navigator.language,
     screen: { width: window.screen.width, height: window.screen.height },
   };
+  const getChatActions = (chat: IChatGroup) => [
+    {
+      id: "pin",
+      label: chat.is_pinned ? "Unpin" : "Pin",
+      icon: <Pin className="w-3 h-3" />,
+      onClick: async () => {
+        if (!workspaceSlug) return;
+
+        if (chat.is_pinned && chat.pin_id) {
+          await dispatch(
+            unpinGroup({
+              workspaceSlug,
+              pinId: chat.pin_id,
+              groupId: chat.id,
+            })
+          );
+        } else {
+          await dispatch(
+            pinGroup({
+              workspaceSlug,
+              data: { group: chat.id },
+            })
+          );
+        }
+      },
+    },
+    {
+      id: "mute",
+      label: chat.is_mute ? "Unmute" : "Mute",
+      icon: chat.is_mute ? (
+        <Volume2 className="w-3 h-3" />
+      ) : (
+        <VolumeX className="w-3 h-3" />
+      ),
+      onClick: async () => {
+        if (!workspaceSlug) return;
+
+        if (chat.is_mute && chat.mute_id) {
+          await dispatch(
+            unmuteGroup({
+              workspaceSlug,
+              muteId: chat.mute_id,
+              groupId: chat.id,
+            })
+          );
+        } else {
+          await dispatch(
+            muteGroup({
+              workspaceSlug,
+              data: { group: chat.id },
+            })
+          );
+        }
+      },
+    },
+  ];
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -297,14 +348,24 @@ export const ChatWindow = () => {
                 </h2>
               </div>
             </div>
+            {/* chat heder actions */}
             <div className="flex items-center space-x-4">
-              <button className="text-gray-600 hover:text-gray-900 font-medium text-xs">
+              <button
+                className={`text-gray-600 hover:text-gray-900  text-xs ${activeTab === "chat" ? "underline font-medium" : ""}`}
+                onClick={() => setActiveTab("chat")}
+              >
                 Chat
               </button>
-              <button className="text-gray-500 hover:text-gray-700 text-xs">
+              <button
+                className={`text-gray-500 hover:text-gray-700 text-xs ${activeTab === "files" ? "underline font-medium" : ""}`}
+                onClick={() => setActiveTab("files")}
+              >
                 Files
               </button>
-              <button className="text-gray-500 hover:text-gray-700 text-xs">
+              <button
+                className={`text-gray-500 hover:text-gray-700 text-xs ${activeTab === "photos" ? "underline font-medium" : ""}`}
+                onClick={() => setActiveTab("photos")}
+              >
                 Photos
               </button>
               {selectedChatGroup && !selectedChatGroup?.is_private && (
@@ -315,10 +376,10 @@ export const ChatWindow = () => {
                   <User className="h-5 w-5" />
                 </button>
               )}
-              {/* <button className="text-gray-400 hover:text-gray-600">
-                <Search className="h-5 w-5" />
-              </button> */}
-              <button className="text-gray-400 hover:text-gray-600">
+              <button
+                onClick={() => setOpenQuickActions(true)}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <MoreVertical className="h-5 w-5" />
               </button>
             </div>
@@ -338,6 +399,27 @@ export const ChatWindow = () => {
               </div>
             </div>
           ) : (
+            <>
+              {activeTab === "files" ? (
+                <ChatFileList
+                  files={currentChatFiles}
+                  memberDetails={memberDetails}
+                />
+              ) : activeTab === "photos" ? (
+                <div className="w-full h-full flex justify-center items-center">
+                  <div className="text-center justify-center align-items-center">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+                      <Image className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    <h3 className="text-md text-gray-900 mb-2">
+                      No photos yet
+                    </h3>
+                    <p className="text-gray-500">
+                      Photos shared in this chat will appear here.
+                    </p>
+              </div>
+            </div>
+          ) : (
             <MessageArea
               groupedMessages={groupedMessages}
               currentUserId={receiverUserId || ""}
@@ -347,14 +429,17 @@ export const ChatWindow = () => {
               handleReplay={handleReplay}
                handleEditMessage={handleEditMessage} 
             />
+              )}
+            </>
           )}
 
           {/* Message Input */}
+        {activeTab === "chat" && (
           <div className=" p-4 bg-transparent">
             <div className="max-w-4xl mx-auto">
               <div className="bg-white border shadow-xl border-gray-100 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
                 {/* Preview Message - Shows when replying */}
-                {replyTo  && selectedMassage && (
+                {replyTo && selectedMassage && (
                   <div className="px-4 pt-3 pb-2 ">
                     <PreviewMessage
                       memberMap={memberDetails}
@@ -467,7 +552,9 @@ export const ChatWindow = () => {
               {/* Send Button */}
               <button
                 onClick={handleSendMessage}
-                disabled={!message.trim() && uploadedAssetIds.size === 0}
+                disabled={
+                  !message.trim() && uploadedAssetIds.size === 0
+                }
                 className="ml-1 p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
@@ -477,6 +564,7 @@ export const ChatWindow = () => {
         </div>
             </div>
           </div>
+      )}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -507,6 +595,14 @@ export const ChatWindow = () => {
           setIsOpen={setOpenMemberModal}
           chatId={currentChatId}
           setSelectedChat={setSelectedChat}
+        />
+      )}
+      {/* Quick Actions Menu */}
+      {openQuickActions && selectedChat && (
+        <QuickActionsMenu
+          actions={getChatActions(selectedChat)}
+          onClose={() => setOpenQuickActions(null)}
+          position={{ top: 60, right: 20 }}
         />
       )}
     </div>
