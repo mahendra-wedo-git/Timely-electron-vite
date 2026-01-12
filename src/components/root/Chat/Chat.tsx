@@ -50,7 +50,7 @@ import { PreviewMessage } from "./PreviewMessage";
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { ChatFileList } from "./FilesListing";
-import TiptapChatEditor from "./Editor";
+import { TiptapChatEditor } from "./Editor";
 
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
@@ -114,6 +114,7 @@ export const ChatWindow = () => {
   ) as IChatGroupLog[];
 
   const groupedMessages = groupChatData(messages_, logs);
+  console.log("groupedMessages",groupedMessages)
   useEffect(() => {
     if (workspaceSlug && currentChatId) {
       dispatch(
@@ -218,6 +219,32 @@ export const ChatWindow = () => {
       reply_to: replyTo ? selectedMassage?.id : null,
       clientMessageId: uuidv4(),
       attachments: Array.from(uploadedAssetIds),
+      browser_data: browserData,
+    });
+    //order chat list by sender
+    setReplyTo(null);
+    dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
+    setMessage("");
+    setUploadedAssetIds(new Set());
+    setFiles([]);
+  };
+
+  const handleSendMessageEditor = (
+    content: string,
+    files: File[],
+    replyTo: any,
+    editor: any
+  ) => {
+    console.log("handleSendMessageEditor", content);
+    if (!selectedChat || !chatSocketService) return;
+
+    chatSocketService.send({
+      type: "message",
+      content: content || "<p></p>",
+      group_id: currentChatId,
+      reply_to: replyTo ? selectedMassage?.id : null,
+      clientMessageId: uuidv4(),
+      attachments: Array.from(files),
       browser_data: browserData,
     });
     //order chat list by sender
@@ -436,17 +463,38 @@ export const ChatWindow = () => {
           {/* Message Input */}
           {activeTab === "chat" && (
             <TiptapChatEditor
-              replyTo={replyTo || null}
-              onSendMessage={handleSendMessage}
-              onCancelReply={() => setReplyTo(null)}
-              files={files}
-              setFiles={setFiles}
-              uploadedAssetIds={uploadedAssetIds}
-              setUploadedAssetIds={setUploadedAssetIds}
               currentChatId={currentChatId}
               workspaceSlug={workspaceSlug}
-              selectedMassage={selectedMassage}
+              replyTo={replyTo}
+              selectedMessage={selectedMassage}
               memberDetails={memberDetails}
+              onSendMessage={(content, attachments) => {
+                if (!chatSocketService) return;
+
+                chatSocketService.send({
+                  type: "message",
+                  content: content,
+                  group_id: currentChatId,
+                  reply_to: replyTo ? selectedMassage?.id : null,
+                  clientMessageId: uuidv4(),
+                  attachments: attachments,
+                  browser_data: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    screen: {
+                      width: window.screen.width,
+                      height: window.screen.height,
+                    },
+                  },
+                });
+
+                // Reorder chat list by sender
+                dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
+              }}
+              onCancelReply={() => setReplyTo(null)}
+              placeholder="Type a message..."
+              maxHeight={300}
             />
           )}
         </div>

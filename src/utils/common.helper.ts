@@ -1,5 +1,5 @@
-// import { clsx, type ClassValue } from "clsx";
-// import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 // interface ImportMetaEnv {
 //   VITE_APP_API_URL?: string;
 //   // Add other environment variables as needed
@@ -49,7 +49,7 @@ export const debounce = (func: any, wait: number, immediate: boolean = false) =>
   };
 };
 
-// export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 export const convertRemToPixel = (rem: number): number => rem * 0.9 * 16;
 

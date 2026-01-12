@@ -1,74 +1,115 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, FC } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { Send, Smile, X, Plus, ImagePlus } from "lucide-react";
+import { useAppDispatch } from "src/redux/hooks";
+import { uploadEditorAsset } from "src/redux/assetsSlice";
+import { getFileIcon } from "src/assets/attachment";
+import { Node } from '@tiptap/core';
+
+// Types
+export type FileData = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  file?: File;
+};
+
+interface EmojiPickerProps {
+  onEmojiSelect: (emoji: string) => void;
+  onClose: () => void;
+}
+
+interface FilePreviewProps {
+  files: FileData[];
+  onRemove: (fileId: string) => void;
+}
+
+interface ReplyPreviewProps {
+  replyTo: any;
+  onClose: () => void;
+  memberDetails?: any;
+}
+
+interface TiptapChatEditorProps {
+  currentChatId?: string;
+  workspaceSlug?: string;
+  replyTo?: any;
+  selectedMessage?: any;
+  memberDetails?: any;
+  onSendMessage: (content: string, attachments: string[]) => void;
+  onCancelReply?: () => void;
+  placeholder?: string;
+  maxHeight?: number;
+}
+
+// Custom Image Component Extension
+const ImageComponent = Node.create({
+  name: 'imageComponent',
+  group: 'block',
+  atom: true,
+
+  addAttributes() {
+    return {
+      src: { default: null },
+      width: { default: '129px' },
+      height: { default: '129px' },
+      id: { default: null },
+      aspectratio: { default: '1' },
+    };
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'image-component',
+      },
+    ];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ['image-component', HTMLAttributes];
+  },
+
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement('div');
+      dom.style.display = 'inline-block';
+      dom.style.border = '2px solid #e5e7eb';
+      dom.style.borderRadius = '8px';
+      dom.style.padding = '8px';
+      dom.style.margin = '4px';
+      dom.style.width = node.attrs.width;
+      dom.style.height = node.attrs.height;
+      dom.style.backgroundColor = '#f9fafb';
+      
+      const icon = document.createElement('div');
+      icon.innerHTML = '🖼️';
+      icon.style.fontSize = '48px';
+      icon.style.display = 'flex';
+      icon.style.alignItems = 'center';
+      icon.style.justifyContent = 'center';
+      icon.style.height = '100%';
+      
+      dom.appendChild(icon);
+      return { dom };
+    };
+  },
+});
 
 // Emoji Picker Component
-const EmojiPicker = ({ onEmojiSelect, onClose }) => {
+const EmojiPicker: FC<EmojiPickerProps> = ({ onEmojiSelect, onClose }) => {
   const emojis = [
-    "😀",
-    "😃",
-    "😄",
-    "😁",
-    "😅",
-    "😂",
-    "🤣",
-    "😊",
-    "😇",
-    "🙂",
-    "😉",
-    "😌",
-    "😍",
-    "🥰",
-    "😘",
-    "😗",
-    "😙",
-    "😚",
-    "😋",
-    "😛",
-    "😝",
-    "😜",
-    "🤪",
-    "🤨",
-    "🧐",
-    "🤓",
-    "😎",
-    "🤩",
-    "🥳",
-    "😏",
-    "👍",
-    "👎",
-    "👌",
-    "✌️",
-    "🤞",
-    "🤟",
-    "🤘",
-    "🤙",
-    "👏",
-    "🙌",
-    "❤️",
-    "🧡",
-    "💛",
-    "💚",
-    "💙",
-    "💜",
-    "🖤",
-    "🤍",
-    "🤎",
-    "💔",
-    "🔥",
-    "✨",
-    "💫",
-    "⭐",
-    "🌟",
-    "💯",
-    "✅",
-    "❌",
-    "⚡",
-    "💥",
+    "😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂",
+    "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛",
+    "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏",
+    "👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👏", "🙌",
+    "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔",
+    "🔥", "✨", "💫", "⭐", "🌟", "💯", "✅", "❌", "⚡", "💥"
   ];
 
   return (
@@ -93,24 +134,7 @@ const EmojiPicker = ({ onEmojiSelect, onClose }) => {
 };
 
 // File Preview Component
-const FilePreview = ({ files, onRemove }) => {
-  const getFileIcon = (extension) => {
-    const iconMap = {
-      pdf: "📄",
-      doc: "📝",
-      docx: "📝",
-      xls: "📊",
-      xlsx: "📊",
-      ppt: "📊",
-      pptx: "📊",
-      zip: "📦",
-      rar: "📦",
-      txt: "📃",
-      default: "📎",
-    };
-    return iconMap[extension] || iconMap.default;
-  };
-
+const FilePreview: FC<FilePreviewProps> = ({ files, onRemove }) => {
   if (files.length === 0) return null;
 
   return (
@@ -122,9 +146,9 @@ const FilePreview = ({ files, onRemove }) => {
             className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg transition-all duration-200 hover:bg-gray-100 group"
           >
             <div className="flex items-center gap-2">
-              <span className="text-xl">
-                {getFileIcon(file.name.split(".").pop())}
-              </span>
+              <div className="flex-shrink-0">
+                {getFileIcon(file.name.split(".").pop() || "")}
+              </div>
               <div className="flex flex-col min-w-0">
                 <span className="truncate max-w-[150px] text-xs font-medium text-gray-700">
                   {file.name}
@@ -149,18 +173,34 @@ const FilePreview = ({ files, onRemove }) => {
 };
 
 // Reply Preview Component
-const ReplyPreview = ({ replyTo, onClose }) => {
+const ReplyPreview: FC<ReplyPreviewProps> = ({ 
+  replyTo, 
+  onClose,
+  memberDetails 
+}) => {
   if (!replyTo) return null;
+
+  const getMemberName = (senderId: string) => {
+    if (!memberDetails || !senderId) return "Unknown User";
+    const member = memberDetails[senderId];
+    return member?.display_name || member?.first_name || "Unknown User";
+  };
+
+  const stripHTML = (html: string) => {
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
 
   return (
     <div className="px-4 pt-3 pb-2 border-b border-gray-100">
       <div className="flex items-start justify-between bg-indigo-50 border-l-4 border-indigo-500 rounded p-3">
         <div className="flex-1">
           <div className="text-xs font-semibold text-indigo-700 mb-1">
-            Replying to {replyTo.sender}
+            Replying to {getMemberName(replyTo.sender)}
           </div>
           <div className="text-sm text-gray-600 line-clamp-2">
-            {replyTo.content}
+            {stripHTML(replyTo.content || "")}
           </div>
         </div>
         <button
@@ -176,12 +216,24 @@ const ReplyPreview = ({ replyTo, onClose }) => {
 };
 
 // Main Tiptap Chat Editor Component
-const TiptapChatEditor = () => {
-  const [files, setFiles] = useState([]);
+export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
+  currentChatId,
+  workspaceSlug,
+  replyTo,
+  selectedMessage,
+  memberDetails,
+  onSendMessage,
+  onCancelReply,
+  placeholder = "Type a message...",
+  maxHeight = 300,
+}) => {
+  const [files, setFiles] = useState<FileData[]>([]);
+  const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(new Set());
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [replyTo, setReplyTo] = useState(null);
-  const fileInputRef = useRef(null);
-  const imageInputRef = useRef(null);
+  const [imageAssetIds, setImageAssetIds] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const dispatch = useAppDispatch();
 
   const editor = useEditor({
     extensions: [
@@ -201,17 +253,11 @@ const TiptapChatEditor = () => {
         },
       }),
       Placeholder.configure({
-        placeholder:
-          files.length > 0
-            ? `${files.length} file(s) ready to send...`
-            : "Type a message...",
+        placeholder: files.length > 0 
+          ? `${files.length} file(s) ready to send...` 
+          : placeholder,
       }),
-      Image.configure({
-        inline: true,
-        HTMLAttributes: {
-          class: "max-w-full h-auto rounded-lg my-2",
-        },
-      }),
+      ImageComponent,
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -221,43 +267,135 @@ const TiptapChatEditor = () => {
     ],
     editorProps: {
       attributes: {
-        class:
-        //   "prose prose-sm max-w-none focus:outline-none min-h-[24px] max-h-[300px] overflow-y-auto text-sm text-gray-700 placeholder:text-gray-400",
-         "focus:outline-none min-h-[24px] max-h-[300px] overflow-y-auto text-sm text-gray-700 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        //    "prose prose-sm max-w-none focus:outline-none min-h-[24px] max-h-[300px] overflow-y-auto text-sm text-gray-700 placeholder:text-gray-400 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        class: `focus:outline-none min-h-[24px] max-h-[${maxHeight}px] overflow-y-auto text-sm text-gray-700 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`,
       },
     },
-    onUpdate: ({ editor }) => {
-      console.log("Editor content:", editor.getHTML());
-    },
+    content: '<p class="editor-paragraph-block break-all whitespace-pre-wrap"></p>',
   });
 
   // Handle file upload
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !currentChatId || !workspaceSlug) return;
+
     const selectedFiles = Array.from(e.target.files);
-    const newFiles = selectedFiles.map((file) => ({
-      id: Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      size: file.size,
-      file: file,
-    }));
-    setFiles((prev) => [...prev, ...newFiles]);
+    const MAX_FILE_SIZE_MB = 5;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+    const validFiles: FileData[] = [];
+
+    for (const file of selectedFiles) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        alert(`"${file.name}" is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`);
+        continue;
+      }
+
+      const tempId = crypto.randomUUID();
+      validFiles.push({
+        id: tempId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        file,
+      });
+    }
+
+    if (validFiles.length === 0) return;
+
+    // Upload files
+    const uploadPromises = validFiles.map(async (fileData) => {
+      try {
+        const result = await dispatch(
+          uploadEditorAsset({
+            blockId: currentChatId,
+            workspaceSlug,
+            data: {
+              entity_identifier: currentChatId,
+              entity_type: "CHAT_ATTACHMENT",
+            },
+            file: fileData.file!,
+          })
+        ).unwrap();
+
+        return {
+          ...fileData,
+          id: result.asset_id,
+        };
+      } catch (err) {
+        console.error(`Failed to upload file: ${fileData.name}`, err);
+        return null;
+      }
+    });
+
+    const uploadedFiles = (await Promise.all(uploadPromises)).filter(
+      Boolean
+    ) as FileData[];
+
+    setFiles((prev) => [...prev, ...uploadedFiles]);
+    setUploadedAssetIds((prev) => {
+      const updated = new Set(prev);
+      uploadedFiles.forEach((f) => updated.add(f.id));
+      return updated;
+    });
+
+    e.target.value = "";
   };
 
   // Handle image upload
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !currentChatId || !workspaceSlug || !editor) return;
+
     const selectedFiles = Array.from(e.target.files);
-    selectedFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        editor?.chain().focus().setImage({ src: e.target.result }).run();
-      };
-      reader.readAsDataURL(file);
-    });
+
+    for (const file of selectedFiles) {
+      try {
+        const result = await dispatch(
+          uploadEditorAsset({
+            blockId: currentChatId,
+            workspaceSlug,
+            data: {
+              entity_identifier: currentChatId,
+              entity_type: "CHAT_ATTACHMENT",
+            },
+            file,
+          })
+        ).unwrap();
+
+        const assetId = result.asset_id;
+        const componentId = crypto.randomUUID();
+
+        // Insert image-component instead of img tag
+        editor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'imageComponent',
+            attrs: {
+              src: assetId,
+              width: '129px',
+              height: '129px',
+              id: componentId,
+              aspectratio: '1',
+            },
+          })
+          .run();
+
+        // Track image asset IDs separately
+        setImageAssetIds((prev) => [...prev, assetId]);
+        setUploadedAssetIds((prev) => {
+          const updated = new Set(prev);
+          updated.add(assetId);
+          return updated;
+        });
+      } catch (err) {
+        console.error("Failed to upload image:", err);
+      }
+    }
+
+    e.target.value = "";
   };
 
   // Handle emoji selection
-  const handleEmojiSelect = (emoji) => {
+  const handleEmojiSelect = (emoji: string) => {
     editor?.chain().focus().insertContent(emoji).run();
   };
 
@@ -265,27 +403,35 @@ const TiptapChatEditor = () => {
   const handleSend = () => {
     if (!editor) return;
 
-    const content = editor.getHTML();
+    let content = editor.getHTML();
     const isEmpty = editor.isEmpty;
 
-    if (isEmpty && files.length === 0) return;
+    if (isEmpty && uploadedAssetIds.size === 0) return;
 
-    console.log("Sending message:", {
-      content,
-      files,
-      replyTo,
-    });
+    // Ensure proper paragraph structure matching web version
+    if (!content.includes('class="editor-paragraph-block')) {
+      content = content.replace(
+        /<p>/g,
+        '<p class="editor-paragraph-block break-all whitespace-pre-wrap">'
+      );
+    }
 
+    onSendMessage(content, Array.from(uploadedAssetIds));
+
+    // Reset state
     editor.commands.clearContent();
+    editor.commands.setContent('<p class="editor-paragraph-block break-all whitespace-pre-wrap"></p>');
     setFiles([]);
-    setReplyTo(null);
+    setUploadedAssetIds(new Set());
+    setImageAssetIds([]);
+    onCancelReply?.();
   };
 
   // Handle Enter key
   useEffect(() => {
     if (!editor) return;
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
         handleSend();
@@ -298,80 +444,70 @@ const TiptapChatEditor = () => {
     return () => {
       editorElement.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editor, files, replyTo]);
+  }, [editor, uploadedAssetIds, replyTo]);
+
+  // Focus editor when replyTo changes
+  useEffect(() => {
+    if (replyTo && editor) {
+      setTimeout(() => {
+        editor.commands.focus("end");
+      }, 100);
+    }
+  }, [replyTo, editor]);
 
   // Remove file
-  const handleRemoveFile = (fileId) => {
+  const handleRemoveFile = (fileId: string) => {
     setFiles((prev) => prev.filter((f) => f.id !== fileId));
+    setUploadedAssetIds((prev) => {
+      const updated = new Set(prev);
+      updated.delete(fileId);
+      return updated;
+    });
   };
 
   if (!editor) return null;
 
   return (
-    <div className="flex justify-center py-4 px-6 bg-gray-50">
-      <div className="w-full max-w-4xl">
-        {/* Demo: Reply Example Button */}
-        {/* <div className="mb-4">
-          <button
-            onClick={() =>
-              setReplyTo({
-                sender: "John Doe",
-                content: "Hey, how are you doing today?",
-              })
-            }
-            className="text-xs text-indigo-600 hover:text-indigo-700"
-          >
-            Demo: Set Reply Message
-          </button>
-        </div> */}
-
-        {/* Editor Container */}
-        <div className="bg-white rounded rounded-2xl  rounded shadow-sm border border-gray-200 focus-within:shadow-md transition-all overflow-hidden">
+    <div className="w-full p-4 bg-transparent">
+      <div className="w-full max-w-4xl mx-auto">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 focus-within:shadow-md transition-all overflow-hidden">
           {/* Reply Preview */}
           {replyTo && (
-            <div className="px-5 pt-3 pb-2">
-              <ReplyPreview
-                replyTo={replyTo}
-                onClose={() => setReplyTo(null)}
-              />
-            </div>
+            <ReplyPreview
+              replyTo={replyTo}
+              onClose={() => onCancelReply?.()}
+              memberDetails={memberDetails}
+            />
           )}
 
           {/* File Preview */}
-          {files.length > 0 && (
-            <div className="px-5 pt-3 pb-2">
-              <FilePreview files={files} onRemove={handleRemoveFile} />
-            </div>
-          )}
+          <FilePreview files={files} onRemove={handleRemoveFile} />
 
           {/* Input Container */}
-          {/* Input Container */}
-          {/* <div className="flex flex-col px-5 py-3 gap-3"> */}
           <div className="relative flex items-end gap-2 px-5 py-3">
             {/* Editor Content */}
-            {/* <div className="flex-1 min-w-0"> */}
             <div className="flex-1 m-auto break-words">
               <EditorContent editor={editor} />
             </div>
 
-            {/* Action Buttons (Bottom) */}
-            {/* <div className="flex items-center justify-end gap-4 flex-shrink-0"> */}
-            <div className="flex items-center gap-4 shrink-0 ml-2">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0 ml-2">
               {/* Emoji Picker */}
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <Smile className="h-5 w-5" />
-              </button>
-
-              {showEmojiPicker && (
-                <EmojiPicker
-                  onEmojiSelect={handleEmojiSelect}
-                  onClose={() => setShowEmojiPicker(false)}
-                />
-              )}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <Smile className="h-5 w-5" />
+                </button>
+                {showEmojiPicker && (
+                  <EmojiPicker
+                    onEmojiSelect={handleEmojiSelect}
+                    onClose={() => setShowEmojiPicker(false)}
+                  />
+                )}
+              </div>
 
               {/* Image Upload */}
               <button
@@ -402,6 +538,7 @@ const TiptapChatEditor = () => {
                 ref={fileInputRef}
                 type="file"
                 multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.json,.zip,.rar,.ppt,.pptx"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -409,7 +546,7 @@ const TiptapChatEditor = () => {
               {/* Send Button */}
               <button
                 onClick={handleSend}
-                disabled={editor.isEmpty && files.length === 0}
+                disabled={editor.isEmpty && uploadedAssetIds.size === 0}
                 className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />
@@ -421,5 +558,3 @@ const TiptapChatEditor = () => {
     </div>
   );
 };
-
-export default TiptapChatEditor;
