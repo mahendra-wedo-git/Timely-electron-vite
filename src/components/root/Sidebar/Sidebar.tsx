@@ -12,6 +12,11 @@ import {
 } from "lucide-react";
 import { AuthService } from "src/services";
 import { useAppContext } from "src/context";
+import { useAppDispatch } from "src/redux/hooks";
+import { useSelector } from "react-redux";
+import { selectMemberMap } from "src/redux/memberRootSlice";
+import { getFileIcon } from "src/assets/attachment";
+import { getFileURL } from "src/utils";
 
 interface NavItem {
   id: string;
@@ -27,6 +32,9 @@ const Sidebar: React.FC = () => {
   const { workspace } = useParams();
   console.log("workspace", workspace);
   const { currentUser } = useAppContext();
+  const dispatch = useAppDispatch();
+  const memberDetails = useSelector(selectMemberMap)[currentUser?.id || ""];
+  console.log("currentUser", currentUser, memberDetails);
   // const workspace = localStorage.getItem("workspace") || "wedo";
   const navItems: NavItem[] = [
     {
@@ -102,9 +110,17 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-footer">
         <div className="user-profile">
-          <div className="user-avatar">
-            {currentUser?.first_name?.split("")[0] || "M"}
-          </div>
+          {memberDetails?.avatar_url ? (
+            <img
+              src={getFileURL(memberDetails?.avatar_url)}
+              alt="User Avatar"
+              className="w-9 h-9 rounded-full object-cover"
+            />
+          ) : (
+            <div className="user-avatar">
+              {currentUser?.first_name?.split("")[0] || "M"}
+            </div>
+          )}
           <div className="user-info">
             <div className="user-name">
               {currentUser?.first_name || "user" + " " + currentUser?.last_name}

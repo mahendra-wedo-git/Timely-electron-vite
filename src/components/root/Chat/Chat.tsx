@@ -50,6 +50,7 @@ import { PreviewMessage } from "./PreviewMessage";
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { ChatFileList } from "./FilesListing";
+import TiptapChatEditor from "./Editor";
 
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
@@ -228,7 +229,6 @@ export const ChatWindow = () => {
   };
 
   const handleEditMessage = (message: any, newContent: string) => {
-
     if (!chatSocketService || !newContent.trim()) return;
 
     chatSocketService.send({
@@ -417,154 +417,38 @@ export const ChatWindow = () => {
                     <p className="text-gray-500">
                       Photos shared in this chat will appear here.
                     </p>
-              </div>
-            </div>
-          ) : (
-            <MessageArea
-              groupedMessages={groupedMessages}
-              currentUserId={receiverUserId || ""}
-              messagesEndRef={messagesEndRef}
-              deleteMassages={deleteMassages}
-              handleForward={handleForward}
-              handleReplay={handleReplay}
-               handleEditMessage={handleEditMessage} 
-            />
+                  </div>
+                </div>
+              ) : (
+                <MessageArea
+                  groupedMessages={groupedMessages}
+                  currentUserId={receiverUserId || ""}
+                  messagesEndRef={messagesEndRef}
+                  deleteMassages={deleteMassages}
+                  handleForward={handleForward}
+                  handleReplay={handleReplay}
+                  handleEditMessage={handleEditMessage}
+                />
               )}
             </>
           )}
 
           {/* Message Input */}
-        {activeTab === "chat" && (
-          <div className=" p-4 bg-transparent">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white border shadow-xl border-gray-100 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-transparent transition-all">
-                {/* Preview Message - Shows when replying */}
-                {replyTo && selectedMassage && (
-                  <div className="px-4 pt-3 pb-2 ">
-                    <PreviewMessage
-                      memberMap={memberDetails}
-                      selectedMassage={selectedMassage}
-                      handleReplay={handleReplay}
-                      reply
-                    />
-                  </div>
-                )}
-
-                {/* File Attachments Preview */}
-          {files.length > 0 && (
-            <div className="px-4 pt-3 pb-2 border-b border-gray-200">
-              <div className="flex flex-wrap gap-2">
-                  {files.map((file) => (
-                    <div
-                      key={file.id}
-                      className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg transition-all duration-200 hover:bg-gray-100 group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="flex-shrink-0">
-                          {getFileIcon(file.name.split(".").pop() || "")}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="truncate max-w-[150px] text-xs font-medium text-gray-700">
-                            {file.name}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(file.id, file.name)}
-                        className="ml-2 text-gray-400 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                </div>
-              )}
-
-          {/* Input Area */}
-          <div className="flex items-center gap-2 px-4 py-1">
-            {/* Text Input */}
-              <input
-                ref={inputRef}
-                type="text"
-                placeholder={
-                  uploadedAssetIds.size
-                    ? `${uploadedAssetIds.size} files are sending...`
-                    : "Type a message..."
-                }
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="flex-1 bg-transparent text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+          {activeTab === "chat" && (
+            <TiptapChatEditor
+              replyTo={replyTo || null}
+              onSendMessage={handleSendMessage}
+              onCancelReply={() => setReplyTo(null)}
+              files={files}
+              setFiles={setFiles}
+              uploadedAssetIds={uploadedAssetIds}
+              setUploadedAssetIds={setUploadedAssetIds}
+              currentChatId={currentChatId}
+              workspaceSlug={workspaceSlug}
+              selectedMassage={selectedMassage}
+              memberDetails={memberDetails}
             />
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-1">
-              {/* Emoji Button */}
-              <button
-                type="button"
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition"
-              >
-                <Smile className="h-5 w-5" />
-              </button>
-              {/* Image Picker */}
-            <div className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
-              <ImagePicker
-                onUploaded={(images) => {
-                  if (!currentChatId || !workspaceSlug) return;
-                  images.forEach((img) => {
-                    dispatch(
-                      uploadEditorAsset({
-                        blockId: currentChatId,
-                        workspaceSlug,
-                        data: {
-                          entity_identifier: currentChatId,
-                          entity_type: "CHAT_ATTACHMENT",
-                        },
-                        file: img.file,
-                      })
-                    );
-                  });
-                }}
-              />
-            </div>
-
-              {/* File Picker */}
-              <div className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
-                <FilePicker
-                  currentChatId={currentChatId || ""}
-                  workspaceSlug={workspaceSlug || ""}
-                  onUploaded={(files) => {
-                    if (!currentChatId || !workspaceSlug) return;
-                    setUploadedAssetIds((prev) => {
-                      const updated = new Set(prev);
-                      for (const file of files) {
-                        updated.add(file.id);
-                      }
-                      return updated;
-                    });
-                    setFiles((prev) => [...prev, ...files]);
-                  }}
-                />
-              </div>
-
-              {/* Send Button */}
-              <button
-                onClick={handleSendMessage}
-                disabled={
-                  !message.trim() && uploadedAssetIds.size === 0
-                }
-                className="ml-1 p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-            </div>
-          </div>
-      )}
+          )}
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center bg-gray-50">

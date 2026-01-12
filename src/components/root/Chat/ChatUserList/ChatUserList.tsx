@@ -11,7 +11,7 @@ import {
   unpinGroup,
 } from "src/redux/chatSlice";
 import { IChatGroup, IChatMessage } from "src/types";
-import { formatMessageDate } from "src/utils";
+import { formatMessageDate, getFileURL } from "src/utils";
 import { GroupChatAvatar } from "../group-chat-avatar";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import {
@@ -22,6 +22,7 @@ import {
 import { stripAndTruncateHTML } from "src/utils/string.helper";
 import {
   Archive,
+  MoreHorizontal,
   MoreVertical,
   Pin,
   Trash2,
@@ -29,6 +30,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { IoNotificationsOff } from "react-icons/io5";
+import { selectMemberMap } from "src/redux/memberRootSlice";
 
 interface IChatUser {
   setSelectedChat: (chat: IChatGroup) => void;
@@ -59,7 +61,6 @@ function QuickActionsMenu({ chat, onClose, position }: QuickActionsMenuProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-
   const handlePin = async () => {
     console.log("handlePin called", chat);
     if (!workspaceSlug) return;
@@ -85,23 +86,26 @@ function QuickActionsMenu({ chat, onClose, position }: QuickActionsMenuProps) {
     }
   };
 
-
-   const handleMute = async () => {
+  const handleMute = async () => {
     if (!workspaceSlug) return;
     if (chat?.is_mute && chat.mute_id) {
       // Unmute
-      await dispatch(unmuteGroup({
-        workspaceSlug,
-        muteId: chat.mute_id,
-        groupId: chat.id
-      }));
+      await dispatch(
+        unmuteGroup({
+          workspaceSlug,
+          muteId: chat.mute_id,
+          groupId: chat.id,
+        })
+      );
       onClose();
     } else {
       // Mute
-      await dispatch(muteGroup({
-        workspaceSlug,
-        data: { group: chat.id }
-      }));
+      await dispatch(
+        muteGroup({
+          workspaceSlug,
+          data: { group: chat.id },
+        })
+      );
       onClose();
     }
   };
@@ -181,7 +185,7 @@ export const ChatUserList: FC<IChatUser> = ({
   // const currentWorkspaceMembers =
   //   workspaceMemberMapFromStore[workspaceSlug || ""];
 
-  // const memberMap = useAppSelector(selectMemberMap);
+  const workspaceMembers = useAppSelector(selectMemberMap);
 
   useEffect(() => {
     if (currentUser) return;
@@ -272,6 +276,10 @@ export const ChatUserList: FC<IChatUser> = ({
   return (
     <div className="flex-1 overflow-y-auto">
       {filteredChats.map((chat: IChatGroup) => {
+        const memberInfo =
+          workspaceMembers && chat?.members
+            ? workspaceMembers[chat.members[0]]
+            : null;
         const lastMsg = lastMessage[chat.id] || null;
         const isMe = lastMsg?.sender === currentUser?.id;
         // const userDetails = memberMap[chat.members[0]];
@@ -290,24 +298,35 @@ export const ChatUserList: FC<IChatUser> = ({
               }`}
             >
               <div className="relative">
-                <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
-                  {chat.is_mute ? (
+                {chat.is_mute ? (
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
                     <IoNotificationsOff />
-                  ) : (
-                    <>
-                      {chat?.members?.length > 1 ? (
+                  </div>
+                ) : (
+                  <>
+                    {chat?.members?.length > 1 ? (
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
                         <GroupChatAvatar
                           size={30}
                           fill="#ffffff"
                           background="bg-indigo-600"
                         />
-                      ) : (
-                        chat.group_name.charAt(0)
-                      )}
-                    </>
-                  )}
-                </div>
-                {/* {chat.isOnline && ( */}
+                      </div>
+                    ) : !memberInfo?.avatar_url ? (
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
+                        {chat.group_name.charAt(0)}
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+                        <img
+                          src={getFileURL(memberInfo?.avatar_url)}
+                          alt={"User Avatar"}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 rounded-full border-2 border-white"></div>
                 {/* )} */}
               </div>
@@ -328,7 +347,7 @@ export const ChatUserList: FC<IChatUser> = ({
                       onClick={(e) => handleMenuClick(e, chat.id)}
                       className="p-1 hover:bg-gray-200 rounded transition"
                     >
-                      <MoreVertical className="h-2 w-2 text-gray-600" />
+                      <MoreHorizontal className="h-2 w-2 text-gray-600" />
                     </button>
                   ) : (
                     <>
