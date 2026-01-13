@@ -347,7 +347,7 @@ export const ChatUserList: FC<IChatUser> = ({
                       onClick={(e) => handleMenuClick(e, chat.id)}
                       className="p-1 hover:bg-gray-200 rounded transition"
                     >
-                      <MoreHorizontal className="h-2 w-2 text-gray-600" />
+                      <MoreHorizontal className="h-3 w-4 text-gray-600" />
                     </button>
                   ) : (
                     <>

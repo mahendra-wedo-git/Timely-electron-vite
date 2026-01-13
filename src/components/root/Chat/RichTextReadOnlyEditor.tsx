@@ -2,7 +2,6 @@ import { FC } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { ImageComponentReadOnly } from "./imageComponent";
-import Image from "@tiptap/extension-image";
 
 type RichTextReadOnlyEditorProps = {
   content: string; // HTML from editor.getHTML()
@@ -19,17 +18,11 @@ export const RichTextReadOnlyEditor: FC<RichTextReadOnlyEditorProps> = ({
     editable: false,
     extensions: [
       StarterKit,
-    //   Image.configure({
-    //     HTMLAttributes: {
-    //       class: "max-w-full h-auto rounded-lg my-2",
-    //     },
-    //     image: false,
-    //   }),
       ImageComponentReadOnly,
     ],
     editorProps: {
       attributes: {
-        class: `text-sm text-gray-700 break-words whitespace-pre-wrap max-h-[${maxHeight}px] overflow-y-auto`,
+        class: `text-sm  break-words whitespace-pre-wrap max-h-[${maxHeight}px] overflow-y-auto`,
       },
     },
     content,

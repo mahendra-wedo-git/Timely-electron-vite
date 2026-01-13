@@ -51,6 +51,8 @@ import { selectMemberMap } from "src/redux/memberRootSlice";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { ChatFileList } from "./FilesListing";
 import { TiptapChatEditor } from "./Editor";
+import { UserAvatar } from "./UserAvatar";
+import { GroupChatAvatar } from "./group-chat-avatar";
 
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
@@ -94,6 +96,7 @@ export const ChatWindow = () => {
   const chatFiles = useAppSelector(selectGroupAttachments);
   const currentChatFiles =
     chatFiles[workspaceSlug || ""]?.[currentChatId || ""] || [];
+    console.log("currentChatFiles",currentChatFiles)
 
   console.log(
     "chatFileschatFileschatFiles",
@@ -347,7 +350,7 @@ export const ChatWindow = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen">
       {/* Sidebar - Chat List */}
       <SidebarChat
         selectedChat={selectedChat}
@@ -359,45 +362,58 @@ export const ChatWindow = () => {
       {selectedChat ? (
         <div className="flex-1 flex flex-col">
           {/* Chat Header */}
-          <div className=" border-b border-gray-200 px-10 py-4 flex items-center justify-between">
+          <div className=" border-b border-gray-200 px-10 py-4 flex items-center bg-white ">
             <div className="flex items-center">
               <div className="relative">
-                <div className="w-8 h-8 rounded-full capitalize bg-indigo-600 flex items-center justify-center text-white font-semibold">
-                  {selectedChat.group_name.charAt(0)}
+                {selectedChat.is_private ? (
+                  <UserAvatar
+                    userDetail={memberDetails?.[selectedChat?.members[0]]}
+                    msg={selectedMassage}
+                  />
+                ) : (
+                 <div className="w-8 h-8 rounded-full capitalize bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                    <GroupChatAvatar
+                      size={30}
+                      fill="#ffffff"
+                      background="bg-indigo-600"
+                    />
                 </div>
+                )}
                 {/* {selectedChat.isOnline && ( */}
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                 {/* )} */}
               </div>
               <div className="ml-3">
-                <h2 className="text-md capitalize font-semibold text-gray-900">
+                <h2 className="text-lg capitalize font-semibold text-gray-900">
                   {selectedChat.group_name}
                 </h2>
               </div>
             </div>
             {/* chat heder actions */}
-            <div className="flex items-center space-x-4">
+            <div className=" px-10 flex items-center justify-start space-x-4">
               <button
-                className={`text-gray-600 hover:text-gray-900  text-xs ${activeTab === "chat" ? "underline font-medium" : ""}`}
+                className={`text-gray-600 hover:text-gray-900  text-sm ${activeTab === "chat" ? "underline font-medium" : ""}`}
                 onClick={() => setActiveTab("chat")}
               >
                 Chat
               </button>
               <button
-                className={`text-gray-500 hover:text-gray-700 text-xs ${activeTab === "files" ? "underline font-medium" : ""}`}
+                className={`text-gray-500 hover:text-gray-700 text-sm ${activeTab === "files" ? "underline font-medium" : ""}`}
                 onClick={() => setActiveTab("files")}
               >
                 Files
               </button>
               <button
-                className={`text-gray-500 hover:text-gray-700 text-xs ${activeTab === "photos" ? "underline font-medium" : ""}`}
+                className={`text-gray-500 hover:text-gray-700 text-sm ${activeTab === "photos" ? "underline font-medium" : ""}`}
                 onClick={() => setActiveTab("photos")}
               >
                 Photos
               </button>
+            </div>
+            <div className="flex items-center ml-auto justify-end space-x-4">
               {selectedChatGroup && !selectedChatGroup?.is_private && (
                 <button
-                  className="text-gray-500 hover:text-gray-700 text-xs"
+                  className="text-gray-500 hover:text-gray-700 text-sm"
                   onClick={() => setOpenMemberModal(true)}
                 >
                   <User className="h-5 w-5" />

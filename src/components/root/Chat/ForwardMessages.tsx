@@ -2,6 +2,10 @@ import { Forward } from "lucide-react";
 import React, { FC, useState } from "react";
 import { useUser } from "src/context";
 import { formatDateLabel } from "src/utils";
+import { RichTextReadOnlyEditor } from "./RichTextReadOnlyEditor";
+import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
+import { IChatMessage } from "src/types";
+import { RenderAttachments } from "./file-details";
 interface IForwardedMessage {
   forwardedFromUser: any;
   forwardedFrom: any;
@@ -12,7 +16,7 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
   forwardedFromUser,
   forwardedFrom,
   msg,
-  reply
+  reply,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const currentUser = useUser();
@@ -25,10 +29,14 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
     ? content
     : content.slice(0, MAX_LENGTH) + "...";
 
-  const IsMe = currentUser?.data?.id === forwardedFromUser.id
+  const IsMe = currentUser?.data?.id === forwardedFromUser.id;
+  const sanitizedMessageContent = cleanedHTML(forwardedFrom?.content);
+  const plainTextContent = extractPlainText(sanitizedMessageContent);
 
   return (
-    <div className={`${reply ? "bg-transparent text-gray" : IsMe  ? "bg-indigo-600 text-white" : ""}   w-full max-w-md rounded-2xl font-sans`}>
+    <div
+      className={`${reply ? "bg-transparent text-gray" : IsMe ? "bg-indigo-600 text-white" : ""}   w-full max-w-2xl rounded-2xl font-sans`}
+    >
       <div className="bg-white text-gray-800 rounded-lg p-3 mb-1 flex flex-col gap-1 relative border-l-4 border-gray-300">
         <div className="flex items-center gap-2 text-xs text-gray-500">
           {/* <span className="text-lg">↪</span> */}
@@ -49,13 +57,24 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
               formatDateLabel(forwardedFrom.created_at)}
           </span>
         </div>
-        <div className="text-xs pl-5">
-          {forwardedFrom?.content && forwardedFrom.content}
+        <div className="text-xs pl-8">
+          {forwardedFrom?.content && plainTextContent}
         </div>
       </div>
 
       <div className="text-xs leading-relaxed break-words">
-        {content.length > MAX_LENGTH ? displayText : content}
+        {reply ? (
+          <>
+            <RichTextReadOnlyEditor
+              content={msg.content}
+              className={`prose prose-sm max-w-none prose-invert`}
+            />
+          </>
+        ) : plainTextContent.length > MAX_LENGTH ? (
+          displayText
+        ) : (
+          content
+        )}
       </div>
       {content.length > MAX_LENGTH && (
         <>

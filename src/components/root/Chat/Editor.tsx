@@ -468,7 +468,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   if (!editor) return null;
 
   return (
-    <div className="w-full p-4 bg-transparent">
+    <div className="w-full p-4 bg-white">
       <div className="w-full max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 focus-within:shadow-md transition-all overflow-hidden">
           {/* Reply Preview */}

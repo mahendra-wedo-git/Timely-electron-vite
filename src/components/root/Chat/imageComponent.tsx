@@ -2,15 +2,16 @@
 import { Node } from "@tiptap/core";
 import { getEditorAssetSrc } from "src/utils/editor.helper";
 
-
 // Add this function at the top of the file
 function resolveAssetUrl(assetId: string) {
   if (!assetId) return "";
-  return getEditorAssetSrc({
-    assetId,
-    projectId: (window as any).__CURRENT_PROJECT_ID__,  
-    workspaceSlug: (window as any).__CURRENT_WORKSPACE_SLUG__,
-  }) ?? "";
+  return (
+    getEditorAssetSrc({
+      assetId,
+      projectId: (window as any).__CURRENT_PROJECT_ID__,
+      workspaceSlug: (window as any).__CURRENT_WORKSPACE_SLUG__,
+    }) ?? ""
+  );
 }
 
 // Then define your Node
@@ -35,22 +36,35 @@ export const ImageComponentReadOnly = Node.create({
   renderHTML({ HTMLAttributes }) {
     return ["image-component", HTMLAttributes];
   },
-    
+
   addNodeView() {
     return ({ node }) => {
       const wrapper = document.createElement("div");
       wrapper.style.display = "inline-block";
-      wrapper.style.margin = "4px";
-      wrapper.style.borderRadius = "8px";
-      wrapper.style.overflow = "hidden";
-      wrapper.style.border = "1px solid #e5e7eb";
+      wrapper.style.cursor = "pointer";
 
       const img = document.createElement("img");
-      img.src = resolveAssetUrl(node.attrs.src); 
+
+      const resolvedSrc = resolveAssetUrl(node.attrs.src);
+
+      img.src = resolvedSrc;
       img.style.width = node.attrs.width;
       img.style.height = node.attrs.height;
       img.style.objectFit = "cover";
       img.style.display = "block";
+
+      img.onclick = () => {
+        window.dispatchEvent(
+          new CustomEvent("open-image-fullscreen", {
+            detail: {
+              src: resolvedSrc, 
+              width: node.attrs.width,
+              height: node.attrs.height,
+              aspectRatio: Number(node.attrs.aspectratio),
+            },
+          })
+        );
+      };
 
       wrapper.appendChild(img);
       return { dom: wrapper };

@@ -182,3 +182,16 @@ export function formatFileSize(bytes: number) {
   const value = (bytes / Math.pow(k, i)).toFixed(2);
   return parseFloat(value) + " " + sizes[i];
 }
+
+export const checkImageOnlyMessage = (msg: any) => {
+  if (msg.reply_to || msg.forwarded_from) return false;
+
+  const hasImageComponents = /<image-component[\s\S]*?>/.test(msg.content);
+
+  const textWithoutImages = msg.content
+    .replace(/<image-component[\s\S]*?<\/image-component>/g, "")
+    .replace(/<p[^>]*>(\s|&nbsp;)*<\/p>/g, "")
+    .trim();
+
+  return hasImageComponents && textWithoutImages.length === 0;
+};
