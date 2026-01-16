@@ -30,7 +30,7 @@ export const ChatFileList: FC<ChatFileListProps> = ({
 
   // Filter files based on search
   const filteredFiles = files.filter((file) =>
-    file.attachment?.some(
+    file.attachment?.filter((att) => !att.attributes?.type?.startsWith("image/"))?.some(
       (att) =>
         att.attributes?.name
           .toLowerCase()
@@ -156,7 +156,6 @@ export const ChatFileList: FC<ChatFileListProps> = ({
                     ? memberDetails[files.sender]
                     : null;
 
-                  console.log("memberInfomemberInfo", memberInfo);
                   return (
                     <tr
                       key={file.id}

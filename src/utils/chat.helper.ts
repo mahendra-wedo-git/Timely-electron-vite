@@ -195,3 +195,33 @@ export const checkImageOnlyMessage = (msg: any) => {
 
   return hasImageComponents && textWithoutImages.length === 0;
 };
+
+export type ImageNode = {
+  src: string;
+  width?: string;
+  height?: string;
+  aspectratio?: string;
+};
+
+export function extractImageComponents(html: string) {
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  const images: ImageNode[] = [];
+  container.querySelectorAll("image-component").forEach((el) => {
+    images.push({
+      src: el.getAttribute("src") || "",
+      width: el.getAttribute("width") || "129px",
+      height: el.getAttribute("height") || "129px",
+      aspectratio: el.getAttribute("aspectratio") || "1",
+    });
+
+    // 🔥 remove image from normal content
+    el.remove();
+  });
+
+  return {
+    images,
+    textHTML: container.innerHTML.trim(),
+  };
+}

@@ -1,10 +1,28 @@
 # VITE_APP_API_URL = "http://127.0.0.1:8000/auth/electron/sign-in/"
 
-manan
-VITE_APP_API_URL="
-https://qtghjv89-8000.inc1.devtunnels.ms
-"
+# bitu
 # VITE_APP_API_URL="
 #  https://g29c5bg0-8000.inc1.devtunnels.ms
 # "
-VITE_WORKSPACE="wedo"
+# VITE_WEBSOCKET_BASE_URL="wss://g29c5bg0-8000.inc1.devtunnels.ms"
+# VITE_WORKSPACE="synapse"
+
+VITE_APP_API_URL="
+https://qtghjv89-8000.inc1.devtunnels.ms
+"
+VITE_WORKSPACE="synapse"
+VITE_WEBSOCKET_BASE_URL="wss://qtghjv89-8000.inc1.devtunnels.ms"
+
+
+
+# dev
+# VITE_APP_API_URL="https://timely-api-dev.wedowebapps.in"
+# VITE_WORKSPACE="wedo"
+# VITE_WEBSOCKET_BASE_URL="wss://timely-api-dev.wedowebapps.in/ws/chat/workspace/wedo/"
+
+
+
+# NEXT_PUBLIC_API_BASE_URL="<https://timely-api-dev.wedowebapps.in>"
+# NEXT_PUBLIC_WEBSOCKET_BASE_URL="wss://[timely-api-dev.wedowebapps.in](http://timely-api-dev.wedowebapps.in)"
+# NEXT_PUBLIC_WEB_BASE_URL="<https://timely-dev.wedowebapps.in>"
+# NEXT_PUBLIC_VAPID_KEY="BMWWt6THqBEZeiqg5jknaRW8heV1BrN4WYz9zK6u6UwSDnLBkgBfyxIhzsiF5VzeGftGAI2m1BbJNudLrQrxZK8"

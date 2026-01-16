@@ -8,7 +8,10 @@ import { Send, Smile, X, Plus, ImagePlus } from "lucide-react";
 import { useAppDispatch } from "src/redux/hooks";
 import { uploadEditorAsset } from "src/redux/assetsSlice";
 import { getFileIcon } from "src/assets/attachment";
-import { Node } from '@tiptap/core';
+import { Node } from "@tiptap/core";
+import { getFileURL } from "src/utils";
+import CodeBlock from "@tiptap/extension-code-block";
+import { resolveAssetUrl } from "./imageComponent";
 
 // Types
 export type FileData = {
@@ -48,55 +51,120 @@ interface TiptapChatEditorProps {
 }
 
 // Custom Image Component Extension
+// const ImageComponent = Node.create({
+//   name: 'imageComponent',
+//   group: 'block',
+//   atom: true,
+//   inline: true,
+
+//   addAttributes() {
+//     return {
+//       src: { default: null },
+//       width: { default: '129px' },
+//       height: { default: '129px' },
+//       id: { default: null },
+//       aspectratio: { default: '1' },
+//     };
+//   },
+
+//   parseHTML() {
+//     return [
+//       {
+//         tag: 'image-component',
+//       },
+//     ];
+//   },
+
+//   renderHTML({ HTMLAttributes }) {
+//     return ['image-component', HTMLAttributes];
+//   },
+
+//   addNodeView() {
+//     return ({ node }) => {
+//       const dom = document.createElement('div');
+//       dom.style.display = 'inline-block';
+//       dom.style.border = '2px solid #e5e7eb';
+//       dom.style.borderRadius = '8px';
+//       dom.style.padding = '8px';
+//       dom.style.margin = '4px';
+//       dom.style.width = node.attrs.width;
+//       dom.style.height = node.attrs.height;
+//       dom.style.backgroundColor = '#f9fafb';
+
+//       const icon = document.createElement('div');
+//       icon.innerHTML = '🖼️';
+//       icon.style.fontSize = '48px';
+//       icon.style.display = 'flex';
+//       icon.style.alignItems = 'center';
+//       icon.style.justifyContent = 'center';
+//       icon.style.height = '100%';
+
+//       dom.appendChild(icon);
+//       return { dom };
+//     };
+//   },
+// });
 const ImageComponent = Node.create({
-  name: 'imageComponent',
-  group: 'block',
+  name: "imageComponent",
+  inline: true,
+  group: "inline",
   atom: true,
+
+  selectable: true,
+  draggable: true,
 
   addAttributes() {
     return {
       src: { default: null },
-      width: { default: '129px' },
-      height: { default: '129px' },
+      width: { default: "129px" },
+      height: { default: "129px" },
       id: { default: null },
-      aspectratio: { default: '1' },
+      aspectratio: { default: "1" },
     };
   },
 
   parseHTML() {
-    return [
-      {
-        tag: 'image-component',
-      },
-    ];
+    return [{ tag: "image-component" }];
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['image-component', HTMLAttributes];
+    return ["image-component", HTMLAttributes];
   },
 
   addNodeView() {
     return ({ node }) => {
-      const dom = document.createElement('div');
-      dom.style.display = 'inline-block';
-      dom.style.border = '2px solid #e5e7eb';
-      dom.style.borderRadius = '8px';
-      dom.style.padding = '8px';
-      dom.style.margin = '4px';
-      dom.style.width = node.attrs.width;
-      dom.style.height = node.attrs.height;
-      dom.style.backgroundColor = '#f9fafb';
-      
-      const icon = document.createElement('div');
-      icon.innerHTML = '🖼️';
-      icon.style.fontSize = '48px';
-      icon.style.display = 'flex';
-      icon.style.alignItems = 'center';
-      icon.style.justifyContent = 'center';
-      icon.style.height = '100%';
-      
-      dom.appendChild(icon);
-      return { dom };
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "inline-block";
+      wrapper.style.margin = "4px";
+      wrapper.style.borderRadius = "8px";
+      wrapper.style.overflow = "hidden";
+      wrapper.style.border = "1px solid #e5e7eb";
+      wrapper.style.width = node.attrs.width;
+      wrapper.style.height = node.attrs.height;
+
+      const img = document.createElement("img");
+      img.onclick = () => {
+        window.dispatchEvent(
+          new CustomEvent("open-image-fullscreen", {
+            detail: { src: img.src },
+          })
+        );
+      };
+
+      const resolvedSrc = resolveAssetUrl(node.attrs.src) || node.attrs.src;
+      console.log("resolvedSrcresolvedSrc", resolvedSrc);
+      img.src = resolvedSrc;
+      // const assetMap = (window as any).__CHAT_ASSET_MAP__ || {};
+      // img.src = assetMap[node.attrs.src] || node.attrs.src;
+
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "cover";
+      img.style.display = "block";
+
+      wrapper.appendChild(img);
+
+      return { dom: wrapper };
     };
   },
 });
@@ -104,14 +172,68 @@ const ImageComponent = Node.create({
 // Emoji Picker Component
 const EmojiPicker: FC<EmojiPickerProps> = ({ onEmojiSelect, onClose }) => {
   const emojis = [
-    "😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂",
-    "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛",
-    "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🤩", "🥳", "😏",
-    "👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👏", "🙌",
-    "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔",
-    "🔥", "✨", "💫", "⭐", "🌟", "💯", "✅", "❌", "⚡", "💥"
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😛",
+    "😝",
+    "😜",
+    "🤪",
+    "🤨",
+    "🧐",
+    "🤓",
+    "😎",
+    "🤩",
+    "🥳",
+    "😏",
+    "👍",
+    "👎",
+    "👌",
+    "✌️",
+    "🤞",
+    "🤟",
+    "🤘",
+    "🤙",
+    "👏",
+    "🙌",
+    "❤️",
+    "🧡",
+    "💛",
+    "💚",
+    "💙",
+    "💜",
+    "🖤",
+    "🤍",
+    "🤎",
+    "💔",
+    "🔥",
+    "✨",
+    "💫",
+    "⭐",
+    "🌟",
+    "💯",
+    "✅",
+    "❌",
+    "⚡",
+    "💥",
   ];
-
+  // above code i'm trying to add multiple images upload to chat but preivew only one and render also last image only
   return (
     <div className="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-72 z-50">
       <div className="grid grid-cols-10 gap-1 max-h-48 overflow-y-auto">
@@ -173,10 +295,10 @@ const FilePreview: FC<FilePreviewProps> = ({ files, onRemove }) => {
 };
 
 // Reply Preview Component
-const ReplyPreview: FC<ReplyPreviewProps> = ({ 
-  replyTo, 
+const ReplyPreview: FC<ReplyPreviewProps> = ({
+  replyTo,
   onClose,
-  memberDetails 
+  memberDetails,
 }) => {
   if (!replyTo) return null;
 
@@ -228,18 +350,23 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   maxHeight = 300,
 }) => {
   const [files, setFiles] = useState<FileData[]>([]);
-  const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(new Set());
+  const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
+    new Set()
+  );
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [imageAssetIds, setImageAssetIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
+  const [isEditorEmpty, setIsEditorEmpty] = useState(true);
 
   const editor = useEditor({
+    onUpdate: ({ editor }) => {
+      setIsEditorEmpty(editor.isEmpty);
+    },
     extensions: [
       StarterKit.configure({
         heading: false,
-        codeBlock: false,
         horizontalRule: false,
         bulletList: {
           HTMLAttributes: {
@@ -252,10 +379,18 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
           },
         },
       }),
+      CodeBlock.configure({
+        tabSize: 2,
+        exitOnTripleEnter: true,
+        HTMLAttributes: {
+          class: "code-block",
+        },
+      }),
       Placeholder.configure({
-        placeholder: files.length > 0 
-          ? `${files.length} file(s) ready to send...` 
-          : placeholder,
+        placeholder:
+          files.length > 0
+            ? `${files.length} file(s) ready to send...`
+            : placeholder,
       }),
       ImageComponent,
       Link.configure({
@@ -269,8 +404,18 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
       attributes: {
         class: `focus:outline-none min-h-[24px] max-h-[${maxHeight}px] overflow-y-auto text-sm text-gray-700 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`,
       },
+      handleKeyDown(view, event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          handleSend();
+          return true;
+        }
+        return false;
+      },
     },
-    content: '<p class="editor-paragraph-block break-all whitespace-pre-wrap"></p>',
+
+    content:
+      '<p class="editor-paragraph-block break-all whitespace-pre-wrap"></p>',
   });
 
   // Handle file upload
@@ -285,7 +430,9 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
 
     for (const file of selectedFiles) {
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        alert(`"${file.name}" is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`);
+        alert(
+          `"${file.name}" is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`
+        );
         continue;
       }
 
@@ -368,13 +515,13 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
           .chain()
           .focus()
           .insertContent({
-            type: 'imageComponent',
+            type: "imageComponent",
             attrs: {
               src: assetId,
-              width: '129px',
-              height: '129px',
+              width: "129px",
+              height: "129px",
               id: componentId,
-              aspectratio: '1',
+              aspectratio: "1",
             },
           })
           .run();
@@ -420,7 +567,9 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
 
     // Reset state
     editor.commands.clearContent();
-    editor.commands.setContent('<p class="editor-paragraph-block break-all whitespace-pre-wrap"></p>');
+    editor.commands.setContent(
+      '<p class="editor-paragraph-block break-all whitespace-pre-wrap"></p>'
+    );
     setFiles([]);
     setUploadedAssetIds(new Set());
     setImageAssetIds([]);
@@ -428,23 +577,23 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   };
 
   // Handle Enter key
-  useEffect(() => {
-    if (!editor) return;
+  // useEffect(() => {
+  //   if (!editor) return;
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        handleSend();
-      }
-    };
+  //   const handleKeyDown = (event: KeyboardEvent) => {
+  //     if (event.key === "Enter" && !event.shiftKey) {
+  //       event.preventDefault();
+  //       handleSend();
+  //     }
+  //   };
 
-    const editorElement = editor.view.dom;
-    editorElement.addEventListener("keydown", handleKeyDown);
+  //   const editorElement = editor.view.dom;
+  //   editorElement.addEventListener("keydown", handleKeyDown);
 
-    return () => {
-      editorElement.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [editor, uploadedAssetIds, replyTo]);
+  //   return () => {
+  //     editorElement.removeEventListener("keydown", handleKeyDown);
+  //   };
+  // }, [editor, uploadedAssetIds, replyTo]);
 
   // Focus editor when replyTo changes
   useEffect(() => {
@@ -546,7 +695,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
               {/* Send Button */}
               <button
                 onClick={handleSend}
-                disabled={editor.isEmpty && uploadedAssetIds.size === 0}
+                disabled={isEditorEmpty}
                 className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Send className="h-4 w-4" />

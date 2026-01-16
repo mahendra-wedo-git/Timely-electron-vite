@@ -3,7 +3,7 @@ import { Node } from "@tiptap/core";
 import { getEditorAssetSrc } from "src/utils/editor.helper";
 
 // Add this function at the top of the file
-function resolveAssetUrl(assetId: string) {
+export function resolveAssetUrl(assetId: string) {
   if (!assetId) return "";
   return (
     getEditorAssetSrc({

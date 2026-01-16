@@ -53,12 +53,17 @@ export class AuthService extends APIService {
         throw error?.response?.data;
       });
   }
-  async SingIn(data: {
+  async SignIn(data: {
     email: string;
     password: string;
-    csrfmiddlewaretoken: string;
+    csrfmiddlewaretoken?: string;
   }): Promise<any> {
     return this.post("/auth/common/sign-in/", data, { headers: {} })
+    // return this.post("/auth/jwt/login/", data, {
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    // })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

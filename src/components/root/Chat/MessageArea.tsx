@@ -8,7 +8,7 @@ import {
   Trash,
   X,
 } from "lucide-react";
-import {  formatDateLabel, getFileURL } from "src/utils";
+import {  extractImageComponents, formatDateLabel, getFileURL } from "src/utils";
 import {
   cleanedHTML,
   extractPlainText,
@@ -22,6 +22,7 @@ import { RenderAttachments } from "./file-details";
 import { RichTextReadOnlyEditor } from "./RichTextReadOnlyEditor";
 import { useParams } from "react-router-dom";
 import { ImageFullscreenProvider } from "./ImageFullscreenProvider";
+import { ChatImageGrid } from "./ChatImageGrid";
 
 // ============= TYPES =============
 interface MentionProps {
@@ -431,6 +432,8 @@ export const MessageArea: FC<MessageAreaProps> = ({
   // ============= RENDER MESSAGE =============
   const renderMessage = (msg: any, messages: any[], index: number) => {
     if (!msg.id) return null;
+const { images, textHTML } = extractImageComponents(msg.content);
+const hasImages = images.length > 0;
 
     const userDetail = memberMap[msg?.sender] || {};
     const isCurrentUser = msg?.sender === currentUserId;
@@ -456,7 +459,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
       !msg.deleted_at &&
       !hasNonImageAttachments &&
       !hasReplyOrForward;
-    console.log("shouldRenderImageOnly >>>",shouldRenderImageOnly);
+    // console.log("shouldRenderImageOnly >>>",shouldRenderImageOnly);
 
     // Deleted message
     if (msg.deleted_at) {
@@ -500,10 +503,11 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               userDetail={userDetail}
               showActions={false}
             >
-              <RichTextReadOnlyEditor
+               {hasImages && <ChatImageGrid images={images} />}
+              {/* <RichTextReadOnlyEditor
                 content={msg.content}
                 className="prose prose-sm max-w-none cursor-pointer"
-              />
+              /> */}
             </MessageWrapper>
           )}
 
@@ -581,27 +585,11 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
       </div>
     );
   };
-  // useEffect(() => {
-  //   if (!currentProjectId || !currentWorkspaceSlug) return;
-
-  //   (window as any).__CURRENT_PROJECT_ID__ = currentProjectId;
-  //   (window as any).__CURRENT_WORKSPACE_SLUG__ = currentWorkspaceSlug;
-
-  //   // Build asset map from all messages
-  //   const assetMap = Object.fromEntries(
-  //     Object.values(groupedMessages)
-  //       .flat()
-  //       .flatMap((msg: any) => msg.attachment || [])
-  //       .map((a: any) => [a.id, a.asset])
-  //   );
-
-  //   (window as any).__CHAT_ASSET_MAP__ = assetMap;
-  // }, [currentProjectId, currentWorkspaceSlug, groupedMessages]);
 
   // MAIN RENDER
   return (
     <div className="flex-1 overflow-y-auto bg-white py-4 sm:py-5 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8">
-      <div className="mx-auto space-y-5 max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl ">
+      <div className="mx-auto space-y-2 max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-4xl ">
         {Object.entries(groupedMessages).map(([date, messages]) =>
           messages.map((msg, index) => renderMessage(msg, messages, index))
         )}

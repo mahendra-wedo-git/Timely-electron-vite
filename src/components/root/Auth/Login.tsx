@@ -30,13 +30,17 @@ export const TimelyLogin = () => {
       formData.append("email", values.email);
       formData.append("password", values.password);
       formData.append("csrfmiddlewaretoken", token.csrf_token!);
-      const response = await authService.SingIn(
+      const response = await authService.SignIn(
         formData as unknown as {
           email: string;
           password: string;
           csrfmiddlewaretoken: string;
         }
       );
+    //    const response = await authService.SignIn({
+    //   email: values.email,
+    //   password: values.password,
+    // });
       if (response?.success) {
         localStorage.setItem("userEmail", values.email);
         localStorage.setItem("workspace", workspace);

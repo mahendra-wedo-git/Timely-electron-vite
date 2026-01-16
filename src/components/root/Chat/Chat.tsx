@@ -42,17 +42,14 @@ import { groupChatData } from "src/utils";
 import MessageArea from "./MessageArea";
 import { ForwardMessageModal } from "./ForwordMessage/ForwordMessage";
 import { GroupMembersModal } from "./GroupMemberModal/GroupMemberModal";
-import { FileData, FilePicker } from "./file-picker";
-import { ImagePicker } from "./Image-picker";
-import { uploadEditorAsset } from "src/redux/assetsSlice";
-import { getFileIcon } from "src/assets/attachment";
-import { PreviewMessage } from "./PreviewMessage";
+import { FileData } from "./file-picker";
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { ChatFileList } from "./FilesListing";
 import { TiptapChatEditor } from "./Editor";
 import { UserAvatar } from "./UserAvatar";
 import { GroupChatAvatar } from "./group-chat-avatar";
+import { ChatImageList } from "./imageListing";
 
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
@@ -71,7 +68,6 @@ export const ChatWindow = () => {
     false
   );
   const [files, setFiles] = useState<FileData[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const { workspace: workspaceSlug } = useParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatSocketService = useChatSocket();
@@ -96,12 +92,7 @@ export const ChatWindow = () => {
   const chatFiles = useAppSelector(selectGroupAttachments);
   const currentChatFiles =
     chatFiles[workspaceSlug || ""]?.[currentChatId || ""] || [];
-    console.log("currentChatFiles",currentChatFiles)
 
-  console.log(
-    "chatFileschatFileschatFiles",
-    chatFiles[workspaceSlug || ""]?.[currentChatId || ""]
-  );
 
   const dispatch = useAppDispatch();
   const messages_ = useAppSelector(
@@ -117,7 +108,6 @@ export const ChatWindow = () => {
   ) as IChatGroupLog[];
 
   const groupedMessages = groupChatData(messages_, logs);
-  console.log("groupedMessages",groupedMessages)
   useEffect(() => {
     if (workspaceSlug && currentChatId) {
       dispatch(
@@ -177,22 +167,6 @@ export const ChatWindow = () => {
         return newSet;
       });
 
-      // 2. Delete from server
-      // if (fileName.startsWith("http")) {
-      //   await fileService.deleteOldWorkspaceAsset(
-      //     currentWorkspace?.id || "",
-      //     id
-      //   );
-      // } else {
-      //   const assetUrl = getEditorAssetSrc({
-      //     assetId: id, // if you have project context
-      //     workspaceSlug: currentWorkspace?.slug || "",
-      //     isdelete: true,
-      //   });
-      //   if (assetUrl) {
-      //     await fileService.deleteNewAsset(assetUrl);
-      //   }
-      // }
     } catch (error) {
       console.error("Failed to delete asset:", error);
       // optional: show toast or revert state if deletion fails
@@ -210,7 +184,7 @@ export const ChatWindow = () => {
     }
     setReplyTo(message ? message : (null as IChatGroup | null));
   };
-  // console.log("groupedMessagesgroupedMessages", groupedMessages);
+  console.log("groupedMessagesgroupedMessages", groupedMessages);
   const handleSendMessage = () => {
     // if (!message || !selectedChat || !chatSocketService) return;
     if (!selectedChat || !chatSocketService) return;
@@ -275,6 +249,15 @@ export const ChatWindow = () => {
     // dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
   };
 
+  const getImageAttachments = () => {
+    if (!currentChatFiles || currentChatFiles.length === 0) return [];
+    const allImages = currentChatFiles.flatMap((msg: IChatMessage) =>
+      (msg.attachment || [])
+        .filter((att) => att.attributes?.type?.startsWith("image/"))
+        .map((att) => ({ ...att, created_at: msg.created_at }))
+    );
+    return allImages;
+  };
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -371,13 +354,13 @@ export const ChatWindow = () => {
                     msg={selectedMassage}
                   />
                 ) : (
-                 <div className="w-8 h-8 rounded-full capitalize bg-indigo-600 flex items-center justify-center text-white font-semibold">
+                  <div className="w-8 h-8 rounded-full capitalize bg-indigo-600 flex items-center justify-center text-white font-semibold">
                     <GroupChatAvatar
                       size={30}
                       fill="#ffffff"
                       background="bg-indigo-600"
                     />
-                </div>
+                  </div>
                 )}
                 {/* {selectedChat.isOnline && ( */}
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
@@ -449,19 +432,11 @@ export const ChatWindow = () => {
                   memberDetails={memberDetails}
                 />
               ) : activeTab === "photos" ? (
-                <div className="w-full h-full flex justify-center items-center">
-                  <div className="text-center justify-center align-items-center">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
-                      <Image className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <h3 className="text-md text-gray-900 mb-2">
-                      No photos yet
-                    </h3>
-                    <p className="text-gray-500">
-                      Photos shared in this chat will appear here.
-                    </p>
-                  </div>
-                </div>
+                  <ChatImageList
+                    images={getImageAttachments()}
+                    memberDetails={memberDetails}
+                    workspaceSlug={workspaceSlug || ""}
+                  />
               ) : (
                 <MessageArea
                   groupedMessages={groupedMessages}
