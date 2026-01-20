@@ -15,7 +15,7 @@ import { resolveAssetUrl } from "./imageComponent";
 import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
 import { IChatMessage } from "src/types";
 import { useForm } from "react-hook-form";
-import { useOnClickOutside } from "src/hooks/useOutsideclick";
+import { useOutsideClick } from "src/hooks/useOutsideClick";
 
 // Types
 export type FileData = {
@@ -226,7 +226,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   const emojiPickerRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLElement>;
   const dispatch = useAppDispatch();
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
-    useOnClickOutside(
+    useOutsideClick(
     emojiPickerRef,
     () => setShowEmojiPicker(false),
     showEmojiPicker

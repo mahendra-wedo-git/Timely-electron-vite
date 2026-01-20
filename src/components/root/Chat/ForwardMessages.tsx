@@ -72,6 +72,9 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
               <RenderAttachments message={forwardedFrom} isCurrentUser={IsMe} />
             </div>
           )}
+          {forwardedFrom?.attachment?.length > 0 &&
+          <RenderAttachments message={forwardedFrom} isCurrentUser={IsMe} />
+          }
         </div>
       </div>
 

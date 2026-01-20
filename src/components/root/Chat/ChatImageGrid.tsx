@@ -33,7 +33,7 @@ const MAX_ZOOM = 2;
 const ZOOM_SPEED = 0.05;
 
 export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
-  console.log("imagesimagesimagesimages", images);
+
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [magnification, setMagnification] = useState<number>(1);
   const [initialMagnification, setInitialMagnification] = useState(1);

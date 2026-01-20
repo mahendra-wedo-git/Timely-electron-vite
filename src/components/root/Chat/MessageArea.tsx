@@ -406,6 +406,7 @@ const TextMessageContent: FC<{
   onForward?: () => void;
   onDelete?: () => void;
   onReply: () => void;
+  className?: string
 }> = ({
   msg,
   isCurrentUser,
@@ -415,6 +416,7 @@ const TextMessageContent: FC<{
   onForward,
   onDelete,
   onReply,
+  className
 }) => (
   <div
     className={`flex items-end gap-2 ${
@@ -422,11 +424,12 @@ const TextMessageContent: FC<{
     }`}
   >
     <div
-      className={`relative text-sm py-2 px-3 rounded-xl w-full max-w-2xl ${
-        isCurrentUser
-          ? "bg-indigo-600 text-white rounded-tr-none"
-          : "bg-gray-100 text-gray-900 rounded-tl-none"
-      }`}
+      className={`relative text-sm py-2 rounded-xl w-full max-w-2xl ${className}`}
+      // className={`relative text-sm py-2 px-3 rounded-xl w-full max-w-2xl ${
+      //   isCurrentUser
+      //     ? "bg-indigo-600 text-white rounded-tr-none"
+      //     : "bg-gray-100 text-gray-900 rounded-tl-none"
+      // }`}
     >
       <MessageActionsToolbar
         isCurrentUser={isCurrentUser}
@@ -676,6 +679,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               <TextMessageContent
                 msg={msg}
                 currentUserId={currentUserId}
+                className={`px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}
                 isCurrentUser={isCurrentUser}
                 content={
                   <>
@@ -723,6 +727,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               <TextMessageContent
                 msg={msg}
                 currentUserId={currentUserId}
+                className={`px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}
                 isCurrentUser={isCurrentUser}
                 content={
               <>
@@ -797,6 +802,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
                 <TextMessageContent
                   msg={msg}
                   currentUserId={currentUserId}
+                  className={`px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}
                   isCurrentUser={isCurrentUser}
                   content={
                     msg.forwarded_from &&
