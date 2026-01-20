@@ -1,14 +1,15 @@
-import { FC, useEffect, useState } from "react";
+import { FC, use, useEffect, useState } from "react";
 import {
   Check,
   CheckCheckIcon,
   Edit2,
   Forward,
   ReplyIcon,
+  SmilePlus,
   Trash,
   X,
 } from "lucide-react";
-import {  extractImageComponents, formatDateLabel, getFileURL } from "src/utils";
+import { extractImageComponents, formatDateLabel, getFileURL, groupReactionsWithUsers } from "src/utils";
 import {
   cleanedHTML,
   extractPlainText,
@@ -23,6 +24,10 @@ import { RichTextReadOnlyEditor } from "./RichTextReadOnlyEditor";
 import { useParams } from "react-router-dom";
 import { ImageFullscreenProvider } from "./ImageFullscreenProvider";
 import { ChatImageGrid } from "./ChatImageGrid";
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
+import { renderEmoji } from "src/utils/emoji.helper";
+import { IChatReaction } from "src/types";
+import { useChatSocket } from "src/context/chatContext";
 
 // ============= TYPES =============
 interface MentionProps {
@@ -44,7 +49,7 @@ interface MessageAreaProps {
   handleEditMessage?: any;
 }
 
-// ============= COMPONENTS =============
+// COMPONENTS
 
 // User Avatar Component
 const UserAvatar: FC<{ userDetail: any; msg: any }> = ({ userDetail, msg }) => {
@@ -68,7 +73,7 @@ const UserAvatar: FC<{ userDetail: any; msg: any }> = ({ userDetail, msg }) => {
       : userDetail?.display_name?.charAt(0) || "U";
 
   return (
-    <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs flex-shrink-0">
+    <div className="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[11px] flex-shrink-0">
       {initials.toUpperCase()}
     </div>
   );
@@ -88,6 +93,7 @@ const UserName: FC<{ userDetail: any }> = ({ userDetail }) => {
 
 // Deleted Message Component
 const DeletedMessage: FC<{ isCurrentUser: boolean }> = ({ isCurrentUser }) => (
+  isCurrentUser &&
   <div className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
     <div
       className={`px-4 py-2 rounded-2xl italic ${
@@ -98,27 +104,83 @@ const DeletedMessage: FC<{ isCurrentUser: boolean }> = ({ isCurrentUser }) => (
     </div>
   </div>
 );
-
+const reactionEmojis = ["128077", "128516", "128533", "129505"];
 // Message Actions Toolbar
 const MessageActionsToolbar: FC<{
   isCurrentUser: boolean;
+  currentUserDetails?: string;
   onEdit?: () => void;
-  onForward: () => void;
+  onForward?: () => void;
   onDelete?: () => void;
   onReply: () => void;
-}> = ({ isCurrentUser, onEdit, onForward, onDelete, onReply }) => (
+  message: any;
+}> = ({ isCurrentUser, onEdit, onForward, onDelete, onReply, message,currentUserDetails}) => {
+  const chatSocketService = useChatSocket();
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
+  if (!message || !chatSocketService) return null;
+  const handelReact = (emoji: string) => {
+      try {
+        const alreadyReacted = message?.reactions?.some(
+          (r: IChatReaction) => r.emoji === emoji && r.user === currentUserDetails
+        );
+
+        const newReaction = {
+          type: "reaction",
+          intent: alreadyReacted ? "delete" : "create",
+          message_id: message.id,
+          emoji: emoji,
+          group_id: message.group,
+        };
+        chatSocketService?.send(newReaction);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+  return(
   <div
-    className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-white rounded-md px-5 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${
-      isCurrentUser ? "right-0" : "left-0"
-    }`}
+  className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-white rounded-md px-3 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${
+    isCurrentUser ? "right-0" : "left-0"
+  }`}
   >
+            {reactionEmojis.slice(0, 2).map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => handelReact(emoji)}
+                className="flex cursor-pointer sitems-center justify-center rounded-md p-1 text-sm hover:bg-custom-background-80"
+              >
+                {renderEmoji(emoji)}
+              </button>
+            ))}
+              <button
+                onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+                className="relative grid place-items-center rounded p-1  outline-none hover:text-custom-text-100 cursor-pointer hover:bg-custom-background-80"
+              >
+                <SmilePlus className="text-custom-text-100 h-4 w-4" color="grey" />
+              </button>
+              {isEmojiPickerOpen && (
+                <div className="absolute bottom-10 right-0 z-50">
+                  <div className="rounded-2xl shadow-lg border border-custom-sidebar-border-300 overflow-hidden">
+                    <EmojiPicker
+                      previewConfig={{ showPreview: false }}
+                      autoFocusSearch={false}
+                      emojiStyle={EmojiStyle.NATIVE}
+                      style={{ height: "350px" }}
+                      onEmojiClick={(emojiData) => {
+                        handelReact(emojiData.unified);
+                        setIsEmojiPickerOpen(false);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
     {isCurrentUser && onEdit && (
       <button
         onClick={onEdit}
         className="p-1.5 border hover:bg-gray-100 rounded-full transition"
         title="Edit message"
       >
-        <Edit2 size={14} className="text-gray-600" />
+        <Edit2 size={10} className="text-gray-600" />
       </button>
     )}
     <button
@@ -126,7 +188,7 @@ const MessageActionsToolbar: FC<{
       className="p-1.5 border hover:bg-gray-100 rounded-full transition"
       title="Forward message"
     >
-      <Forward size={14} className="text-gray-600" />
+      <Forward size={10} className="text-gray-600" />
     </button>
     {isCurrentUser && onDelete && (
       <button
@@ -134,7 +196,7 @@ const MessageActionsToolbar: FC<{
         className="p-1.5 border hover:bg-red-50 rounded-full transition"
         title="Delete message"
       >
-        <Trash size={14} className="text-red-500" />
+        <Trash size={10} className="text-red-500" />
       </button>
     )}
     <button
@@ -142,10 +204,10 @@ const MessageActionsToolbar: FC<{
       className="p-1.5 border hover:bg-gray-100 rounded-full transition"
       title="Reply to message"
     >
-      <ReplyIcon size={14} className="text-gray-600" />
+      <ReplyIcon size={10} className="text-gray-600" />
     </button>
   </div>
-);
+)}
 
 // Message Timestamp and Status
 const MessageMetadata: FC<{
@@ -226,9 +288,12 @@ const ReplyHeader = ({ msg, memberMap }: any) => {
 const MessageWrapper: FC<{
   msg: any;
   isCurrentUser: boolean;
+  currentUserId: string;
   userDetail: any;
   children: React.ReactNode;
-  showActions?: boolean;
+  showActions?: any;
+  groupedReactions?: any;
+  reactions?: any;
   onEdit?: () => void;
   onForward?: () => void;
   onDelete?: () => void;
@@ -236,9 +301,12 @@ const MessageWrapper: FC<{
 }> = ({
   msg,
   isCurrentUser,
+  currentUserId,  
   userDetail,
   children,
-  showActions = true,
+  groupedReactions,
+  showActions,
+  reactions,
   onEdit,
   onForward,
   onDelete,
@@ -248,6 +316,14 @@ const MessageWrapper: FC<{
     msg?.updated_at &&
     new Date(msg.updated_at).getTime() - new Date(msg.created_at).getTime() >
       2000;
+  const chatSocketService = useChatSocket();
+  if (!msg || !chatSocketService) return null;
+
+    const hasReactedByMe = (emoji: string) =>
+        msg?.reactions?.some(
+          (r: IChatReaction) =>
+            r.emoji === emoji && r.user === currentUserId
+        );
 
   return (
     <div className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
@@ -271,8 +347,50 @@ const MessageWrapper: FC<{
             </span>
           )}
 
-          {children}
+          <div className="relative">
+            <div className="relative z-10 h-auto">
+              {children}
+            </div>
+
+            {/* Emoji reactions */}
+            {reactions?.length > 0 && (
+              <div
+                className={`absolute z-10 -bottom-2.5 flex flex-wrap gap-1 ${
+                  isCurrentUser ? "right-2 justify-end" : "left-2 justify-start"
+                }`}
+              >
+                {groupedReactions.map((reaction: any) => (
+                  <span
+                    key={reaction.emoji}
+                    className="flex items-center gap-1 rounded-full bg-white px-2 py-[2px] text-xs shadow-sm cursor-pointer"
+                    onClick={() => {
+                      try {
+                        const reactedByMe = hasReactedByMe(reaction.emoji)
+                        chatSocketService.send({
+                          type: "reaction",
+                          intent: reactedByMe ? "delete" : "create",
+                          message_id: msg.id,
+                          emoji: reaction.emoji,
+                          group_id: msg.group,
+                        });
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                  >
+                    {renderEmoji(reaction.emoji)}
+                    {reaction.count > 1 && (
+                      <span className="text-[10px] text-gray-600">
+                        {reaction.count}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   );
@@ -282,14 +400,16 @@ const MessageWrapper: FC<{
 const TextMessageContent: FC<{
   msg: any;
   isCurrentUser: boolean;
+  currentUserId: string;
   content: React.ReactNode;
   onEdit?: () => void;
-  onForward: () => void;
+  onForward?: () => void;
   onDelete?: () => void;
   onReply: () => void;
 }> = ({
   msg,
   isCurrentUser,
+  currentUserId,
   content,
   onEdit,
   onForward,
@@ -302,7 +422,7 @@ const TextMessageContent: FC<{
     }`}
   >
     <div
-      className={`relative text-xs py-2 px-3 rounded-xl w-full max-w-2xl ${
+      className={`relative text-sm py-2 px-3 rounded-xl w-full max-w-2xl ${
         isCurrentUser
           ? "bg-indigo-600 text-white rounded-tr-none"
           : "bg-gray-100 text-gray-900 rounded-tl-none"
@@ -310,10 +430,12 @@ const TextMessageContent: FC<{
     >
       <MessageActionsToolbar
         isCurrentUser={isCurrentUser}
+        currentUserDetails={currentUserId}
         onEdit={onEdit}
         onForward={onForward}
         onDelete={onDelete}
         onReply={onReply}
+        message={msg}
       />
       {content}
     </div>
@@ -326,7 +448,7 @@ const TextMessageContent: FC<{
   </div>
 );
 
-// ============= MAIN COMPONENT =============
+// MAIN COMPONENT
 export const MessageArea: FC<MessageAreaProps> = ({
   groupedMessages,
   currentUserId,
@@ -349,7 +471,7 @@ export const MessageArea: FC<MessageAreaProps> = ({
   (window as any).__CURRENT_PROJECT_ID__ = currentProjectId;
   (window as any).__CURRENT_WORKSPACE_SLUG__ = currentWorkspaceSlug;
 
-  // ============= HANDLERS =============
+  // HANDLERS
   const handleStartEdit = (msg: any) => {
     setEditingMessageId(msg?.id);
     const sanitizedContent = cleanedHTML(msg.content);
@@ -429,7 +551,7 @@ export const MessageArea: FC<MessageAreaProps> = ({
     );
   };
 
-  // ============= RENDER MESSAGE =============
+  //  RENDER MESSAGE
   const renderMessage = (msg: any, messages: any[], index: number) => {
     if (!msg.id) return null;
 const { images, textHTML } = extractImageComponents(msg.content);
@@ -459,6 +581,10 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
       !msg.deleted_at &&
       !hasNonImageAttachments &&
       !hasReplyOrForward;
+      const shouldRenderImageWithText = 
+            hasImageComponents && 
+            !hasNoTextContent && 
+            !msg.deleted_at;
     // console.log("shouldRenderImageOnly >>>",shouldRenderImageOnly);
 
     // Deleted message
@@ -500,39 +626,164 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
             <MessageWrapper
               msg={msg}
               isCurrentUser={isCurrentUser}
+              currentUserId={currentUserId}
               userDetail={userDetail}
-              showActions={false}
+              showActions={msg.reaction}
+              reactions={msg.reactions}
+                groupedReactions={groupReactionsWithUsers(
+                msg.reactions || [],
+                userDetail.id || "",
+                msg.group || []
+              )}
             >
-               {hasImages && <ChatImageGrid images={images} />}
-              {/* <RichTextReadOnlyEditor
-                content={msg.content}
-                className="prose prose-sm max-w-none cursor-pointer"
-              /> */}
+              <TextMessageContent
+                msg={msg}
+                currentUserId={currentUserId}
+                isCurrentUser={isCurrentUser}
+                content={hasImages && <ChatImageGrid images={images} />}
+                onEdit={messageActions.onEdit}
+                // onForward={messageActions.onForward}
+                onDelete={messageActions.onDelete}
+                onReply={messageActions.onReply}
+              />
             </MessageWrapper>
           )}
 
+          {/* Image + Text message */}
+        {shouldRenderImageWithText && msg?.attachment?.length && (
+          <MessageWrapper
+            msg={msg}
+            isCurrentUser={isCurrentUser}
+            currentUserId={currentUserId}
+            userDetail={userDetail}
+            showActions={msg.reaction}
+              reactions={msg.reactions}
+                groupedReactions={groupReactionsWithUsers(
+                msg.reactions || [],
+                userDetail.id || "",
+                msg.group || []
+        )}
+          >
+            {isEditing ? (
+              <EditMessageForm
+                content={editedContent}
+                onChange={setEditedContent}
+                onSave={() => handleSaveEdit(msg)}
+                onCancel={handleCancelEdit}
+                onKeyDown={(e) => handleKeyPress(e, msg)}
+              />
+            ) : (
+              <TextMessageContent
+                msg={msg}
+                currentUserId={currentUserId}
+                isCurrentUser={isCurrentUser}
+                content={
+                  <>
+                    {/* Render images first */}
+                    {hasImages && (
+                      <div className="mb-2">
+                        <ChatImageGrid images={images} />
+                      </div>
+                    )}
+                    {/* Render text content */}
+                    {textHTML && (
+                      <RichTextReadOnlyEditor
+                        content={textHTML}
+                        className="prose prose-sm max-w-none"
+                      />
+                    )}
+                    <RenderAttachments
+                      key={msg.id}
+                      message={msg}
+                      isCurrentUser={isCurrentUser}
+                    />
+                  </>
+                }
+                {...messageActions}
+              />
+            )}
+          </MessageWrapper>
+          )}
+
           {/* Message with attachments */}
-          {!shouldRenderImageOnly && msg?.attachment?.length > 0 && (
+          {!shouldRenderImageOnly && !shouldRenderImageWithText && msg?.attachment?.length > 0 && (
             <MessageWrapper
               msg={msg}
               isCurrentUser={isCurrentUser}
+              currentUserId={currentUserId}
               userDetail={userDetail}
-              showActions={false}
+              showActions={msg.reaction}
+              reactions={msg.reactions}
+                groupedReactions={groupReactionsWithUsers(
+                msg.reactions || [],
+                userDetail.id || "",
+                msg.group || []
+        )}
             >
+              <TextMessageContent
+                msg={msg}
+                currentUserId={currentUserId}
+                isCurrentUser={isCurrentUser}
+                content={
+              <>
               <RenderAttachments
                 key={msg.id}
                 message={msg}
                 isCurrentUser={isCurrentUser}
               />
+                {textHTML && (
+                      <RichTextReadOnlyEditor
+                        content={textHTML}
+                        className="prose prose-sm max-w-none"
+                      />
+                    )}</>
+                    }
+                onEdit={messageActions.onEdit}
+                onDelete={messageActions.onDelete}
+                onReply={messageActions.onReply}
+              />
+                
             </MessageWrapper>
-          )}
+        )}
+
+          {/* Message with attachments */}
+          {/* {!shouldRenderImageOnly && msg?.attachment?.length > 0 && (
+            <MessageWrapper
+              msg={msg}
+              isCurrentUser={isCurrentUser}
+              userDetail={userDetail}
+              showActions={false}
+            >
+              <TextMessageContent
+                msg={msg}
+                isCurrentUser={isCurrentUser}
+                content={
+                  <RenderAttachments
+                    message={msg}
+                    isCurrentUser={isCurrentUser}
+                  />
+                }
+                onEdit={messageActions.onEdit}
+                onDelete={messageActions.onDelete}
+                onReply={messageActions.onReply}
+              />
+            </MessageWrapper>
+          )} */}
 
           {/* Regular text message */}
           {!shouldRenderImageOnly && !msg?.attachment?.length && (
             <MessageWrapper
               msg={msg}
+              currentUserId={currentUserId}
               isCurrentUser={isCurrentUser}
               userDetail={userDetail}
+              showActions={msg.reaction}
+              reactions={msg.reactions}
+                groupedReactions={groupReactionsWithUsers(
+                msg.reactions || [],
+                userDetail.id || "",
+                msg.group || []
+        )}
             >
               {isEditing ? (
                 <EditMessageForm
@@ -545,6 +796,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               ) : (
                 <TextMessageContent
                   msg={msg}
+                  currentUserId={currentUserId}
                   isCurrentUser={isCurrentUser}
                   content={
                     msg.forwarded_from &&

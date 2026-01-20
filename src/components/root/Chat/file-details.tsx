@@ -29,9 +29,9 @@ export const RenderAttachments: FC<RenderAttachmentsProps> = ({
     },
   ];
 
-  const handleDownloadFile = async () => {
-    if (!menuState?.attachment) return;
-    const attachment = menuState.attachment;
+  const handleDownloadFile = async (attachment: any) => {
+    // if (!menuState?.attachment) return;
+    // const attachment = menuState.attachment;
     try {
       const fileUrl = getFileURL(attachment.asset);
       const response = await fetch(fileUrl || "");
@@ -48,7 +48,7 @@ export const RenderAttachments: FC<RenderAttachmentsProps> = ({
   };
   return (
     <div
-      className={`flex flex-wrap flex-row cols-2 gap-2 mt-2 pb-2 ${isCurrentUser ? "justify-end" : "justify-start"} `}
+      className={`flex flex-wrap flex-row cols-2 gap-2 mt-2 pb-2 ${isCurrentUser ? "justify-end " : "justify-start"} `}
     >
       {message.attachment.map((att) => {
         const url = getFileURL(att.asset);
@@ -71,12 +71,19 @@ export const RenderAttachments: FC<RenderAttachmentsProps> = ({
               <span className="truncate font-medium text-xs text-custom-text-100">
                 {truncateText(att.attributes?.name || "Unnamed file", 20)}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs">
                 {formatFileSize(att.attributes?.size) || ""}
               </span>
             </div>
             <div className="ml-auto pe-2">
-              <MoreVertical
+              <Download
+                className="h-4 w-4 text cursor-pointer"  
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownloadFile(att as any);
+                }}
+              />
+              {/* <MoreVertical
                 className="h-3 w-3 text-gray-600 cursor-pointer"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -89,7 +96,7 @@ export const RenderAttachments: FC<RenderAttachmentsProps> = ({
                     },
                   });
                 }}
-              />
+              /> */}
             </div>
 
             {menuState?.attachment?.id === att.id && (

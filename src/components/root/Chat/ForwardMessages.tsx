@@ -1,11 +1,12 @@
 import { Forward } from "lucide-react";
 import React, { FC, useState } from "react";
 import { useUser } from "src/context";
-import { formatDateLabel } from "src/utils";
+import { extractImageComponents, formatDateLabel } from "src/utils";
 import { RichTextReadOnlyEditor } from "./RichTextReadOnlyEditor";
 import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
 import { IChatMessage } from "src/types";
 import { RenderAttachments } from "./file-details";
+import { ChatImageGrid } from "./ChatImageGrid";
 interface IForwardedMessage {
   forwardedFromUser: any;
   forwardedFrom: any;
@@ -32,7 +33,10 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
   const IsMe = currentUser?.data?.id === forwardedFromUser.id;
   const sanitizedMessageContent = cleanedHTML(forwardedFrom?.content);
   const plainTextContent = extractPlainText(sanitizedMessageContent);
-
+  const { images: forwardedImages } = extractImageComponents(
+    forwardedFrom?.content || "",
+  );
+  const hasForwardedImages = forwardedImages.length > 0;
   return (
     <div
       className={`${reply ? "bg-transparent text-gray" : IsMe ? "bg-indigo-600 text-white" : ""}   w-full max-w-2xl rounded-2xl font-sans`}
@@ -59,6 +63,15 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
         </div>
         <div className="text-xs pl-8">
           {forwardedFrom?.content && plainTextContent}
+        </div>
+
+        <div className="text-xs">
+          {hasForwardedImages && (
+            <div className="mb-2">
+              <ChatImageGrid images={forwardedImages} />
+              <RenderAttachments message={forwardedFrom} isCurrentUser={IsMe} />
+            </div>
+          )}
         </div>
       </div>
 

@@ -92,7 +92,11 @@ export const ChatWindow = () => {
   const chatFiles = useAppSelector(selectGroupAttachments);
   const currentChatFiles =
     chatFiles[workspaceSlug || ""]?.[currentChatId || ""] || [];
-
+  useEffect(() => {
+    if(currentSelectedGroup) {
+      setActiveTab("chat")
+    }
+  },[currentSelectedGroup])
 
   const dispatch = useAppDispatch();
   const messages_ = useAppSelector(
@@ -125,6 +129,7 @@ export const ChatWindow = () => {
         })
       );
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
+      scrollToBottom();
     }
     if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
   }, [workspaceSlug, currentChatId, dispatch]);
@@ -133,11 +138,6 @@ export const ChatWindow = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  useEffect(() => {
-    if (groupedMessages) {
-      scrollToBottom();
-    }
-  }, [groupedMessages]);
 
   const deleteMassages = (message: any) => {
     console.log("deleteMassages called", message);
@@ -149,7 +149,7 @@ export const ChatWindow = () => {
       sender: message.sender,
     });
   };
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Focus the input box when replyTo has a value
   useEffect(() => {
@@ -184,7 +184,6 @@ export const ChatWindow = () => {
     }
     setReplyTo(message ? message : (null as IChatGroup | null));
   };
-  console.log("groupedMessagesgroupedMessages", groupedMessages);
   const handleSendMessage = () => {
     // if (!message || !selectedChat || !chatSocketService) return;
     if (!selectedChat || !chatSocketService) return;
@@ -482,6 +481,7 @@ export const ChatWindow = () => {
 
                 // Reorder chat list by sender
                 dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
+                scrollToBottom();
               }}
               onCancelReply={() => setReplyTo(null)}
               placeholder="Type a message..."

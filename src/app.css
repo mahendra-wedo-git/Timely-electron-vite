@@ -23,6 +23,13 @@ body {
   overflow: hidden;
 }
 
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #9ca3af !important; /* /* Gray color */
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
 /* Sidebar Styles */
 .sidebar {
   width: 260px;

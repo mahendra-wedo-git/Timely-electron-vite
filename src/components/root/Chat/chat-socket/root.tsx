@@ -14,6 +14,7 @@ import {
   deleteMessage,
   replaceTemporaryMessage,
   updateChatGroupLog,
+  updateMessageReaction,
   updateMessages,
 } from "src/redux/massagesSlice";
 import { selectMemberMap } from "src/redux/memberRootSlice";
@@ -180,7 +181,36 @@ export function ChatSocketContainer() {
             }
             break;
           case "reaction":
-            dispatch({ type: "chat/updateReaction", payload: parsed });
+            if (parsed.intent === "delete") {
+              dispatch(
+                updateMessageReaction({
+                  workspaceSlug,
+                  chatId: parsed.group,
+                  messageId: parsed.message,
+                  reaction: parsed,
+                  intent: "delete",
+                })
+              );
+            }else if (parsed.intent === "create") {
+              dispatch(
+                updateMessageReaction({
+                  workspaceSlug,
+                  chatId: parsed.group,
+                  messageId: parsed.message,
+                  reaction: parsed,
+                  intent: "create",
+                })
+              );
+            }else if (parsed.intent === "update") {
+              dispatch(
+                updateMessageReaction({
+                  workspaceSlug,
+                  chatId: parsed.group,
+                  messageId: parsed.message_id,
+                  reaction: parsed,
+                })
+              );
+            }
             break;
         }
       },

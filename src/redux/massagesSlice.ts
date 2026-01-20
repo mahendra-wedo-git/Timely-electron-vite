@@ -336,7 +336,8 @@ const messageSlice = createSlice({
           }
           message.reactions[reactionIndex] = reaction;
         } else {
-          message.reactions.push(reaction);
+          // message.reactions.push(reaction);
+          message.reactions = [...message.reactions, reaction];
         }
       }
     },

@@ -1,7 +1,7 @@
 // import dayjs from "dayjs";
 // import { IChatReaction, IUserLite } from "packages/types/src";
 
-import { IUserLite } from "src/types";
+import { IChatReaction, IUserLite } from "src/types";
 
 // export function groupChatData(messages: any[], logs: any[]) {
 //   const combined = [...messages, ...logs];
@@ -151,28 +151,28 @@ export function getMemberName(member: IUserLite): string {
   return member.display_name;
 }
 
-// export function groupReactionsWithUsers(
-//   reactions: IChatReaction[],
-//   currentUserId: string,
-//   usersById: Record<string, any>
-// ) {
-//   const grouped = reactions.reduce((acc, r) => {
-//     if (!acc[r.emoji]) {
-//       acc[r.emoji] = {
-//         emoji: r.emoji,
-//         users: [] as any[],
-//         count: 0,
-//         reactedByMe: false,
-//       };
-//     }
-//     acc[r.emoji].count += 1;
-//     acc[r.emoji].users.push(usersById[r.user] || { id: r.user, name: "Unknown" });
-//     if (r.user === currentUserId) acc[r.emoji].reactedByMe = true;
-//     return acc;
-//   }, {} as Record<string, { emoji: string; users: any[]; count: number; reactedByMe: boolean }>);
+export function groupReactionsWithUsers(
+    reactions: IChatReaction[],
+    currentUserId: string,
+    usersById: Record<string, any>
+  ) {
+    const grouped = reactions.reduce((acc, r) => {
+      if (!acc[r.emoji]) {
+        acc[r.emoji] = {
+          emoji: r.emoji,
+          users: [] as any[],
+          count: 0,
+          reactedByMe: false,
+        };
+      }
+      acc[r.emoji].count += 1;
+      acc[r.emoji].users.push(usersById[r.user] || { id: r.user, name: "Unknown" });
+      if (r.user === currentUserId) acc[r.emoji].reactedByMe = true;
+      return acc;
+    }, {} as Record<string, { emoji: string; users: any[]; count: number; reactedByMe: boolean }>);
 
-//   return Object.values(grouped);
-// }
+    return Object.values(grouped);
+}
 
 export function formatFileSize(bytes: number) {
   if (bytes === 0) return "0 B";
@@ -216,7 +216,6 @@ export function extractImageComponents(html: string) {
       aspectratio: el.getAttribute("aspectratio") || "1",
     });
 
-    // 🔥 remove image from normal content
     el.remove();
   });
 

@@ -213,7 +213,7 @@ export const SidebarChat: FC<ISidebarChat> = ({
     )}
   </div>
         {/* Bottom Buttons */}
-        <div className="p-4 border-t border-gray-200 space-y-2 mt-auto">
+        <div className="p-4 mt-auto w-full flex justify-center items-center gap-2">
           <button
             onClick={() => setUserListModalOpen(true)}
             className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 flex items-center justify-center"

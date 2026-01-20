@@ -4,7 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { Send, Smile, X, Plus, ImagePlus } from "lucide-react";
+import { Send, Smile, X, Plus, ImagePlus, Paperclip } from "lucide-react";
 import { useAppDispatch } from "src/redux/hooks";
 import { uploadEditorAsset } from "src/redux/assetsSlice";
 import { getFileIcon } from "src/assets/attachment";
@@ -12,6 +12,10 @@ import { Node } from "@tiptap/core";
 import { getFileURL } from "src/utils";
 import CodeBlock from "@tiptap/extension-code-block";
 import { resolveAssetUrl } from "./imageComponent";
+import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
+import { IChatMessage } from "src/types";
+import { useForm } from "react-hook-form";
+import { useOnClickOutside } from "src/hooks/useOutsideclick";
 
 // Types
 export type FileData = {
@@ -49,61 +53,6 @@ interface TiptapChatEditorProps {
   placeholder?: string;
   maxHeight?: number;
 }
-
-// Custom Image Component Extension
-// const ImageComponent = Node.create({
-//   name: 'imageComponent',
-//   group: 'block',
-//   atom: true,
-//   inline: true,
-
-//   addAttributes() {
-//     return {
-//       src: { default: null },
-//       width: { default: '129px' },
-//       height: { default: '129px' },
-//       id: { default: null },
-//       aspectratio: { default: '1' },
-//     };
-//   },
-
-//   parseHTML() {
-//     return [
-//       {
-//         tag: 'image-component',
-//       },
-//     ];
-//   },
-
-//   renderHTML({ HTMLAttributes }) {
-//     return ['image-component', HTMLAttributes];
-//   },
-
-//   addNodeView() {
-//     return ({ node }) => {
-//       const dom = document.createElement('div');
-//       dom.style.display = 'inline-block';
-//       dom.style.border = '2px solid #e5e7eb';
-//       dom.style.borderRadius = '8px';
-//       dom.style.padding = '8px';
-//       dom.style.margin = '4px';
-//       dom.style.width = node.attrs.width;
-//       dom.style.height = node.attrs.height;
-//       dom.style.backgroundColor = '#f9fafb';
-
-//       const icon = document.createElement('div');
-//       icon.innerHTML = '🖼️';
-//       icon.style.fontSize = '48px';
-//       icon.style.display = 'flex';
-//       icon.style.alignItems = 'center';
-//       icon.style.justifyContent = 'center';
-//       icon.style.height = '100%';
-
-//       dom.appendChild(icon);
-//       return { dom };
-//     };
-//   },
-// });
 const ImageComponent = Node.create({
   name: "imageComponent",
   inline: true,
@@ -152,7 +101,7 @@ const ImageComponent = Node.create({
       };
 
       const resolvedSrc = resolveAssetUrl(node.attrs.src) || node.attrs.src;
-      console.log("resolvedSrcresolvedSrc", resolvedSrc);
+
       img.src = resolvedSrc;
       // const assetMap = (window as any).__CHAT_ASSET_MAP__ || {};
       // img.src = assetMap[node.attrs.src] || node.attrs.src;
@@ -170,90 +119,7 @@ const ImageComponent = Node.create({
 });
 
 // Emoji Picker Component
-const EmojiPicker: FC<EmojiPickerProps> = ({ onEmojiSelect, onClose }) => {
-  const emojis = [
-    "😀",
-    "😃",
-    "😄",
-    "😁",
-    "😅",
-    "😂",
-    "🤣",
-    "😊",
-    "😇",
-    "🙂",
-    "😉",
-    "😌",
-    "😍",
-    "🥰",
-    "😘",
-    "😗",
-    "😙",
-    "😚",
-    "😋",
-    "😛",
-    "😝",
-    "😜",
-    "🤪",
-    "🤨",
-    "🧐",
-    "🤓",
-    "😎",
-    "🤩",
-    "🥳",
-    "😏",
-    "👍",
-    "👎",
-    "👌",
-    "✌️",
-    "🤞",
-    "🤟",
-    "🤘",
-    "🤙",
-    "👏",
-    "🙌",
-    "❤️",
-    "🧡",
-    "💛",
-    "💚",
-    "💙",
-    "💜",
-    "🖤",
-    "🤍",
-    "🤎",
-    "💔",
-    "🔥",
-    "✨",
-    "💫",
-    "⭐",
-    "🌟",
-    "💯",
-    "✅",
-    "❌",
-    "⚡",
-    "💥",
-  ];
-  // above code i'm trying to add multiple images upload to chat but preivew only one and render also last image only
-  return (
-    <div className="absolute bottom-full mb-2 left-0 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-72 z-50">
-      <div className="grid grid-cols-10 gap-1 max-h-48 overflow-y-auto">
-        {emojis.map((emoji, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => {
-              onEmojiSelect(emoji);
-              onClose();
-            }}
-            className="text-xl hover:bg-gray-100 rounded p-1 transition"
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
+
 
 // File Preview Component
 const FilePreview: FC<FilePreviewProps> = ({ files, onRemove }) => {
@@ -357,9 +223,14 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   const [imageAssetIds, setImageAssetIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLElement>;
   const dispatch = useAppDispatch();
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
-
+    useOnClickOutside(
+    emojiPickerRef,
+    () => setShowEmojiPicker(false),
+    showEmojiPicker
+  );
   const editor = useEditor({
     onUpdate: ({ editor }) => {
       setIsEditorEmpty(editor.isEmpty);
@@ -379,6 +250,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
           },
         },
       }),
+      // Custom Code Block Extension
       CodeBlock.configure({
         tabSize: 2,
         exitOnTripleEnter: true,
@@ -546,6 +418,12 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
     editor?.chain().focus().insertContent(emoji).run();
   };
 
+  useEffect(() => {
+ if (files.length > 0 || uploadedAssetIds.size > 0 || editor?.isEmpty === false) {
+   setIsEditorEmpty(false);
+ } 
+},[files])
+
   // Handle send message
   const handleSend = () => {
     if (!editor) return;
@@ -619,7 +497,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   return (
     <div className="w-full p-4 bg-white">
       <div className="w-full max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 focus-within:shadow-md transition-all overflow-hidden">
+        <div className=" rounded-2xl shadow-sm border border-gray-200 focus-within:shadow-md transition-all">
           {/* Reply Preview */}
           {replyTo && (
             <ReplyPreview
@@ -633,30 +511,50 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
           <FilePreview files={files} onRemove={handleRemoveFile} />
 
           {/* Input Container */}
-          <div className="relative flex items-end gap-2 px-5 py-3">
+          <div className="relative flex items-end gap-2 px-5 py-2.5">
             {/* Editor Content */}
             <div className="flex-1 m-auto break-words">
               <EditorContent editor={editor} />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-2 shrink-0 ml-2">
+            <div className="flex items-center gap-3 shrink-0 ml-2">
               {/* Emoji Picker */}
-              <div className="relative">
+              <div className="relative" ref={emojiPickerRef} >
+
+                  <button
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    type="button"
+                    className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                  >
+                    <Smile size={20} />
+                  </button>
+                {showEmojiPicker && (
+                  <div className="absolute bottom-10 right-0 z-50">
+                    <div className="rounded-2xl shadow-lg border border-custom-sidebar-border-300 overflow-hidden">
+                      <EmojiPicker
+                        previewConfig={{ showPreview: false }}
+                        autoFocusSearch={false}
+                        emojiStyle={EmojiStyle.NATIVE}
+                        onEmojiClick={(emojiData) => {
+                          handleEmojiSelect(emojiData.emoji);
+                          setShowEmojiPicker(false);
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <Smile className="h-5 w-5" />
+                   <EmojiPicker open={showEmojiPicker} />
                 </button>
-                {showEmojiPicker && (
-                  <EmojiPicker
-                    onEmojiSelect={handleEmojiSelect}
-                    onClose={() => setShowEmojiPicker(false)}
-                  />
-                )}
-              </div>
+              </div> */}
 
               {/* Image Upload */}
               <button
@@ -681,7 +579,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
                 onClick={() => fileInputRef.current?.click()}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <Plus className="h-5 w-5" />
+                <Paperclip className="h-5 w-5" />
               </button>
               <input
                 ref={fileInputRef}
@@ -691,14 +589,13 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
                 onChange={handleFileChange}
                 className="hidden"
               />
-
               {/* Send Button */}
               <button
                 onClick={handleSend}
                 disabled={isEditorEmpty}
-                className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3 w-3" />
               </button>
             </div>
           </div>
