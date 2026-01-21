@@ -6,10 +6,8 @@ import { useParams } from "react-router-dom";
 import {
   fetchGroups,
   selectAllGroups,
-  selectGroupById,
   setSelectedGroup,
 } from "src/redux/chatSlice";
-import { useDispatch } from "react-redux";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
 import { IChatGroup, IChatMessage, IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
@@ -17,18 +15,8 @@ import { CreateGroupModal } from "../CreateGroup/CreateGroup";
 import { WorkspaceService } from "src/services/workspace.service";
 import {
   fetchWorkspaceMembers,
-  selectWorkspaceMemberDetails,
-  selectWorkspaceMemberMap,
 } from "src/redux/workspaceMemberSlice";
-interface Chat {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount?: number;
-  isOnline?: boolean;
-}
+import { ChatListSkeleton } from "src/components/common";
 interface ISidebarChat {
   setSelectedChat: (chat: IChatGroup) => void;
   selectedChat: IChatGroup | undefined;
@@ -50,7 +38,7 @@ const workspaceService = new WorkspaceService();
 export const SidebarChat: FC<ISidebarChat> = ({
   selectedChat,
   setSelectedChat,
-  lastMessage
+  lastMessage,
 }) => {
   const { workspace: workspaceSlug } = useParams();
   const chatSocketService = useChatSocket();
@@ -63,15 +51,15 @@ export const SidebarChat: FC<ISidebarChat> = ({
   const groups: any = useAppSelector(selectAllGroups);
   // const selectedChatGroup = useAppSelector((state) => selectGroupById(state, selectedChat?.id));
 
-//  for workspcae members
+  //  for workspcae members
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     const fetchMembers = async () => {
-      if(users.length > 0) return
+      if (users.length > 0) return;
       try {
         const members: any = await workspaceService.fetchWorkspaceMembers(
-          workspaceSlug as string
+          workspaceSlug as string,
         );
         setUsers(members);
       } catch (error) {
@@ -82,13 +70,11 @@ export const SidebarChat: FC<ISidebarChat> = ({
     fetchMembers();
   }, [workspaceSlug]);
 
-  // const lastMessage = useAppSelector((state) => selectLastMessage(state));
-  // const users = useAppSelector((state) => selectWorkspaceMemberMap(state, workspaceSlug as string));
-    useEffect(() => {
-      if (!workspaceSlug) return;
-      // fetchWorkspaceMember(workspaceSlug);
-      dispatch(fetchWorkspaceMembers(workspaceSlug));
-    }, [workspaceSlug]);
+  useEffect(() => {
+    if (!workspaceSlug) return;
+    // fetchWorkspaceMember(workspaceSlug);
+    dispatch(fetchWorkspaceMembers(workspaceSlug));
+  }, [workspaceSlug]);
   const [chatUsers, setChatUsers] = useState(groups || []);
   const onSelect = (groupId: string) => {
     dispatch(setSelectedGroup(groupId));
@@ -103,14 +89,9 @@ export const SidebarChat: FC<ISidebarChat> = ({
       members: [user.id],
     };
     chatSocketService?.send(newMsg);
-    // Simulate API call
-    // setTimeout(() => {
-      setSendingTo(null);
-      setUserListModalOpen(false);
-      // dispatch(fetchGroups(workspaceSlug as string));
-      // dispatch(setSelectedGroup(workspaceSlug as string));
-      // You can add success notification here
-    // }, 1000);
+
+    setSendingTo(null);
+    setUserListModalOpen(false);
   };
 
   const handleCreateGroup = () => {
@@ -123,33 +104,24 @@ export const SidebarChat: FC<ISidebarChat> = ({
     // dispatch(setSelectedGroup(workspaceSlug));
     // setChatUsers(groups);
   }, [workspaceSlug, dispatch]);
-  // // const loader = useAppSelector((s) => s.chat.loader);
+  const loader = useAppSelector((s) => s.chat.loader);
 
-  // useEffect(() => {
-  //   if (!workspaceSlug) return;
-  //   dispatch(fetchGroups(workspaceSlug));
-  // }, [workspaceSlug]);
+  
 
-  // const dispatch = useAppDispatch();
 
-  // useEffect(() => {
-  //   if (!workspaceSlug) return;
-  //   const getChatUserList = async () => {
-  //     try {
-  //       const AllChats:any = await dispatch(fetchGroups(workspaceSlug));
-  //       console.log("AllChatsAllChats", AllChats);
-  //       setChatUsers(AllChats);
-  //     } catch (error) {
-  //       console.error("Error fetching chat user list:", error);
-  //     }
-  //   };
-  //   getChatUserList();
-  // }, [workspaceSlug]);
-
-  //   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const pinnedGroups = groups && groups.filter((group: any) => group?.is_pinned);
+  const pinnedGroups =
+    groups && groups.filter((group: any) => group?.is_pinned);
   const recentGroups =
     groups && groups.filter((group: any) => group && !group?.is_pinned);
+
+  if (loader)
+    return (
+      <div className="w-[25%] bg-white border-r border-gray-200 flex flex-col">
+        <div className="flex flex-col h-full overflow-y-auto p-2">
+          <ChatListSkeleton />
+        </div>
+      </div>
+    );
   return (
     <>
       <div className="w-[25%] bg-white border-r border-gray-200 flex flex-col">
@@ -190,28 +162,28 @@ export const SidebarChat: FC<ISidebarChat> = ({
             </>
           )}
 
-        {/* Recent Label */}
-    {recentGroups.length > 0 && (
-      <>
-        <div className="px-4 py-2 bg-gray-50">
-          <button className="text-xs text-gray-600 flex items-center">
-            <span className="mr-1">▼</span> Recent
-          </button>
-        </div>
+          {/* Recent Label */}
+          {recentGroups.length > 0 && (
+            <>
+              <div className="px-4 py-2 bg-gray-50">
+                <button className="text-xs text-gray-600 flex items-center">
+                  <span className="mr-1">▼</span> Recent
+                </button>
+              </div>
 
-        {/* Chat List */}
-        <div className="flex-1">
-          <ChatUserList
-            groups={recentGroups}
-            lastMessage={lastMessage}
-            selectedChat={selectedChat}
-            setSelectedChat={setSelectedChat}
-            searchQuery={searchQuery}
-          />
+              {/* Chat List */}
+              <div className="flex-1">
+                <ChatUserList
+                  groups={recentGroups}
+                  lastMessage={lastMessage}
+                  selectedChat={selectedChat}
+                  setSelectedChat={setSelectedChat}
+                  searchQuery={searchQuery}
+                />
+              </div>
+            </>
+          )}
         </div>
-      </>
-    )}
-  </div>
         {/* Bottom Buttons */}
         <div className="p-4 mt-auto w-full flex justify-center items-center gap-2">
           <button

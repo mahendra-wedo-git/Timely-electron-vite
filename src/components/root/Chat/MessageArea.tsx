@@ -155,7 +155,7 @@ const MessageActionsToolbar: FC<{
             ))}
               <button
                 onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-                className="relative grid place-items-center rounded p-1  outline-none hover:text-custom-text-100 cursor-pointer hover:bg-custom-background-80"
+                className="relative grid place-items-center rounded p-1  outline-none hover:text-custom-text-100 cursor-pointer hover:bg-gray-100"
               >
                 <SmilePlus className="text-custom-text-100 h-4 w-4" color="grey" />
               </button>

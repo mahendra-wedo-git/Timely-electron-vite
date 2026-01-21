@@ -37,6 +37,7 @@ import {
   selectChatMessageDetails,
   selectGroupAttachments,
   selectLastMessage,
+  selectLoader,
 } from "src/redux/massagesSlice";
 import { groupChatData } from "src/utils";
 import MessageArea from "./MessageArea";
@@ -50,10 +51,11 @@ import { TiptapChatEditor } from "./Editor";
 import { UserAvatar } from "./UserAvatar";
 import { GroupChatAvatar } from "./group-chat-avatar";
 import { ChatImageList } from "./imageListing";
+import { ChatMessageSkeleton } from "src/components/common";
 
 export const ChatWindow = () => {
   const [selectedChat, setSelectedChat] = useState<IChatGroup | undefined>(
-    undefined
+    undefined,
   );
   const [message, setMessage] = useState("");
   const [openForwardModal, setOpenForwardModal] = useState(false);
@@ -62,10 +64,10 @@ export const ChatWindow = () => {
   const [replyTo, setReplyTo] = useState<IChatGroup | null>(null);
   const memberDetails = useAppSelector(selectMemberMap);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [openQuickActions, setOpenQuickActions] = useState<boolean | null>(
-    false
+    false,
   );
   const [files, setFiles] = useState<FileData[]>([]);
   const { workspace: workspaceSlug } = useParams();
@@ -74,41 +76,44 @@ export const ChatWindow = () => {
   const selectedChatGroup = useAppSelector((state) =>
     selectedChat?.id !== undefined
       ? selectGroupById(state, selectedChat.id)
-      : undefined
+      : undefined,
   );
 
   const currentSelectedGroup = useAppSelector((state) =>
-    workspaceSlug ? selectCurrentSelectedGroup(state, workspaceSlug) : undefined
+    workspaceSlug
+      ? selectCurrentSelectedGroup(state, workspaceSlug)
+      : undefined,
   );
   const [activeTab, setActiveTab] = useState<"chat" | "files" | "photos">(
-    "chat"
+    "chat",
   );
   const currentChatId = currentSelectedGroup?.groupId;
   const receiverUserId = currentSelectedGroup?.userId;
   const groupName = currentSelectedGroup?.group_name;
 
   const lastMessage = useAppSelector((state) => selectLastMessage(state));
+  const loader = useAppSelector((state) => selectLoader(state));
 
   const chatFiles = useAppSelector(selectGroupAttachments);
   const currentChatFiles =
     chatFiles[workspaceSlug || ""]?.[currentChatId || ""] || [];
   useEffect(() => {
-    if(currentSelectedGroup) {
-      setActiveTab("chat")
+    if (currentSelectedGroup) {
+      setActiveTab("chat");
     }
-  },[currentSelectedGroup])
+  }, [currentSelectedGroup]);
 
   const dispatch = useAppDispatch();
   const messages_ = useAppSelector(
     (state) =>
       workspaceSlug &&
       currentChatId &&
-      selectChatMessageDetails(state, workspaceSlug, currentChatId)
+      selectChatMessageDetails(state, workspaceSlug, currentChatId),
   ) as IChatMessage[];
   const logs = useAppSelector((state) =>
     workspaceSlug && currentChatId
       ? selectChatGroupLogDetails(state, workspaceSlug, currentChatId)
-      : undefined
+      : undefined,
   ) as IChatGroupLog[];
 
   const groupedMessages = groupChatData(messages_, logs);
@@ -119,14 +124,14 @@ export const ChatWindow = () => {
           workspaceSlug,
           chatId: currentChatId,
           params: { cursor: null as string | null },
-        })
+        }),
       );
       dispatch(
         fetchGroupAttachments({
           workspaceSlug,
           chatId: currentChatId,
           params: { cursor: null },
-        })
+        }),
       );
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
       scrollToBottom();
@@ -137,7 +142,6 @@ export const ChatWindow = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
 
   const deleteMassages = (message: any) => {
     console.log("deleteMassages called", message);
@@ -166,7 +170,6 @@ export const ChatWindow = () => {
         newSet.delete(id);
         return newSet;
       });
-
     } catch (error) {
       console.error("Failed to delete asset:", error);
       // optional: show toast or revert state if deletion fails
@@ -209,7 +212,7 @@ export const ChatWindow = () => {
     content: string,
     files: File[],
     replyTo: any,
-    editor: any
+    editor: any,
   ) => {
     console.log("handleSendMessageEditor", content);
     if (!selectedChat || !chatSocketService) return;
@@ -253,7 +256,7 @@ export const ChatWindow = () => {
     const allImages = currentChatFiles.flatMap((msg: IChatMessage) =>
       (msg.attachment || [])
         .filter((att) => att.attributes?.type?.startsWith("image/"))
-        .map((att) => ({ ...att, created_at: msg.created_at }))
+        .map((att) => ({ ...att, created_at: msg.created_at })),
     );
     return allImages;
   };
@@ -288,14 +291,14 @@ export const ChatWindow = () => {
               workspaceSlug,
               pinId: chat.pin_id,
               groupId: chat.id,
-            })
+            }),
           );
         } else {
           await dispatch(
             pinGroup({
               workspaceSlug,
               data: { group: chat.id },
-            })
+            }),
           );
         }
       },
@@ -317,14 +320,14 @@ export const ChatWindow = () => {
               workspaceSlug,
               muteId: chat.mute_id,
               groupId: chat.id,
-            })
+            }),
           );
         } else {
           await dispatch(
             muteGroup({
               workspaceSlug,
               data: { group: chat.id },
-            })
+            }),
           );
         }
       },
@@ -341,7 +344,11 @@ export const ChatWindow = () => {
       />
 
       {/* Main Chat Area */}
-      {selectedChat ? (
+      {loader ? (
+        <div className="p-4 max-w-[950px] mx-auto w-full">
+          <ChatMessageSkeleton />
+        </div>
+      ) : selectedChat ? (
         <div className="flex-1 flex flex-col">
           {/* Chat Header */}
           <div className=" border-b border-gray-200 px-10 py-4 flex items-center bg-white ">

@@ -24,7 +24,7 @@ export const RichTextReadOnlyEditor: FC<RichTextReadOnlyEditorProps> = ({
     ],
     editorProps: {
       attributes: {
-        class: `text-${text}  break-words whitespace-pre-wrap max-h-[${maxHeight}px] overflow-y-auto`,
+        class: `text-${text}  break-words tracking-wide whitespace-pre-wrap max-h-[${maxHeight}px] overflow-y-auto`,
       },
     },
     content,
