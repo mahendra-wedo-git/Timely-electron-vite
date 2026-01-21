@@ -148,7 +148,7 @@ const MessageActionsToolbar: FC<{
                 key={emoji}
                 type="button"
                 onClick={() => handelReact(emoji)}
-                className="flex cursor-pointer sitems-center justify-center rounded-md p-1 text-sm hover:bg-custom-background-80"
+                className="flex cursor-pointer sitems-center justify-center rounded-md p-1 text-sm hover:bg-gray-100"
               >
                 {renderEmoji(emoji)}
               </button>
@@ -363,7 +363,7 @@ const MessageWrapper: FC<{
                 {groupedReactions.map((reaction: any) => (
                   <span
                     key={reaction.emoji}
-                    className="flex items-center gap-1 rounded-full bg-white px-2 py-[2px] text-xs shadow-sm cursor-pointer"
+                    className="flex items-center gap-1 rounded-full bg-gray-100 px-1 py-[2px] text-xs shadow-sm cursor-pointer"
                     onClick={() => {
                       try {
                         const reactedByMe = hasReactedByMe(reaction.emoji)
@@ -425,7 +425,7 @@ const TextMessageContent: FC<{
     }`}
   >
     <div
-      className={`relative text-sm py-2 rounded-xl w-full max-w-2xl ${className}`}
+      className={`relative text-sm py-3 rounded-xl px-3 w-full max-w-2xl ${className}`}
       // className={`relative text-sm py-2 px-3 rounded-xl w-full max-w-2xl ${
       //   isCurrentUser
       //     ? "bg-indigo-600 text-white rounded-tr-none"
@@ -867,7 +867,8 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
                         </p> */}
                         <RichTextReadOnlyEditor
                           content={msg.content}
-                          className="prose prose-sm max-w-none"
+                          text="sm"
+                          className="prose text-lg prose-sm max-w-none"
                         />
                       </>
                     )

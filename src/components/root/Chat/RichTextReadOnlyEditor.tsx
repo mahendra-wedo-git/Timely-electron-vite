@@ -7,12 +7,14 @@ type RichTextReadOnlyEditorProps = {
   content: string; // HTML from editor.getHTML()
   className?: string;
   maxHeight?: number;
+  text?: string;
 };
 
 export const RichTextReadOnlyEditor: FC<RichTextReadOnlyEditorProps> = ({
   content,
   className,
   maxHeight = 400,
+  text = "sm",
 }) => {
   const editor = useEditor({
     editable: false,
@@ -22,7 +24,7 @@ export const RichTextReadOnlyEditor: FC<RichTextReadOnlyEditorProps> = ({
     ],
     editorProps: {
       attributes: {
-        class: `text-sm  break-words whitespace-pre-wrap max-h-[${maxHeight}px] overflow-y-auto`,
+        class: `text-${text}  break-words whitespace-pre-wrap max-h-[${maxHeight}px] overflow-y-auto`,
       },
     },
     content,
