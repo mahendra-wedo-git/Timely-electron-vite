@@ -13,6 +13,7 @@ import { extractImageComponents, formatDateLabel, getFileURL, groupReactionsWith
 import {
   cleanedHTML,
   extractPlainText,
+  isEmojiOnlyText,
   isEmptyHtmlString,
 } from "src/utils/string.helper";
 import { useAppSelector } from "src/redux/hooks";
@@ -216,13 +217,13 @@ const MessageMetadata: FC<{
   isRead?: boolean;
 }> = ({ isCurrentUser, createdAt, isRead }) => (
   <>
-    <span className="text-[11px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+    <span className="text-[9px] min-w-[45px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
       {new Date(createdAt).toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       })}
     </span>
-    {isCurrentUser && (
+    {/* {isCurrentUser && (
       <span className="opacity-0 group-hover:opacity-100 transition-opacity">
         {isRead ? (
           <CheckCheckIcon className="h-3 w-3 text-indigo-600" />
@@ -230,7 +231,7 @@ const MessageMetadata: FC<{
           <Check className="h-3 w-3 text-gray-400" />
         )}
       </span>
-    )}
+    )} */}
   </>
 );
 
@@ -578,6 +579,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
         (att : any) => !att.attributes?.type?.startsWith("image/")
       ) ?? false;
     const hasReplyOrForward = !!(msg.reply_to || msg.is_forwarded);
+    const hasAnyAttachments = (msg.attachment?.length || 0) > 0;
     const shouldRenderImageOnly =
       hasImageComponents &&
       hasNoTextContent &&
@@ -587,7 +589,15 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
       const shouldRenderImageWithText = 
             hasImageComponents && 
             !hasNoTextContent && 
-            !msg.deleted_at;
+    !msg.deleted_at;
+    const plainTextContent = extractPlainText(sanitizedMessageContent);
+    const isEmojiOnlyContent = isEmojiOnlyText(plainTextContent);
+      const shouldRenderEmojiOnly =
+      isEmojiOnlyContent &&
+      !hasAnyAttachments &&
+      !hasReplyOrForward &&
+      !hasImageComponents &&
+      !msg.deleted_at;
     // console.log("shouldRenderImageOnly >>>",shouldRenderImageOnly);
 
     // Deleted message
@@ -646,6 +656,34 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
                 content={hasImages && <ChatImageGrid images={images} />}
                 onEdit={messageActions.onEdit}
                 // onForward={messageActions.onForward}
+                onDelete={messageActions.onDelete}
+                onReply={messageActions.onReply}
+              />
+            </MessageWrapper>
+          )}
+
+          {/* Emoji-only message */}
+          {shouldRenderEmojiOnly && (
+            <MessageWrapper
+              msg={msg}
+              isCurrentUser={isCurrentUser}
+              currentUserId={currentUserId}
+              userDetail={userDetail}
+              showActions={msg.reaction}
+              reactions={msg.reactions}
+                groupedReactions={groupReactionsWithUsers(
+                msg.reactions || [],
+                userDetail.id || "",
+                msg.group || []
+              )}
+            >
+              <TextMessageContent
+                msg={msg}
+                currentUserId={currentUserId}
+                isCurrentUser={isCurrentUser}
+                content={plainTextContent}
+                onEdit={messageActions.onEdit}
+                // onForward={messageActions.onForward} 
                 onDelete={messageActions.onDelete}
                 onReply={messageActions.onReply}
               />
@@ -727,7 +765,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               <TextMessageContent
                 msg={msg}
                 currentUserId={currentUserId}
-                className={`px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}
+                className={`${textHTML && `px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}`}
                 isCurrentUser={isCurrentUser}
                 content={
               <>
@@ -776,7 +814,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
           )} */}
 
           {/* Regular text message */}
-          {!shouldRenderImageOnly && !msg?.attachment?.length && (
+          {!shouldRenderImageOnly && !shouldRenderEmojiOnly && !msg?.attachment?.length && (
             <MessageWrapper
               msg={msg}
               currentUserId={currentUserId}

@@ -155,7 +155,6 @@ export const ChatImageList: React.FC<ChatImageListProps> = ({
                 if (!imageUrl) {
                   return null;
                 }
-                console.log("imageUrlimageUrl", imageUrl);
                 const memberName = getMemberName(image.created_by);
                 return (
                   <div

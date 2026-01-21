@@ -20,6 +20,7 @@ import {
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { IChatGroup } from "src/types";
 import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
+import { renderEmoji } from "src/utils/emoji.helper";
 
 export function ChatSocketContainer() {
   const { workspace: workspaceSlug } = useParams();
@@ -32,7 +33,7 @@ export function ChatSocketContainer() {
   const groupsDetails: any = useAppSelector(selectAllGroups);
   const shouldShowOSNotification = (
     senderId: string,
-    currentUserId: string
+    currentUserId: string,
   ) => {
     console.log("shouldShowOSNotification called", senderId, currentUserId);
     // if (senderId) return false;
@@ -40,6 +41,14 @@ export function ChatSocketContainer() {
     if (document.hasFocus()) return false;
     return true;
   };
+  // function shouldShowReactionNotification(
+  //   reactorId: string,
+  //   messageSenderId: string,
+  //   currentUserId: string
+  // ) {
+  //   console.log("shouldShowReactionNotification",reactorId !== currentUserId && messageSenderId === currentUserId)
+  //   return reactorId !== currentUserId && messageSenderId === currentUserId;
+  // }
 
   useEffect(() => {
     if (!workspaceSlug || !currentUser?.id) return;
@@ -77,7 +86,7 @@ export function ChatSocketContainer() {
                   workspaceSlug,
                   chatId: groupId,
                   log: parsed,
-                })
+                }),
               );
               return;
             }
@@ -104,13 +113,13 @@ export function ChatSocketContainer() {
               shouldShowOSNotification(parsed.sender, currentUser.id)
             ) {
               const senderDetails = Array.from(groupsDetails).find(
-                (group: any) => group.id === parsed.group
+                (group: any) => group.id === parsed.group,
               ) as IChatGroup;
               const Attachments = parsed?.attachments?.length > 0;
               const isGroupChat = senderDetails.members.length > 1;
               const sanitizedMessageContent = cleanedHTML(parsed.content);
               const plainTextContent = extractPlainText(
-                sanitizedMessageContent
+                sanitizedMessageContent,
               );
               const Messages =
                 plainTextContent.length > 100
@@ -121,8 +130,8 @@ export function ChatSocketContainer() {
               console.log(
                 "groupsDetails",
                 Array.from(groupsDetails).find(
-                  (group: any) => group.id === parsed.group
-                )
+                  (group: any) => group.id === parsed.group,
+                ),
               );
               window.api?.showNotification({
                 title: parsed.group ? senderDetails.group_name : `New message`,
@@ -140,7 +149,7 @@ export function ChatSocketContainer() {
                   chatId: parsed.group,
                   clientMessageId: parsed.clientMessageId,
                   message: parsed,
-                })
+                }),
               );
             } else if (parsed.intent === "delete") {
               dispatch(
@@ -148,7 +157,7 @@ export function ChatSocketContainer() {
                   workspaceSlug,
                   chatId: parsed.group,
                   messageId: parsed.message_id,
-                })
+                }),
               );
             } else if (parsed.intent === "update") {
               dispatch(
@@ -158,14 +167,14 @@ export function ChatSocketContainer() {
                   msgs: [parsed],
                   message_id: parsed.message_id || parsed.id,
                   currentUserId: currentUser.id,
-                })
+                }),
               );
             } else {
               const chatId = parsed.id || parsed.group;
               console.log(
                 "groupedMessages update socket called",
                 parsed,
-                chatId
+                chatId,
               );
               dispatch(
                 updateMessages({
@@ -173,7 +182,7 @@ export function ChatSocketContainer() {
                   chatId,
                   msgs: [parsed],
                   currentUserId: currentUser.id,
-                })
+                }),
               );
             }
             if (parsed.intent !== "update") {
@@ -181,6 +190,25 @@ export function ChatSocketContainer() {
             }
             break;
           case "reaction":
+            if (
+              parsed.intent === "create" &&
+              shouldShowOSNotification(parsed.sender, currentUser.id)
+            ) {
+              const senderDetails = Array.from(groupsDetails).find(
+                (group: any) => group.id === parsed.group,
+              ) as IChatGroup;
+
+              const isGroupChat = senderDetails?.members?.length > 1;
+              const reactorName =
+                memberMap[parsed.user]?.display_name || "Someone";
+              const parsedEmoji = renderEmoji(parsed.emoji) as string;
+              window.api?.showNotification({
+                title: senderDetails?.group_name || "New reaction",
+                body: isGroupChat
+                  ? `${reactorName} reacted ${parsedEmoji} to your message`
+                  : `${reactorName} reacted ${parsedEmoji}`,
+              });
+            }
             if (parsed.intent === "delete") {
               dispatch(
                 updateMessageReaction({
@@ -189,9 +217,9 @@ export function ChatSocketContainer() {
                   messageId: parsed.message,
                   reaction: parsed,
                   intent: "delete",
-                })
+                }),
               );
-            }else if (parsed.intent === "create") {
+            } else if (parsed.intent === "create") {
               dispatch(
                 updateMessageReaction({
                   workspaceSlug,
@@ -199,16 +227,16 @@ export function ChatSocketContainer() {
                   messageId: parsed.message,
                   reaction: parsed,
                   intent: "create",
-                })
+                }),
               );
-            }else if (parsed.intent === "update") {
+            } else if (parsed.intent === "update") {
               dispatch(
                 updateMessageReaction({
                   workspaceSlug,
                   chatId: parsed.group,
                   messageId: parsed.message_id,
                   reaction: parsed,
-                })
+                }),
               );
             }
             break;
@@ -216,7 +244,7 @@ export function ChatSocketContainer() {
       },
       () => console.log("WS connected:", workspaceSlug),
       (err) => console.error("WS error:", err),
-      () => console.log("WS closed")
+      () => console.log("WS closed"),
     );
 
     return () => {

@@ -428,18 +428,26 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   const handleSend = () => {
     if (!editor) return;
 
-    let content = editor.getHTML();
-    const isEmpty = editor.isEmpty;
+   const isEmpty = editor.isEmpty;
+  const hasFiles = uploadedAssetIds.size > 0;
 
-    if (isEmpty && uploadedAssetIds.size === 0) return;
+  // If nothing at all, do nothing
+  if (isEmpty && !hasFiles) return;
 
-    // Ensure proper paragraph structure matching web version
+  let content = "";
+
+  // Only include editor HTML if there's text
+  if (!isEmpty) {
+    content = editor.getHTML();
+
+    // Ensure paragraph class only when text exists
     if (!content.includes('class="editor-paragraph-block')) {
       content = content.replace(
         /<p>/g,
         '<p class="editor-paragraph-block break-all whitespace-pre-wrap">'
       );
     }
+  }
 
     onSendMessage(content, Array.from(uploadedAssetIds));
 

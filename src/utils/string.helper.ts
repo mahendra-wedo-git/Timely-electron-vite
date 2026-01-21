@@ -368,3 +368,22 @@ export const extractPlainText = (html: string) =>
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
+
+export const isEmojiCodePoint = (codePoint: number) =>
+  (codePoint >= 0x1f000 && codePoint <= 0x1ffff) ||
+  (codePoint >= 0x1f1e6 && codePoint <= 0x1f1ff) ||
+  (codePoint >= 0x2600 && codePoint <= 0x27bf) ||
+  codePoint === 0x200d ||
+  codePoint === 0xfe0f;
+
+export const isEmojiOnlyText = (text: string) => {
+  const compact = text.replace(/\s+/g, "");
+  if (!compact) return false;
+
+  return Array.from(compact).every((char) => {
+    const codePoint = char.codePointAt(0);
+    if (!codePoint) return false;
+
+    return isEmojiCodePoint(codePoint);
+  });
+};
