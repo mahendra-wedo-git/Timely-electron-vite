@@ -33,7 +33,6 @@ const MAX_ZOOM = 2;
 const ZOOM_SPEED = 0.05;
 
 export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
-
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [magnification, setMagnification] = useState<number>(1);
   const [initialMagnification, setInitialMagnification] = useState(1);
@@ -155,7 +154,7 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
       node.style.left = "0px";
       node.style.top = "0px";
     },
-    [activeIndex, naturalDimensions]
+    [activeIndex, naturalDimensions],
   );
 
   useEffect(() => {
@@ -203,7 +202,7 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
       imgRef.current.style.left = `${dragOffset.current.x + dx / magnification}px`;
       imgRef.current.style.top = `${dragOffset.current.y + dy / magnification}px`;
     },
-    [isDragging, magnification]
+    [isDragging, magnification],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -239,41 +238,6 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
     }
   };
 
-  //   const handleDownload = async () => {
-  //   if (!currentImage) return;
-
-  //   const resolvedSrc = resolveAssetUrl(currentImage.src);
-  //   if (!resolvedSrc) return;
-
-  //   try {
-  //     const response = await fetch(resolvedSrc, {
-  //       credentials: "include", // IMPORTANT if auth-protected
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(`Failed to fetch image: ${response.status}`);
-  //     }
-
-  //     const blob = await response.blob();
-
-  //     // Infer filename correctly
-  //     const assetId = getAssetIdFromUrl(resolvedSrc) ?? "image";
-  //     const extension = blob.type.split("/")[1] || "png";
-
-  //     const url = URL.createObjectURL(blob);
-  //     const link = document.createElement("a");
-  //     link.href = url;
-  //     link.download = `${assetId}.${extension}`;
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     document.body.removeChild(link);
-
-  //     URL.revokeObjectURL(url);
-  //   } catch (error) {
-  //     console.error("Image download failed:", error);
-  //   }
-  // };
-
   // Keyboard navigation
   useEffect(() => {
     if (activeIndex === null) return;
@@ -296,7 +260,7 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
           "grid gap-1.5 rounded-lg overflow-hidden",
           images.length === 1 && "grid-cols-1 max-w-xs",
           images.length === 2 && "grid-cols-2 max-w-md",
-          images.length >= 3 && "grid-cols-2 max-w-md"
+          images.length >= 3 && "grid-cols-2 max-w-md",
         )}
       >
         {visibleImages.map((image, index) => {
@@ -306,9 +270,9 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
               key={image.id ?? index}
               type="button"
               className={cn(
-                "relative w-full overflow-hidden focus:outline-none bg-gray-100 rounded-sm aspect-square",
+                "relative w-full max-w-[200px] aspect-square overflow-hidden bg-gray-100 rounded-sm",
                 images.length === 3 && index === 0 && "row-span-2",
-                isCountTile && "cursor-pointer"
+                isCountTile && "cursor-pointer",
               )}
               onClick={() => openModalAt(index)}
             >
@@ -317,7 +281,7 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
                 alt={image.alt ?? "attachment"}
                 className={cn(
                   "size-full object-cover",
-                  isCountTile && "blur-[1px] scale-105"
+                  isCountTile && "blur-[1px] scale-105",
                 )}
               />
               {isCountTile && (
@@ -340,7 +304,7 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
               "fixed inset-0 z-[9999] bg-black/90 grid place-items-center",
               {
                 "cursor-grabbing": isDragging,
-              }
+              },
             )}
             ref={modalRef}
             onMouseDown={(e) => e.target === modalRef.current && closeModal()}
@@ -465,7 +429,7 @@ export const ChatImageGrid: React.FC<ImageGridProps> = ({ images }) => {
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </Fragment>
   );

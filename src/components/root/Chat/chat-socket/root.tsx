@@ -139,7 +139,7 @@ export function ChatSocketContainer() {
                   ? `${memberMap[parsed.sender]?.display_name} : ${
                       Attachments ? "Sent a file" : Messages
                     }`
-                  : Messages,
+                  : Attachments ? "Sent a file" : Messages || "New message",
               });
             }
             if (parsed.intent === "replaceTempData") {
