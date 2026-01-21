@@ -1,4 +1,4 @@
-import { Plus, Search, Users } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Search, Users } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 import { ChatUserList } from "./ChatUserList";
 import { AddChatModal } from "../UserChatRequestModal";
@@ -13,9 +13,7 @@ import { IChatGroup, IChatMessage, IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
 import { CreateGroupModal } from "../CreateGroup/CreateGroup";
 import { WorkspaceService } from "src/services/workspace.service";
-import {
-  fetchWorkspaceMembers,
-} from "src/redux/workspaceMemberSlice";
+import { fetchWorkspaceMembers } from "src/redux/workspaceMemberSlice";
 import { ChatListSkeleton } from "src/components/common";
 interface ISidebarChat {
   setSelectedChat: (chat: IChatGroup) => void;
@@ -46,6 +44,8 @@ export const SidebarChat: FC<ISidebarChat> = ({
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [userListModalOpen, setUserListModalOpen] = useState(false);
   const [groupListModalOpen, setGroupListModalOpen] = useState(false);
+  const [pinChatCollapse, setPinChatCollapse] = useState(true);
+  const [recentChatCollapse, setRecentChatCollapse] = useState(true);
 
   const dispatch = useAppDispatch();
   const groups: any = useAppSelector(selectAllGroups);
@@ -106,9 +106,6 @@ export const SidebarChat: FC<ISidebarChat> = ({
   }, [workspaceSlug, dispatch]);
   const loader = useAppSelector((s) => s.chat.loader);
 
-  
-
-
   const pinnedGroups =
     groups && groups.filter((group: any) => group?.is_pinned);
   const recentGroups =
@@ -145,42 +142,64 @@ export const SidebarChat: FC<ISidebarChat> = ({
         <div className="overflow-y-auto">
           {pinnedGroups.length > 0 && (
             <>
-              <div className="px-4 py-2 bg-gray-50">
+              <div
+                className="px-4 py-2 bg-gray-50 cursor-pointer"
+                onClick={() => setPinChatCollapse(!pinChatCollapse)}
+              >
                 <button className="text-xs text-gray-600 flex items-center">
-                  <span className="mr-1">▼</span> Pin
+                  {pinChatCollapse ? (
+                    <ChevronDown className="mr-1 h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="mr-1 h-4 w-4" />
+                  )}
+                  {/* <span className="mr-1">▼</span>  */}
+                  Pinned
                 </button>
               </div>
-              <div className="flex ">
-                <ChatUserList
-                  groups={pinnedGroups}
-                  lastMessage={lastMessage}
-                  selectedChat={selectedChat}
-                  setSelectedChat={setSelectedChat}
-                  searchQuery={searchQuery}
-                />
-              </div>
+              {pinChatCollapse && (
+                <div className="flex ">
+                  <ChatUserList
+                    groups={pinnedGroups}
+                    lastMessage={lastMessage}
+                    selectedChat={selectedChat}
+                    setSelectedChat={setSelectedChat}
+                    searchQuery={searchQuery}
+                  />
+                </div>
+              )}
             </>
           )}
 
           {/* Recent Label */}
           {recentGroups.length > 0 && (
             <>
-              <div className="px-4 py-2 bg-gray-50">
+              <div
+                className="px-4 py-2 bg-gray-50 cursor-pointer"
+                onClick={() => setRecentChatCollapse(!recentChatCollapse)}
+              >
                 <button className="text-xs text-gray-600 flex items-center">
-                  <span className="mr-1">▼</span> Recent
+                  {recentChatCollapse ? (
+                    <ChevronDown className="mr-1 h-4 w-4" />
+                  ) : (
+                    <ChevronUp className="mr-1 h-4 w-4" />
+                  )}
+                  {/* <span className="mr-1">▼</span> */}
+                  Recent
                 </button>
               </div>
 
               {/* Chat List */}
-              <div className="flex-1">
-                <ChatUserList
-                  groups={recentGroups}
-                  lastMessage={lastMessage}
-                  selectedChat={selectedChat}
-                  setSelectedChat={setSelectedChat}
-                  searchQuery={searchQuery}
-                />
-              </div>
+              {recentChatCollapse && (
+                <div className="flex-1">
+                  <ChatUserList
+                    groups={recentGroups}
+                    lastMessage={lastMessage}
+                    selectedChat={selectedChat}
+                    setSelectedChat={setSelectedChat}
+                    searchQuery={searchQuery}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>

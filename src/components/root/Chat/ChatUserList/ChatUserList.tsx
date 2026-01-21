@@ -299,13 +299,13 @@ export const ChatUserList: FC<IChatUser> = ({
             >
               <div className="relative">
                 {chat.is_mute ? (
-                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
+                  <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
                     <IoNotificationsOff />
                   </div>
                 ) : (
                   <>
                     {chat?.members?.length > 1 ? (
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
+                      <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
                         <GroupChatAvatar
                           size={30}
                           fill="#ffffff"
@@ -313,15 +313,15 @@ export const ChatUserList: FC<IChatUser> = ({
                         />
                       </div>
                     ) : !memberInfo?.avatar_url ? (
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
+                      <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold text-xs">
                         {chat.group_name.charAt(0)}
                       </div>
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center">
                         <img
                           src={getFileURL(memberInfo?.avatar_url)}
                           alt={"User Avatar"}
-                          className="w-8 h-8 rounded-full object-cover"
+                          className="w-9 h-9 rounded-full object-cover"
                         />
                       </div>
                     )}
