@@ -18,6 +18,7 @@ interface CreateGroupModalProps {
   users: User[] | any;
   isAddMemberModal?: boolean;
   groupDetails?: any;
+  currentUser?: any
 }
 export const CreateGroupModal: FC<CreateGroupModalProps> = ({
   setIsOpen,
@@ -25,6 +26,7 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
   users,
   isAddMemberModal = false,
   groupDetails,
+  currentUser 
 }) => {
   //   const [isOpen, setIsOpen] = useState(true);
   const [groupName, setGroupName] = useState("");
@@ -56,6 +58,7 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
             .toLowerCase()
             .includes(searchQuery.toLowerCase())
       ) || [];
+    const chatMembers = filteredUsers.filter((user: any) => user?.id !== currentUser?.id) || []
   //   console.log("usersusers", users);
 
   const toggleMemberSelection = (userId: string) => {
@@ -173,9 +176,9 @@ export const CreateGroupModal: FC<CreateGroupModalProps> = ({
 
           {/* Member List */}
           <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-            {filteredUsers.length > 0 ? (
+            {chatMembers?.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {filteredUsers.map((userList: any) => {
+                {chatMembers.map((userList: any) => {
                   const user = isAddMemberModal ? userList : userList.member;
                   const isSelected = selectedMembers.includes(user.id);
 

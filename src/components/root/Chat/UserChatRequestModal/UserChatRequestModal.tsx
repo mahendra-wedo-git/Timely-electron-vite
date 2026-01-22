@@ -25,6 +25,7 @@ interface AddChatModalProps {
   isOpen: boolean;
   handleSendRequest: (user: IUserLite) => void;
   sendingTo: string | null;
+  currentUserId: string | undefined
 }
 
 const workspaceService = new WorkspaceService();
@@ -34,6 +35,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
   setIsOpen,
   handleSendRequest,
   sendingTo,
+  currentUserId
 }) => {
   // const chatSocketService = useChatSocket();
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,7 +69,7 @@ export const AddChatModal: FC<AddChatModalProps> = ({
         user.member.last_name
           .toLowerCase()
           .includes(searchQuery.toLowerCase())
-    ) || [];
+    ).filter((user: any) => user.member.id !== currentUserId) || [];
 
   // console.log("filteredUsers", filteredUsers);
   //   const filteredUsers = users?.filter(

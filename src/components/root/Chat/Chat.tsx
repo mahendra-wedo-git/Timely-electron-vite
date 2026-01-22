@@ -84,6 +84,7 @@ export const ChatWindow = () => {
   const [activeTab, setActiveTab] = useState<"chat" | "files" | "photos">(
     "chat",
   );
+  const [isDragging, setIsDragging] = useState(false);
   const currentChatId = currentSelectedGroup?.groupId;
   const receiverUserId = currentSelectedGroup?.userId;
   const groupName = currentSelectedGroup?.group_name;
@@ -274,6 +275,34 @@ export const ChatWindow = () => {
     language: navigator.language,
     screen: { width: window.screen.width, height: window.screen.height },
   };
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragging(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length && editorRef.current) {
+      await editorRef.current.handleDroppedFiles(files);
+    }
+  };
+
   const getChatActions = (chat: IChatGroup) => [
     {
       id: "pin",
@@ -338,6 +367,7 @@ export const ChatWindow = () => {
         selectedChat={selectedChat}
         lastMessage={lastMessage}
         setSelectedChat={setSelectedChat}
+        currentUserId={receiverUserId}
       />
 
       {/* Main Chat Area */}
@@ -435,68 +465,95 @@ export const ChatWindow = () => {
                   memberDetails={memberDetails}
                 />
               ) : activeTab === "photos" ? (
-                  <ChatImageList
-                    images={getImageAttachments()}
-                    memberDetails={memberDetails}
-                    workspaceSlug={workspaceSlug || ""}
-                  />
-              ) : (
-                <MessageArea
-                  groupedMessages={groupedMessages}
-                  currentUserId={receiverUserId || ""}
-                  messagesEndRef={messagesEndRef}
-                  deleteMassages={deleteMassages}
-                  handleForward={handleForward}
-                  handleReplay={handleReplay}
-                  handleEditMessage={handleEditMessage}
-                  onFilesDropped={async (files) => {
-                    if (editorRef.current) {
-                      await editorRef.current.handleDroppedFiles(files);
-                    }
-                  }}
+                <ChatImageList
+                  images={getImageAttachments()}
+                  memberDetails={memberDetails}
+                  workspaceSlug={workspaceSlug || ""}
                 />
+              ) : (
+                <div
+                  className="relative flex-1 flex flex-col min-h-0"
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  {isDragging && (
+                    <div className="absolute inset-0 border-2 border-dashed border-indigo-500 min-h-full flex items-center justify-center bg-indigo-50/80 z-50 pointer-events-none">
+                      <div className="text-center">
+                        <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+                          <svg
+                            className="h-8 w-8 text-indigo-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-semibold text-indigo-700">
+                          Drop files or images here
+                        </p>
+                        <p className="text-sm text-indigo-500 mt-1">
+                          Release to upload
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  <MessageArea
+                    groupedMessages={groupedMessages}
+                    currentUserId={receiverUserId || ""}
+                    messagesEndRef={messagesEndRef}
+                    deleteMassages={deleteMassages}
+                    handleForward={handleForward}
+                    handleReplay={handleReplay}
+                    handleEditMessage={handleEditMessage}
+                  />
+
+                  <TiptapChatEditor
+                    ref={editorRef}
+                    currentChatId={currentChatId}
+                    workspaceSlug={workspaceSlug}
+                    replyTo={replyTo}
+                    selectedMessage={selectedMassage}
+                    memberDetails={memberDetails}
+                    onSendMessage={(content, attachments) => {
+                      if (!chatSocketService) return;
+
+                      chatSocketService.send({
+                        type: "message",
+                        content: content,
+                        group_id: currentChatId,
+                        reply_to: replyTo ? selectedMassage?.id : null,
+                        clientMessageId: uuidv4(),
+                        attachments: attachments,
+                        browser_data: {
+                          userAgent: navigator.userAgent,
+                          platform: navigator.platform,
+                          language: navigator.language,
+                          screen: {
+                            width: window.screen.width,
+                            height: window.screen.height,
+                          },
+                        },
+                      });
+
+                      // Reorder chat list by sender
+                      dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
+                      scrollToBottom();
+                    }}
+                    onCancelReply={() => setReplyTo(null)}
+                    placeholder="Type a message..."
+                    maxHeight={300}
+                  />
+                </div>
               )}
             </>
-          )}
-
-          {/* Message Input */}
-          {activeTab === "chat" && (
-            <TiptapChatEditor
-              ref={editorRef}
-              currentChatId={currentChatId}
-              workspaceSlug={workspaceSlug}
-              replyTo={replyTo}
-              selectedMessage={selectedMassage}
-              memberDetails={memberDetails}
-              onSendMessage={(content, attachments) => {
-                if (!chatSocketService) return;
-
-                chatSocketService.send({
-                  type: "message",
-                  content: content,
-                  group_id: currentChatId,
-                  reply_to: replyTo ? selectedMassage?.id : null,
-                  clientMessageId: uuidv4(),
-                  attachments: attachments,
-                  browser_data: {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language,
-                    screen: {
-                      width: window.screen.width,
-                      height: window.screen.height,
-                    },
-                  },
-                });
-
-                // Reorder chat list by sender
-                dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
-                scrollToBottom();
-              }}
-              onCancelReply={() => setReplyTo(null)}
-              placeholder="Type a message..."
-              maxHeight={300}
-            />
           )}
         </div>
       ) : (

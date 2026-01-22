@@ -11,7 +11,7 @@ import {
 import { useAppSelector } from "src/redux/hooks";
 import { useParams } from "react-router-dom";
 import { getGroup } from "src/redux/chatSlice";
-import { IChatGroup,  IUserLite } from "src/types";
+import { IChatGroup, IUserLite } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
 import { useUser } from "src/context";
 import { selectMemberMap } from "src/redux/memberRootSlice";
@@ -43,9 +43,8 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
   const memberDetails = useAppSelector(selectMemberMap);
   // const groupDetails = workspaceSlug ? useAppSelector((state) => selectChatGroupLogDetails(state, workspaceSlug, chatId)) : null;
   const groupDetails: IChatGroup | null = workspaceSlug
-  ? useAppSelector((state) => getGroup(state, chatId))
-  : null;
-  console.log("groupDetails",groupDetails)
+    ? useAppSelector((state) => getGroup(state, chatId))
+    : null;
   const { data: currentUser } = useUser();
   const isCurrentUser = selectedMember?.id === currentUser?.id;
   //   const [isOpen, setIsOpen] = useState(true);
@@ -84,7 +83,7 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
   ];
 
   const filteredMembers = members.filter((member) =>
-    member.name.toLowerCase().includes(searchQuery.toLowerCase())
+    member.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleClose = () => {
@@ -157,7 +156,7 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
                 onClick={confirmLeave}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none transition"
               >
-               {isCurrentUser ? "Leave Group" : "Remove"} 
+                {isCurrentUser ? "Leave Group" : "Remove"}
               </button>
             </div>
           </div>
@@ -166,13 +165,13 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
     );
   }
 
-  
   if (showAddPeople) {
     return (
       <CreateGroupModal
         isOpen={showAddPeople}
         setIsOpen={setShowAddPeople}
         users={memberDetails}
+        currentUser={currentUser}
         groupDetails={groupDetails}
         isAddMemberModal
       />
@@ -249,18 +248,19 @@ export const GroupMembersModal: FC<GroupMembersModalProps> = ({
                         )} */}
                       </h3>
                       <p className="text-xs text-gray-500 truncate">
-                        {availableMember.email}
+                        {currentUser?.id === availableMember.id ? "You" : availableMember.email}
                       </p>
                     </div>
-
-                    <XCircle
-                      className="h-5 w-5 text-gray-400 hover:text-gray-600 transition cursor-pointer"
-                      // onClick={() => handleRemoveMember(availableMember.id)}
-                      onClick={() => {
-                        setSelectedMember(availableMember);
-                        setShowLeaveConfirm(true);
-                      }}
-                    />
+                    {currentUser?.id !== availableMember.id && (
+                      <XCircle
+                        className="h-5 w-5 text-gray-400 hover:text-gray-600 transition cursor-pointer"
+                        // onClick={() => handleRemoveMember(availableMember.id)}
+                        onClick={() => {
+                          setSelectedMember(availableMember);
+                          setShowLeaveConfirm(true);
+                        }}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -337,7 +337,7 @@ function AddPeopleModal({ onClose }: { onClose: () => void }) {
   const filteredUsers = availableUsers.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleAddUsers = () => {
@@ -397,7 +397,7 @@ function AddPeopleModal({ onClose }: { onClose: () => void }) {
                       setSelectedUsers([...selectedUsers, user.id]);
                     } else {
                       setSelectedUsers(
-                        selectedUsers.filter((id) => id !== user.id)
+                        selectedUsers.filter((id) => id !== user.id),
                       );
                     }
                   }}

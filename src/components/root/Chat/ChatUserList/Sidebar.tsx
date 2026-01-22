@@ -19,6 +19,7 @@ interface ISidebarChat {
   setSelectedChat: (chat: IChatGroup) => void;
   selectedChat: IChatGroup | undefined;
   lastMessage: Record<string, IChatMessage>;
+  currentUserId?: string
 }
 
 interface User {
@@ -37,6 +38,7 @@ export const SidebarChat: FC<ISidebarChat> = ({
   selectedChat,
   setSelectedChat,
   lastMessage,
+  currentUserId
 }) => {
   const { workspace: workspaceSlug } = useParams();
   const chatSocketService = useChatSocket();
@@ -229,6 +231,7 @@ export const SidebarChat: FC<ISidebarChat> = ({
           setIsOpen={setUserListModalOpen}
           handleSendRequest={handleSendRequest}
           sendingTo={sendingTo}
+          currentUserId={currentUserId}
         />
       )}
       {groupListModalOpen && (
