@@ -48,7 +48,7 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
             <Forward className="h-3.5 w-3.5 text-custom-text-100" />
           )}
           <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-            <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
+            <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
               {forwardedFromUser.first_name && forwardedFromUser.first_name[0]}
             </div>
           </div>

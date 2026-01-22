@@ -299,6 +299,7 @@ const MessageWrapper: FC<{
   onForward?: () => void;
   onDelete?: () => void;
   onReply?: () => void;
+  showSenderName?: boolean
 }> = ({
   msg,
   isCurrentUser,
@@ -312,6 +313,7 @@ const MessageWrapper: FC<{
   onForward,
   onDelete,
   onReply,
+  showSenderName = true,
 }) => {
   const isEdited =
     msg?.updated_at &&
@@ -327,16 +329,15 @@ const MessageWrapper: FC<{
         );
 
   return (
-    <div className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
+    <div className={`flex ${isCurrentUser ? "justify-end" : showSenderName ? "justify-start pt-2" : "justify-start"}`}>
       <div
         className={`flex items-start gap-2 ${
           isCurrentUser ? "flex-row-reverse" : "flex-row"
         }`}
       >
-        {!isCurrentUser && <UserAvatar userDetail={userDetail} msg={msg} />}
-
-        <div className={`${isCurrentUser ? "mr-2" : "ml-2"} flex flex-col`}>
-          {!isCurrentUser && <UserName userDetail={userDetail} />}
+        {!isCurrentUser && showSenderName && <UserAvatar userDetail={userDetail} msg={msg} />}
+        <div className={`${isCurrentUser ? "mr-2" : !showSenderName ? "ml-10" : "ml-1"} flex flex-col`}>
+          {!isCurrentUser && showSenderName && <UserName userDetail={userDetail} />}
 
           {isEdited && (
             <span
@@ -598,6 +599,9 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
       !hasReplyOrForward &&
       !hasImageComponents &&
       !msg.deleted_at;
+      const prevMsg = messages[index - 1];
+      const isSameSender = prevMsg && prevMsg.sender === msg.sender;
+      const showSenderName = !isSameSender;
     // console.log("shouldRenderImageOnly >>>",shouldRenderImageOnly);
 
     // Deleted message
@@ -638,6 +642,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
           {shouldRenderImageOnly && (
             <MessageWrapper
               msg={msg}
+              showSenderName={showSenderName}
               isCurrentUser={isCurrentUser}
               currentUserId={currentUserId}
               userDetail={userDetail}
@@ -667,6 +672,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
             <MessageWrapper
               msg={msg}
               isCurrentUser={isCurrentUser}
+              showSenderName={showSenderName}
               currentUserId={currentUserId}
               userDetail={userDetail}
               showActions={msg.reaction}
@@ -696,6 +702,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
             msg={msg}
             isCurrentUser={isCurrentUser}
             currentUserId={currentUserId}
+            showSenderName={showSenderName}
             userDetail={userDetail}
             showActions={msg.reaction}
               reactions={msg.reactions}
@@ -752,6 +759,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
             <MessageWrapper
               msg={msg}
               isCurrentUser={isCurrentUser}
+              showSenderName={showSenderName}
               currentUserId={currentUserId}
               userDetail={userDetail}
               showActions={msg.reaction}
@@ -818,6 +826,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
             <MessageWrapper
               msg={msg}
               currentUserId={currentUserId}
+              showSenderName={showSenderName}
               isCurrentUser={isCurrentUser}
               userDetail={userDetail}
               showActions={msg.reaction}
