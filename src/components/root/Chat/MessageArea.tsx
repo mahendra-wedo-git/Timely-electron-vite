@@ -48,6 +48,7 @@ interface MessageAreaProps {
   handleForward?: any;
   handleReplay?: any;
   handleEditMessage?: any;
+  onFilesDropped?: (files: File[]) => Promise<void>;
 }
 
 // COMPONENTS
@@ -462,6 +463,7 @@ export const MessageArea: FC<MessageAreaProps> = ({
   handleForward,
   handleReplay,
   handleEditMessage,
+  onFilesDropped,
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -469,6 +471,7 @@ export const MessageArea: FC<MessageAreaProps> = ({
   const [expandedMessages, setExpandedMessages] = useState<
     Record<string, boolean>
   >({});
+  const [isDragging, setIsDragging] = useState(false);
   const { workspace: currentWorkspaceSlug, project: currentProjectId } =
     useParams();
 
@@ -511,6 +514,46 @@ export const MessageArea: FC<MessageAreaProps> = ({
       ...prev,
       [msgId]: !prev[msgId],
     }));
+  };
+
+  // Handle drag and drop
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the main container
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes("Files")) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (!onFilesDropped) return;
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length === 0) return;
+
+    // Handle dropped files through the callback
+    await onFilesDropped(droppedFiles);
   };
 
   // ============= RENDER HELPERS =============
@@ -894,7 +937,44 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
 
   // MAIN RENDER
   return (
-    <div className="flex-1 overflow-y-auto bg-white py-4 sm:py-5 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8">
+    <div
+      className={`flex-1 overflow-y-auto bg-white py-4 sm:py-5 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 relative ${
+        isDragging
+          ? "bg-indigo-50 border-2 border-dashed border-indigo-400"
+          : ""
+      } transition-colors duration-200`}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 flex items-center justify-center bg-indigo-50/80 z-50 pointer-events-none">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="h-8 w-8 text-indigo-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <p className="text-lg font-semibold text-indigo-700">
+              Drop files or images here
+            </p>
+            <p className="text-sm text-indigo-500 mt-1">
+              Release to upload
+            </p>
+          </div>
+        </div>
+      )}
       <div className="mx-auto space-y-2 max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-4xl ">
         {Object.entries(groupedMessages).map(([date, messages]) =>
           messages.map((msg, index) => renderMessage(msg, messages, index))

@@ -1,20 +1,16 @@
-import React, { useState, useRef, useEffect, FC } from "react";
+import React, { useState, useRef, useEffect, FC, useImperativeHandle, forwardRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
-import { Send, Smile, X, Plus, ImagePlus, Paperclip } from "lucide-react";
+import { Send, Smile, X, ImagePlus, Paperclip } from "lucide-react";
 import { useAppDispatch } from "src/redux/hooks";
 import { uploadEditorAsset } from "src/redux/assetsSlice";
 import { getFileIcon } from "src/assets/attachment";
 import { Node } from "@tiptap/core";
-import { getFileURL } from "src/utils";
 import CodeBlock from "@tiptap/extension-code-block";
 import { resolveAssetUrl } from "./imageComponent";
 import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
-import { IChatMessage } from "src/types";
-import { useForm } from "react-hook-form";
 import { useOutsideClick } from "src/hooks/useOutsideClick";
 
 // Types
@@ -25,11 +21,6 @@ export type FileData = {
   size: number;
   file?: File;
 };
-
-interface EmojiPickerProps {
-  onEmojiSelect: (emoji: string) => void;
-  onClose: () => void;
-}
 
 interface FilePreviewProps {
   files: FileData[];
@@ -52,6 +43,10 @@ interface TiptapChatEditorProps {
   onCancelReply?: () => void;
   placeholder?: string;
   maxHeight?: number;
+}
+
+export interface TiptapChatEditorRef {
+  handleDroppedFiles: (files: File[]) => Promise<void>;
 }
 const ImageComponent = Node.create({
   name: "imageComponent",
@@ -204,7 +199,7 @@ const ReplyPreview: FC<ReplyPreviewProps> = ({
 };
 
 // Main Tiptap Chat Editor Component
-export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
+export const TiptapChatEditor = forwardRef<TiptapChatEditorRef, TiptapChatEditorProps>(({
   currentChatId,
   workspaceSlug,
   replyTo,
@@ -214,7 +209,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   onCancelReply,
   placeholder = "Type a message...",
   maxHeight = 300,
-}) => {
+}, ref) => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
     new Set()
@@ -223,11 +218,11 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   const [imageAssetIds, setImageAssetIds] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const emojiPickerRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLElement>;
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const [isEditorEmpty, setIsEditorEmpty] = useState(true);
-    useOutsideClick(
-    emojiPickerRef,
+  useOutsideClick(
+    emojiPickerRef as React.RefObject<HTMLElement>,
     () => setShowEmojiPicker(false),
     showEmojiPicker
   );
@@ -276,12 +271,45 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
       attributes: {
         class: `focus:outline-none min-h-[24px] max-h-[${maxHeight}px] overflow-y-auto text-sm text-gray-700 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`,
       },
-      handleKeyDown(view, event) {
+      handleKeyDown(_view, event) {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           handleSend();
           return true;
         }
+        return false;
+      },
+      handlePaste(_view, event) {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return false;
+
+        const items = Array.from(clipboardData.items);
+        const imageItems = items.filter((item) => item.type.indexOf("image") !== -1);
+
+        if (imageItems.length > 0) {
+          event.preventDefault();
+
+          imageItems.forEach((item) => {
+            const file = item.getAsFile();
+            if (file) {
+              // Check file size (5MB limit)
+              const MAX_FILE_SIZE_MB = 5;
+              const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+              if (file.size > MAX_FILE_SIZE_BYTES) {
+                alert(
+                  `Pasted image is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`
+                );
+                return;
+              }
+
+              uploadAndInsertImage(file);
+            }
+          });
+
+          return true;
+        }
+
         return false;
       },
     },
@@ -359,6 +387,54 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
     e.target.value = "";
   };
 
+  // Helper function to upload and insert image
+  const uploadAndInsertImage = async (file: File) => {
+    if (!currentChatId || !workspaceSlug || !editor) return;
+
+    try {
+      const result = await dispatch(
+        uploadEditorAsset({
+          blockId: currentChatId,
+          workspaceSlug,
+          data: {
+            entity_identifier: currentChatId,
+            entity_type: "CHAT_ATTACHMENT",
+          },
+          file,
+        })
+      ).unwrap();
+
+      const assetId = result.asset_id;
+      const componentId = crypto.randomUUID();
+
+      // Insert image-component instead of img tag
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "imageComponent",
+          attrs: {
+            src: assetId,
+            width: "129px",
+            height: "129px",
+            id: componentId,
+            aspectratio: "1",
+          },
+        })
+        .run();
+
+      // Track image asset IDs separately
+      setImageAssetIds((prev) => [...prev, assetId]);
+      setUploadedAssetIds((prev) => {
+        const updated = new Set(prev);
+        updated.add(assetId);
+        return updated;
+      });
+    } catch (err) {
+      console.error("Failed to upload image:", err);
+    }
+  };
+
   // Handle image upload
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !currentChatId || !workspaceSlug || !editor) return;
@@ -366,48 +442,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
     const selectedFiles = Array.from(e.target.files);
 
     for (const file of selectedFiles) {
-      try {
-        const result = await dispatch(
-          uploadEditorAsset({
-            blockId: currentChatId,
-            workspaceSlug,
-            data: {
-              entity_identifier: currentChatId,
-              entity_type: "CHAT_ATTACHMENT",
-            },
-            file,
-          })
-        ).unwrap();
-
-        const assetId = result.asset_id;
-        const componentId = crypto.randomUUID();
-
-        // Insert image-component instead of img tag
-        editor
-          .chain()
-          .focus()
-          .insertContent({
-            type: "imageComponent",
-            attrs: {
-              src: assetId,
-              width: "129px",
-              height: "129px",
-              id: componentId,
-              aspectratio: "1",
-            },
-          })
-          .run();
-
-        // Track image asset IDs separately
-        setImageAssetIds((prev) => [...prev, assetId]);
-        setUploadedAssetIds((prev) => {
-          const updated = new Set(prev);
-          updated.add(assetId);
-          return updated;
-        });
-      } catch (err) {
-        console.error("Failed to upload image:", err);
-      }
+      await uploadAndInsertImage(file);
     }
 
     e.target.value = "";
@@ -417,6 +452,89 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
   const handleEmojiSelect = (emoji: string) => {
     editor?.chain().focus().insertContent(emoji).run();
   };
+
+  // Handle dropped files (called from parent component)
+  const handleDroppedFiles = async (droppedFiles: File[]) => {
+    if (!currentChatId || !workspaceSlug || !editor) return;
+
+    const MAX_FILE_SIZE_MB = 100;
+    const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+    const imageFiles: File[] = [];
+    const regularFiles: File[] = [];
+
+    // Separate images from other files
+    droppedFiles.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        alert(
+          `"${file.name}" is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`
+        );
+        return;
+      }
+
+      if (file.type.startsWith("image/")) {
+        imageFiles.push(file);
+      } else {
+        regularFiles.push(file);
+      }
+    });
+
+    // Handle images - upload and insert into editor
+    for (const file of imageFiles) {
+      await uploadAndInsertImage(file);
+    }
+
+    // Handle regular files - upload and add to files list
+    if (regularFiles.length > 0) {
+      const validFiles: FileData[] = regularFiles.map((file) => ({
+        id: crypto.randomUUID(),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        file,
+      }));
+
+      const uploadPromises = validFiles.map(async (fileData) => {
+        try {
+          const result = await dispatch(
+            uploadEditorAsset({
+              blockId: currentChatId,
+              workspaceSlug,
+              data: {
+                entity_identifier: currentChatId,
+                entity_type: "CHAT_ATTACHMENT",
+              },
+              file: fileData.file!,
+            })
+          ).unwrap();
+
+          return {
+            ...fileData,
+            id: result.asset_id,
+          };
+        } catch (err) {
+          console.error(`Failed to upload file: ${fileData.name}`, err);
+          return null;
+        }
+      });
+
+      const uploadedFiles = (await Promise.all(uploadPromises)).filter(
+        Boolean
+      ) as FileData[];
+
+      setFiles((prev) => [...prev, ...uploadedFiles]);
+      setUploadedAssetIds((prev) => {
+        const updated = new Set(prev);
+        uploadedFiles.forEach((f) => updated.add(f.id));
+        return updated;
+      });
+    }
+  };
+
+  // Expose handleDroppedFiles method to parent component
+  useImperativeHandle(ref, () => ({
+    handleDroppedFiles,
+  }));
 
   useEffect(() => {
  if (files.length > 0 || uploadedAssetIds.size > 0 || editor?.isEmpty === false) {
@@ -462,24 +580,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
     onCancelReply?.();
   };
 
-  // Handle Enter key
-  // useEffect(() => {
-  //   if (!editor) return;
 
-  //   const handleKeyDown = (event: KeyboardEvent) => {
-  //     if (event.key === "Enter" && !event.shiftKey) {
-  //       event.preventDefault();
-  //       handleSend();
-  //     }
-  //   };
-
-  //   const editorElement = editor.view.dom;
-  //   editorElement.addEventListener("keydown", handleKeyDown);
-
-  //   return () => {
-  //     editorElement.removeEventListener("keydown", handleKeyDown);
-  //   };
-  // }, [editor, uploadedAssetIds, replyTo]);
 
   // Focus editor when replyTo changes
   useEffect(() => {
@@ -519,7 +620,7 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
           <FilePreview files={files} onRemove={handleRemoveFile} />
 
           {/* Input Container */}
-          <div className="relative flex items-end gap-2 px-5 py-2.5">
+          <div className="relative flex items-end gap-2 px-4 py-2.5">
             {/* Editor Content */}
             <div className="flex-1 m-auto break-words">
               <EditorContent editor={editor} />
@@ -553,16 +654,6 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
                   </div>
                 )}
               </div>
-              {/* <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <Smile className="h-5 w-5" />
-                   <EmojiPicker open={showEmojiPicker} />
-                </button>
-              </div> */}
 
               {/* Image Upload */}
               <button
@@ -611,4 +702,6 @@ export const TiptapChatEditor: FC<TiptapChatEditorProps> = ({
       </div>
     </div>
   );
-};
+});
+
+TiptapChatEditor.displayName = "TiptapChatEditor";

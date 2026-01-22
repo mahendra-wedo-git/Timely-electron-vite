@@ -2,15 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Users,
   MoreVertical,
-  Send,
-  Smile,
   ChartBar,
   User,
-  X,
   Volume2,
   VolumeX,
   Pin,
-  Image,
 } from "lucide-react";
 import { SidebarChat } from "./ChatUserList";
 import { useAppDispatch, useAppSelector } from "src/redux/hooks";
@@ -47,7 +43,7 @@ import { FileData } from "./file-picker";
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { QuickActionsMenu } from "./QuickActionsMenu";
 import { ChatFileList } from "./FilesListing";
-import { TiptapChatEditor } from "./Editor";
+import { TiptapChatEditor, TiptapChatEditorRef } from "./Editor";
 import { UserAvatar } from "./UserAvatar";
 import { GroupChatAvatar } from "./group-chat-avatar";
 import { ChatImageList } from "./imageListing";
@@ -60,8 +56,8 @@ export const ChatWindow = () => {
   const [message, setMessage] = useState("");
   const [openForwardModal, setOpenForwardModal] = useState(false);
   const [openMemberModal, setOpenMemberModal] = useState(false);
-  const [selectedMassage, setSelectedMassage] = useState();
-  const [replyTo, setReplyTo] = useState<IChatGroup | null>(null);
+  const [selectedMassage, setSelectedMassage] = useState<any>();
+  const [replyTo, setReplyTo] = useState<any | null>(null);
   const memberDetails = useAppSelector(selectMemberMap);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
     new Set(),
@@ -72,6 +68,7 @@ export const ChatWindow = () => {
   const [files, setFiles] = useState<FileData[]>([]);
   const { workspace: workspaceSlug } = useParams();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<TiptapChatEditorRef>(null);
   const chatSocketService = useChatSocket();
   const selectedChatGroup = useAppSelector((state) =>
     selectedChat?.id !== undefined
@@ -452,6 +449,11 @@ export const ChatWindow = () => {
                   handleForward={handleForward}
                   handleReplay={handleReplay}
                   handleEditMessage={handleEditMessage}
+                  onFilesDropped={async (files) => {
+                    if (editorRef.current) {
+                      await editorRef.current.handleDroppedFiles(files);
+                    }
+                  }}
                 />
               )}
             </>
@@ -460,6 +462,7 @@ export const ChatWindow = () => {
           {/* Message Input */}
           {activeTab === "chat" && (
             <TiptapChatEditor
+              ref={editorRef}
               currentChatId={currentChatId}
               workspaceSlug={workspaceSlug}
               replyTo={replyTo}
