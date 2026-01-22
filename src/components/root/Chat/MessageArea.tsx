@@ -784,7 +784,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               />
                 {textHTML && (
                       <RichTextReadOnlyEditor
-                        content={textHTML}
+                        content={msg.content}
                         className="prose prose-sm max-w-none"
                       />
                     )}</>
