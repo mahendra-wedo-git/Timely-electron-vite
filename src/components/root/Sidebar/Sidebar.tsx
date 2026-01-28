@@ -118,12 +118,12 @@ const Sidebar: React.FC = () => {
             />
           ) : (
             <div className="user-avatar">
-              {currentUser?.first_name?.split("")[0] || "M"}
+              {memberDetails?.first_name?.split("")[0] || "M"}
             </div>
           )}
           <div className="user-info">
             <div className="user-name">
-              {currentUser?.first_name || "user" + " " + currentUser?.last_name}
+              {memberDetails?.first_name || "" + " " + memberDetails?.last_name || ""}
             </div>
             <div className="user-status">Online</div>
           </div>

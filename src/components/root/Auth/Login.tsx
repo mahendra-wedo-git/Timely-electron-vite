@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthService } from "src/services";
 import { useAppContext } from "src/context";
 import { useDispatch } from "react-redux";
-import { setCurrentUser } from "src/redux/userSlice";
+import { setCurrentUser, setToken } from "src/redux/userSlice";
 import { Form } from "src/components/common";
 import { loginSchema } from "src/utils";
 import { Input } from "src/components/core";
@@ -26,25 +26,26 @@ export const TimelyLogin = () => {
     setIsLoading(true);
 
     try {
-      const token = await authService.requestCSRFToken();
+      // const token = await authService.requestCSRFToken();
       formData.append("email", values.email);
       formData.append("password", values.password);
-      formData.append("csrfmiddlewaretoken", token.csrf_token!);
+      // formData.append("csrfmiddlewaretoken", token.csrf_token!);
       const response = await authService.SignIn(
         formData as unknown as {
           email: string;
           password: string;
-          csrfmiddlewaretoken: string;
-        }
+          // csrfmiddlewaretoken: string;
+        },
       );
-    //    const response = await authService.SignIn({
-    //   email: values.email,
-    //   password: values.password,
-    // });
+      //    const response = await authService.SignIn({
+      //   email: values.email,
+      //   password: values.password,
+      // });
       if (response?.success) {
         localStorage.setItem("userEmail", values.email);
         localStorage.setItem("workspace", workspace);
         dispatch(setCurrentUser(response?.user));
+        dispatch(setToken({ token: response?.access }));
         navigate(`/${workspace}`);
         window.location.reload();
       }

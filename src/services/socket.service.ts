@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BrowserPersistence, localStorageKeys } from "src/utils";
 
 export interface SocketOptions {
   reconnect?: boolean;         // auto reconnect
   reconnectInterval?: number;  // retry delay (ms)
   heartbeatInterval?: number;  // ping/pong keepalive (ms)
 }
-
+const storage = new BrowserPersistence();
 export abstract class SocketService {
   private socket: WebSocket | null = null;
   private reconnectTimer: any = null;
@@ -34,7 +35,7 @@ export abstract class SocketService {
     this.manualClose = false;
     if (this.socket) this.disconnect();
 
-    this.socket = new WebSocket(`${this.baseURL}${path}`);
+    this.socket = new WebSocket(`${this.baseURL}${path}?token=${storage.getItem(localStorageKeys.AUTH_TOKEN) || ""}`);
 
     this.socket.onopen = () => {
       // this.startHeartbeat();

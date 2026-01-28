@@ -7,18 +7,25 @@
 # VITE_WEBSOCKET_BASE_URL="wss://g29c5bg0-8000.inc1.devtunnels.ms"
 # VITE_WORKSPACE="synapse"
 
-VITE_APP_API_URL="
-https://qtghjv89-8000.inc1.devtunnels.ms
-"
-VITE_WORKSPACE="synapse"
-VITE_WEBSOCKET_BASE_URL="wss://qtghjv89-8000.inc1.devtunnels.ms"
+# VITE_APP_API_URL="
+# https://qtghjv89-8000.inc1.devtunnels.ms
+# "
+# VITE_WORKSPACE="synapse"
+# VITE_WEBSOCKET_BASE_URL="wss://qtghjv89-8000.inc1.devtunnels.ms"
 
 
 
-# dev
-# VITE_APP_API_URL="https://timely-api-dev.wedowebapps.in"
+dev
+VITE_APP_API_URL="https://timely-api-dev.wedowebapps.in"
+VITE_WORKSPACE="wedo-dev"
+VITE_WEBSOCKET_BASE_URL="wss://timely-api-dev.wedowebapps.in"
+
+
+# VITE_APP_API_URL="https://f9krch2k-8081.inc1.devtunnels.ms"
 # VITE_WORKSPACE="wedo"
-# VITE_WEBSOCKET_BASE_URL="wss://timely-api-dev.wedowebapps.in/ws/chat/workspace/wedo/"
+# VITE_WEBSOCKET_BASE_URL="wss://f9krch2k-8081.inc1.devtunnels.ms"
+
+
 
 
 

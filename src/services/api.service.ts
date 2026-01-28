@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { BrowserPersistence, localStorageKeys } from "src/utils";
+const storage = new BrowserPersistence();
 
 export abstract class APIService {
   protected baseURL: string;
@@ -16,15 +18,28 @@ export abstract class APIService {
   }
 
   private setupInterceptors() {
+    this.axiosInstance.interceptors.request.use(
+      (config) => {
+        if (!config) return config;
+        const token = storage.getItem(localStorageKeys.AUTH_TOKEN);
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error),
+    );
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response && error.response.status === 401) {
           const currentPath = window.location.pathname;
-          window.location.replace(`/${currentPath ? `?next_path=${currentPath}` : ``}`);
+          window.location.replace(
+            `/${currentPath ? `?next_path=${currentPath}` : ``}`,
+          );
         }
         return Promise.reject(error);
-      }
+      },
     );
   }
 

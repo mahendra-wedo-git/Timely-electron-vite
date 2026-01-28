@@ -58,12 +58,12 @@ export class AuthService extends APIService {
     password: string;
     csrfmiddlewaretoken?: string;
   }): Promise<any> {
-    return this.post("/auth/common/sign-in/", data, { headers: {} })
-    // return this.post("/auth/jwt/login/", data, {
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    // })
+    // return this.post("/auth/common/sign-in/", data, { headers: {} })
+    return this.post("/auth/jwt/login/", data, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
