@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
   Home,
@@ -17,6 +17,7 @@ import { useSelector } from "react-redux";
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { getFileIcon } from "src/assets/attachment";
 import { getFileURL } from "src/utils";
+import { fetchWorkspaceMembers } from "src/redux/workspaceMemberSlice";
 
 interface NavItem {
   id: string;
@@ -34,7 +35,10 @@ const Sidebar: React.FC = () => {
   const { currentUser } = useAppContext();
   const dispatch = useAppDispatch();
   const memberDetails = useSelector(selectMemberMap)[currentUser?.id || ""];
-  console.log("currentUser", currentUser, memberDetails);
+    useEffect(() => {
+      if (!workspace) return;
+      dispatch(fetchWorkspaceMembers(workspace));
+    }, [workspace]);
   // const workspace = localStorage.getItem("workspace") || "wedo";
   const navItems: NavItem[] = [
     {
