@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, FC, useImperativeHandle, forwardRef } from "react";
+import React, { useState, useRef, useEffect, FC, useImperativeHandle, forwardRef, useMemo } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -12,6 +12,10 @@ import CodeBlock from "@tiptap/extension-code-block";
 import { resolveAssetUrl } from "./imageComponent";
 import EmojiPicker, { EmojiStyle } from 'emoji-picker-react';
 import { useOutsideClick } from "src/hooks/useOutsideClick";
+import Mention from "@tiptap/extension-mention";
+import { mentionSuggestion } from "./suggestion";
+import { throttle } from "lodash";
+import { MentionComponent } from "./Mentioncomponent";
 
 // Types
 export type FileData = {
@@ -43,6 +47,8 @@ interface TiptapChatEditorProps {
   onCancelReply?: () => void;
   placeholder?: string;
   maxHeight?: number;
+   chatSocketService?: any
+   currentUser?: any
 }
 
 export interface TiptapChatEditorRef {
@@ -209,6 +215,8 @@ export const TiptapChatEditor = forwardRef<TiptapChatEditorRef, TiptapChatEditor
   onCancelReply,
   placeholder = "Type a message...",
   maxHeight = 300,
+   chatSocketService,
+   currentUser
 }, ref) => {
   const [files, setFiles] = useState<FileData[]>([]);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<Set<string>>(
@@ -226,9 +234,45 @@ export const TiptapChatEditor = forwardRef<TiptapChatEditorRef, TiptapChatEditor
     () => setShowEmojiPicker(false),
     showEmojiPicker
   );
+
+  const memberDetailsRef = useRef(memberDetails);
+
+  useEffect(() => {
+    memberDetailsRef.current = memberDetails;
+  }, [memberDetails]);
+
+  const selectedMessageRef = useRef(selectedMessage);
+
+useEffect(() => {
+  selectedMessageRef.current = selectedMessage;
+}, [selectedMessage]);
+
+ const handleTyping = () => {
+    if (chatSocketService && currentChatId && currentUser) {
+      chatSocketService.send({
+        type: "typing",
+        group: currentChatId,
+        sender: currentUser,
+      });
+    }
+  };
+
+  // Throttled typing handler using useMemo to prevent recreation
+  const throttledTyping = useMemo(
+    () => throttle(handleTyping, 500),
+    [chatSocketService, currentChatId, currentUser?.id]
+  );
+
+   useEffect(() => {
+    return () => {
+      throttledTyping.cancel();
+    };
+  }, [throttledTyping]);
+
   const editor = useEditor({
     onUpdate: ({ editor }) => {
       setIsEditorEmpty(editor.isEmpty);
+      throttledTyping();
     },
     extensions: [
       StarterKit.configure({
@@ -266,6 +310,62 @@ export const TiptapChatEditor = forwardRef<TiptapChatEditorRef, TiptapChatEditor
           class: "text-indigo-600 hover:underline",
         },
       }),
+//       Mention.configure({
+//         HTMLAttributes: {
+//           class: 'bg-indigo-100 text-indigo-700 rounded px-1 py-0.5 font-medium decoration-clone',
+//         },
+//         suggestion: {
+//           ...mentionSuggestion,
+//           items: ({ query }) => {
+//   const memberMap = memberDetailsRef.current || {};
+//   const allowedMemberIds = selectedMessageRef.current?.members || [];
+
+//   return allowedMemberIds
+//     .map((id: string) => memberMap[id])
+//     .filter(Boolean)
+//     .filter((member: any) =>
+//       (member.display_name || member.first_name || "")
+//         .toLowerCase()
+//         .startsWith(query.toLowerCase())
+//     )
+//     .slice(0, 10)
+//     .map((m: any) => ({
+//       id: m.id,
+//       display_name: m.display_name,
+//       first_name: m.first_name,
+//       avatar_url: m.avatar_url,
+//     }));
+// },
+//         },
+//       }),
+
+MentionComponent.configure({
+  HTMLAttributes: {},  // No styling needed, it's a custom element
+  suggestion: {
+    ...mentionSuggestion,
+    items: ({ query }) => {
+      const memberMap = memberDetailsRef.current || {};
+      const allowedMemberIds = selectedMessageRef.current?.members || [];
+
+      return allowedMemberIds
+        .map((id: string) => memberMap[id])
+        .filter(Boolean)
+        .filter((member: any) =>
+          (member.display_name || member.first_name || "")
+            .toLowerCase()
+            .startsWith(query.toLowerCase())
+        )
+        .slice(0, 10)
+        .map((m: any) => ({
+          id: m.id,  // ← This becomes entity_identifier
+          display_name: m.display_name,
+          first_name: m.first_name,
+          avatar_url: m.avatar_url,
+        }));
+    },
+  },
+})
+
     ],
     editorProps: {
       attributes: {
@@ -537,35 +637,35 @@ export const TiptapChatEditor = forwardRef<TiptapChatEditorRef, TiptapChatEditor
   }));
 
   useEffect(() => {
- if (files.length > 0 || uploadedAssetIds.size > 0 || editor?.isEmpty === false) {
-   setIsEditorEmpty(false);
- } 
-},[files])
+    if (files.length > 0 || uploadedAssetIds.size > 0 || editor?.isEmpty === false) {
+      setIsEditorEmpty(false);
+    }
+  }, [files])
 
   // Handle send message
   const handleSend = () => {
     if (!editor) return;
 
-   const isEmpty = editor.isEmpty;
-  const hasFiles = uploadedAssetIds.size > 0;
+    const isEmpty = editor.isEmpty;
+    const hasFiles = uploadedAssetIds.size > 0;
 
-  // If nothing at all, do nothing
-  if (isEmpty && !hasFiles) return;
+    // If nothing at all, do nothing
+    if (isEmpty && !hasFiles) return;
 
-  let content = "";
+    let content = "";
 
-  // Only include editor HTML if there's text
-  if (!isEmpty) {
-    content = editor.getHTML();
+    // Only include editor HTML if there's text
+    if (!isEmpty) {
+      content = editor.getHTML();
 
-    // Ensure paragraph class only when text exists
-    if (!content.includes('class="editor-paragraph-block')) {
-      content = content.replace(
-        /<p>/g,
-        '<p class="editor-paragraph-block break-all whitespace-pre-wrap">'
-      );
+      // Ensure paragraph class only when text exists
+      if (!content.includes('class="editor-paragraph-block')) {
+        content = content.replace(
+          /<p>/g,
+          '<p class="editor-paragraph-block break-all whitespace-pre-wrap">'
+        );
+      }
     }
-  }
 
     onSendMessage(content, Array.from(uploadedAssetIds));
 
@@ -631,13 +731,13 @@ export const TiptapChatEditor = forwardRef<TiptapChatEditorRef, TiptapChatEditor
               {/* Emoji Picker */}
               <div className="relative" ref={emojiPickerRef} >
 
-                  <button
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    type="button"
-                    className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                  >
-                    <Smile size={20} />
-                  </button>
+                <button
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  type="button"
+                  className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  <Smile size={20} />
+                </button>
                 {showEmojiPicker && (
                   <div className="absolute bottom-10 right-0 z-50">
                     <div className="rounded-2xl shadow-lg border border-custom-sidebar-border-300 overflow-hidden">

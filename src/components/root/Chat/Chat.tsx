@@ -31,6 +31,7 @@ import {
   fetchLastMessage,
   selectChatGroupLogDetails,
   selectChatMessageDetails,
+  selectChatMessages,
   selectGroupAttachments,
   selectLastMessage,
   selectLoader,
@@ -91,6 +92,7 @@ export const ChatWindow = () => {
 
   const lastMessage = useAppSelector((state) => selectLastMessage(state));
   const loader = useAppSelector((state) => selectLoader(state));
+  // const chatMessage = useAppSelector(selectChatMessages)[workspaceSlug || ""];
 
   const chatFiles = useAppSelector(selectGroupAttachments);
   const currentChatFiles =
@@ -520,8 +522,10 @@ export const ChatWindow = () => {
                     currentChatId={currentChatId}
                     workspaceSlug={workspaceSlug}
                     replyTo={replyTo}
-                    selectedMessage={selectedMassage}
+                    selectedMessage={selectedChat}
                     memberDetails={memberDetails}
+                     chatSocketService={chatSocketService}
+                      currentUser={receiverUserId || ""}
                     onSendMessage={(content, attachments) => {
                       if (!chatSocketService) return;
 

@@ -7,21 +7,23 @@ import { cleanedHTML, extractPlainText } from "src/utils/string.helper";
 import { IChatMessage } from "src/types";
 import { RenderAttachments } from "./file-details";
 import { ChatImageGrid } from "./ChatImageGrid";
+import { UserAvatar } from "./UserAvatar";
 interface IForwardedMessage {
   forwardedFromUser: any;
   forwardedFrom: any;
   msg: any;
   reply?: any;
+  memberDetails?: any;
 }
 export const ForwardedMessage: FC<IForwardedMessage> = ({
   forwardedFromUser,
   forwardedFrom,
   msg,
   reply,
+  memberDetails,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const currentUser = useUser();
-
   // The long repetitive string from your image
   const content = msg?.content;
   // Define how many characters to show before "Read more"
@@ -47,11 +49,18 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
           {msg?.forwarded_from && (
             <Forward className="h-3.5 w-3.5 text-custom-text-100" />
           )}
+          {forwardedFromUser.avatar_url ? (
+            <UserAvatar
+              userDetail={forwardedFromUser}
+              msg={forwardedFrom}
+            />  
+          ):
           <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
             <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
               {forwardedFromUser.first_name && forwardedFromUser.first_name[0]}
             </div>
           </div>
+          }
           <span className="font-semibold text-gray-700">
             {forwardedFromUser.first_name && forwardedFromUser.first_name}{" "}
             {forwardedFromUser.last_name && forwardedFromUser.last_name}
@@ -73,7 +82,7 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
             </div>
           )}
           {forwardedFrom?.attachment?.length > 0 &&
-          <RenderAttachments message={forwardedFrom} isCurrentUser={IsMe} />
+            <RenderAttachments message={forwardedFrom} isCurrentUser={IsMe} />
           }
         </div>
       </div>
@@ -84,6 +93,7 @@ export const ForwardedMessage: FC<IForwardedMessage> = ({
             <RichTextReadOnlyEditor
               content={msg.content}
               className={`prose prose-sm max-w-none prose-invert`}
+              memberDetails={memberDetails}
             />
           </>
         ) : plainTextContent.length > MAX_LENGTH ? (

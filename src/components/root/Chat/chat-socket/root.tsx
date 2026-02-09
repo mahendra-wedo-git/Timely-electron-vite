@@ -13,6 +13,7 @@ import { useChatSocket } from "src/context/chatContext";
 import {
   deleteMessage,
   replaceTemporaryMessage,
+  setTyping,
   updateChatGroupLog,
   updateMessageReaction,
   updateMessages,
@@ -36,6 +37,8 @@ export function ChatSocketContainer() {
     currentUserId: string,
   ) => {
     console.log("shouldShowOSNotification called", senderId, currentUserId);
+    // Don't show notifications if user is "mte"
+    // if (currentUser?.id === "mte" || currentUser?.username === "mte") return false;
     // if (senderId) return false;
     // if (senderId === currentUserId) return false;
     if (document.hasFocus()) return false;
@@ -238,6 +241,11 @@ export function ChatSocketContainer() {
                   reaction: parsed,
                 }),
               );
+            }
+            break;
+            case "typing":
+            if (parsed.sender !== currentUser?.id) {
+              setTyping(parsed);
             }
             break;
         }

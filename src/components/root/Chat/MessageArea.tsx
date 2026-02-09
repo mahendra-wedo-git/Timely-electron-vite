@@ -29,6 +29,8 @@ import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import { renderEmoji } from "src/utils/emoji.helper";
 import { IChatReaction } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
+import { selectTyping } from "src/redux/massagesSlice";
+import { TypingIndicator } from "./typing-indicator";
 
 // ============= TYPES =============
 interface MentionProps {
@@ -97,9 +99,8 @@ const DeletedMessage: FC<{ isCurrentUser: boolean }> = ({ isCurrentUser }) => (
   isCurrentUser &&
   <div className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}>
     <div
-      className={`px-4 py-2 rounded-2xl italic ${
-        isCurrentUser ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-900"
-      }`}
+      className={`px-4 py-2 rounded-2xl italic ${isCurrentUser ? "bg-indigo-600 text-white" : "bg-gray-200 text-gray-900"
+        }`}
     >
       <p className="text-xs">This message was deleted</p>
     </div>
@@ -115,100 +116,100 @@ const MessageActionsToolbar: FC<{
   onDelete?: () => void;
   onReply: () => void;
   message: any;
-}> = ({ isCurrentUser, onEdit, onForward, onDelete, onReply, message,currentUserDetails}) => {
+}> = ({ isCurrentUser, onEdit, onForward, onDelete, onReply, message, currentUserDetails }) => {
   const chatSocketService = useChatSocket();
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   if (!message || !chatSocketService) return null;
   const handelReact = (emoji: string) => {
-      try {
-        const alreadyReacted = message?.reactions?.some(
-          (r: IChatReaction) => r.emoji === emoji && r.user === currentUserDetails
-        );
+    try {
+      const alreadyReacted = message?.reactions?.some(
+        (r: IChatReaction) => r.emoji === emoji && r.user === currentUserDetails
+      );
 
-        const newReaction = {
-          type: "reaction",
-          intent: alreadyReacted ? "delete" : "create",
-          message_id: message.id,
-          emoji: emoji,
-          group_id: message.group,
-        };
-        chatSocketService?.send(newReaction);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-  return(
-  <div
-  className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-white rounded-md px-3 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${
-    isCurrentUser ? "right-0" : "left-0"
-  }`}
-  >
-            {reactionEmojis.slice(0, 2).map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => handelReact(emoji)}
-                className="flex cursor-pointer sitems-center justify-center rounded-md p-1 text-sm hover:bg-gray-100"
-              >
-                {renderEmoji(emoji)}
-              </button>
-            ))}
-              <button
-                onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
-                className="relative grid place-items-center rounded p-1  outline-none hover:text-custom-text-100 cursor-pointer hover:bg-gray-100"
-              >
-                <SmilePlus className="text-custom-text-100 h-4 w-4" color="grey" />
-              </button>
-              {isEmojiPickerOpen && (
-                <div className="absolute bottom-10 right-0 z-50">
-                  <div className="rounded-2xl shadow-lg border border-custom-sidebar-border-300 overflow-hidden">
-                    <EmojiPicker
-                      previewConfig={{ showPreview: false }}
-                      autoFocusSearch={false}
-                      emojiStyle={EmojiStyle.NATIVE}
-                      style={{ height: "350px" }}
-                      onEmojiClick={(emojiData) => {
-                        handelReact(emojiData.unified);
-                        setIsEmojiPickerOpen(false);
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-    {isCurrentUser && onEdit && (
+      const newReaction = {
+        type: "reaction",
+        intent: alreadyReacted ? "delete" : "create",
+        message_id: message.id,
+        emoji: emoji,
+        group_id: message.group,
+      };
+      chatSocketService?.send(newReaction);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  return (
+    <div
+      className={`absolute -top-9 hidden group-hover:flex items-center gap-2 bg-white rounded-md px-3 py-2 shadow-sm backdrop-blur-md transition-all duration-200 ${isCurrentUser ? "right-0" : "left-0"
+        }`}
+    >
+      {reactionEmojis.slice(0, 2).map((emoji) => (
+        <button
+          key={emoji}
+          type="button"
+          onClick={() => handelReact(emoji)}
+          className="flex cursor-pointer sitems-center justify-center rounded-md p-1 text-sm hover:bg-gray-100"
+        >
+          {renderEmoji(emoji)}
+        </button>
+      ))}
       <button
-        onClick={onEdit}
+        onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
+        className="relative grid place-items-center rounded p-1  outline-none hover:text-custom-text-100 cursor-pointer hover:bg-gray-100"
+      >
+        <SmilePlus className="text-custom-text-100 h-4 w-4" color="grey" />
+      </button>
+      {isEmojiPickerOpen && (
+        <div className="absolute bottom-10 right-0 z-50">
+          <div className="rounded-2xl shadow-lg border border-custom-sidebar-border-300 overflow-hidden">
+            <EmojiPicker
+              previewConfig={{ showPreview: false }}
+              autoFocusSearch={false}
+              emojiStyle={EmojiStyle.NATIVE}
+              style={{ height: "350px" }}
+              onEmojiClick={(emojiData) => {
+                handelReact(emojiData.unified);
+                setIsEmojiPickerOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {isCurrentUser && onEdit && (
+        <button
+          onClick={onEdit}
+          className="p-1.5 border hover:bg-gray-100 rounded-full transition"
+          title="Edit message"
+        >
+          <Edit2 size={10} className="text-gray-600" />
+        </button>
+      )}
+      <button
+        onClick={onForward}
         className="p-1.5 border hover:bg-gray-100 rounded-full transition"
-        title="Edit message"
+        title="Forward message"
       >
-        <Edit2 size={10} className="text-gray-600" />
+        <Forward size={10} className="text-gray-600" />
       </button>
-    )}
-    <button
-      onClick={onForward}
-      className="p-1.5 border hover:bg-gray-100 rounded-full transition"
-      title="Forward message"
-    >
-      <Forward size={10} className="text-gray-600" />
-    </button>
-    {isCurrentUser && onDelete && (
+      {isCurrentUser && onDelete && (
+        <button
+          onClick={onDelete}
+          className="p-1.5 border hover:bg-red-50 rounded-full transition"
+          title="Delete message"
+        >
+          <Trash size={10} className="text-red-500" />
+        </button>
+      )}
       <button
-        onClick={onDelete}
-        className="p-1.5 border hover:bg-red-50 rounded-full transition"
-        title="Delete message"
+        onClick={onReply}
+        className="p-1.5 border hover:bg-gray-100 rounded-full transition"
+        title="Reply to message"
       >
-        <Trash size={10} className="text-red-500" />
+        <ReplyIcon size={10} className="text-gray-600" />
       </button>
-    )}
-    <button
-      onClick={onReply}
-      className="p-1.5 border hover:bg-gray-100 rounded-full transition"
-      title="Reply to message"
-    >
-      <ReplyIcon size={10} className="text-gray-600" />
-    </button>
-  </div>
-)}
+    </div>
+  )
+}
 
 // Message Timestamp and Status
 const MessageMetadata: FC<{
@@ -281,6 +282,7 @@ const ReplyHeader = ({ msg, memberMap }: any) => {
       forwardedFrom={msg.reply_to}
       msg={msg}
       reply={true}
+      memberDetails={memberMap}
     />
   );
 };
@@ -303,7 +305,7 @@ const MessageWrapper: FC<{
 }> = ({
   msg,
   isCurrentUser,
-  currentUserId,  
+  currentUserId,
   userDetail,
   children,
   groupedReactions,
@@ -315,88 +317,85 @@ const MessageWrapper: FC<{
   onReply,
   showSenderName = true,
 }) => {
-  const isEdited =
-    msg?.updated_at &&
-    new Date(msg.updated_at).getTime() - new Date(msg.created_at).getTime() >
+    const isEdited =
+      msg?.updated_at &&
+      new Date(msg.updated_at).getTime() - new Date(msg.created_at).getTime() >
       2000;
-  const chatSocketService = useChatSocket();
-  if (!msg || !chatSocketService) return null;
+    const chatSocketService = useChatSocket();
+    if (!msg || !chatSocketService) return null;
 
     const hasReactedByMe = (emoji: string) =>
-        msg?.reactions?.some(
-          (r: IChatReaction) =>
-            r.emoji === emoji && r.user === currentUserId
-        );
+      msg?.reactions?.some(
+        (r: IChatReaction) =>
+          r.emoji === emoji && r.user === currentUserId
+      );
 
-  return (
-    <div className={`flex ${isCurrentUser ? "justify-end" : showSenderName ? "justify-start pt-2" : "justify-start"}`}>
-      <div
-        className={`flex items-start gap-2 ${
-          isCurrentUser ? "flex-row-reverse" : "flex-row"
-        }`}
-      >
-        {!isCurrentUser && showSenderName && <UserAvatar userDetail={userDetail} msg={msg} />}
-        <div className={`${isCurrentUser ? "mr-2" : !showSenderName ? "ml-10" : "ml-1"} flex flex-col`}>
-          {!isCurrentUser && showSenderName && <UserName userDetail={userDetail} />}
+    return (
+      <div className={`flex ${isCurrentUser ? "justify-end" : showSenderName ? "justify-start pt-2" : "justify-start"}`}>
+        <div
+          className={`flex items-start gap-2 ${isCurrentUser ? "flex-row-reverse" : "flex-row"
+            }`}
+        >
+          {!isCurrentUser && showSenderName && <UserAvatar userDetail={userDetail} msg={msg} />}
+          <div className={`${isCurrentUser ? "mr-2" : !showSenderName ? "ml-10" : "ml-1"} flex flex-col`}>
+            {!isCurrentUser && showSenderName && <UserName userDetail={userDetail} />}
 
-          {isEdited && (
-            <span
-              className={`text-[10px] text-gray-400 ${
-                isCurrentUser ? "text-end" : "text-start"
-              }`}
-            >
-              Edited
-            </span>
-          )}
-
-          <div className="relative">
-            <div className="relative z-10 h-auto">
-              {children}
-            </div>
-
-            {/* Emoji reactions */}
-            {reactions?.length > 0 && (
-              <div
-                className={`absolute z-10 -bottom-2.5 flex flex-wrap gap-1 ${
-                  isCurrentUser ? "right-2 justify-end" : "left-2 justify-start"
-                }`}
+            {isEdited && (
+              <span
+                className={`text-[10px] text-gray-400 ${isCurrentUser ? "text-end" : "text-start"
+                  }`}
               >
-                {groupedReactions.map((reaction: any) => (
-                  <span
-                    key={reaction.emoji}
-                    className="flex items-center gap-1 rounded-full bg-gray-100 px-1 py-[2px] text-xs shadow-sm cursor-pointer"
-                    onClick={() => {
-                      try {
-                        const reactedByMe = hasReactedByMe(reaction.emoji)
-                        chatSocketService.send({
-                          type: "reaction",
-                          intent: reactedByMe ? "delete" : "create",
-                          message_id: msg.id,
-                          emoji: reaction.emoji,
-                          group_id: msg.group,
-                        });
-                      } catch (err) {
-                        console.error(err);
-                      }
-                    }}
-                  >
-                    {renderEmoji(reaction.emoji)}
-                    {reaction.count > 1 && (
-                      <span className="text-[10px] text-gray-600">
-                        {reaction.count}
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
+                Edited
+              </span>
             )}
-          </div>
-        </div>
 
+            <div className="relative">
+              <div className="relative z-10 h-auto">
+                {children}
+              </div>
+
+              {/* Emoji reactions */}
+              {reactions?.length > 0 && (
+                <div
+                  className={`absolute z-10 -bottom-2.5 flex flex-wrap gap-1 ${isCurrentUser ? "right-2 justify-end" : "left-2 justify-start"
+                    }`}
+                >
+                  {groupedReactions.map((reaction: any) => (
+                    <span
+                      key={reaction.emoji}
+                      className="flex items-center gap-1 rounded-full bg-gray-100 px-1 py-[2px] text-xs shadow-sm cursor-pointer"
+                      onClick={() => {
+                        try {
+                          const reactedByMe = hasReactedByMe(reaction.emoji)
+                          chatSocketService.send({
+                            type: "reaction",
+                            intent: reactedByMe ? "delete" : "create",
+                            message_id: msg.id,
+                            emoji: reaction.emoji,
+                            group_id: msg.group,
+                          });
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }}
+                    >
+                      {renderEmoji(reaction.emoji)}
+                      {reaction.count > 1 && (
+                        <span className="text-[10px] text-gray-600">
+                          {reaction.count}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 // Text Message Content with Actions
 const TextMessageContent: FC<{
@@ -420,38 +419,37 @@ const TextMessageContent: FC<{
   onReply,
   className
 }) => (
-  <div
-    className={`flex items-end gap-2 ${
-      isCurrentUser ? "flex-row-reverse" : "flex-row"
-    }`}
-  >
     <div
-      className={`relative text-sm py-3 rounded-xl px-3 w-full max-w-2xl ${className}`}
+      className={`flex items-end gap-2 ${isCurrentUser ? "flex-row-reverse" : "flex-row"
+        }`}
+    >
+      <div
+        className={`relative text-sm py-3 rounded-xl px-3 w-full max-w-2xl ${className}`}
       // className={`relative text-sm py-2 px-3 rounded-xl w-full max-w-2xl ${
       //   isCurrentUser
       //     ? "bg-indigo-600 text-white rounded-tr-none"
       //     : "bg-gray-100 text-gray-900 rounded-tl-none"
       // }`}
-    >
-      <MessageActionsToolbar
-        isCurrentUser={isCurrentUser}
-        currentUserDetails={currentUserId}
-        onEdit={onEdit}
-        onForward={onForward}
-        onDelete={onDelete}
-        onReply={onReply}
-        message={msg}
-      />
-      {content}
-    </div>
+      >
+        <MessageActionsToolbar
+          isCurrentUser={isCurrentUser}
+          currentUserDetails={currentUserId}
+          onEdit={onEdit}
+          onForward={onForward}
+          onDelete={onDelete}
+          onReply={onReply}
+          message={msg}
+        />
+        {content}
+      </div>
 
-    <MessageMetadata
-      isCurrentUser={isCurrentUser}
-      createdAt={msg.created_at}
-      isRead={msg.isRead}
-    />
-  </div>
-);
+      <MessageMetadata
+        isCurrentUser={isCurrentUser}
+        createdAt={msg.created_at}
+        isRead={msg.isRead}
+      />
+    </div>
+  );
 
 // MAIN COMPONENT
 export const MessageArea: FC<MessageAreaProps> = ({
@@ -464,6 +462,10 @@ export const MessageArea: FC<MessageAreaProps> = ({
   handleEditMessage,
 }) => {
   const memberMap = useAppSelector(selectMemberMap);
+  const typing = useAppSelector(selectTyping);
+  const typingInfo = typing[currentUserId];
+  // const typingMember = typingInfo.sender ? memberMap[typingInfo?.sender] : null;  
+  console.log("typingInfotypingInfo",typingInfo)
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [expandedMessages, setExpandedMessages] = useState<
@@ -552,22 +554,22 @@ export const MessageArea: FC<MessageAreaProps> = ({
     return (
       index === 0 ||
       new Date(messages[index - 1].created_at).toDateString() !==
-        new Date(messages[index].created_at).toDateString()
+      new Date(messages[index].created_at).toDateString()
     );
   };
 
   //  RENDER MESSAGE
   const renderMessage = (msg: any, messages: any[], index: number) => {
-    
-const { images, textHTML } = extractImageComponents(msg.content);
-const hasImages = images.length > 0;
+console.log("msgmsgmsgmsgmsg",msg)
+    const { images, textHTML } = extractImageComponents(msg.content);
+    const hasImages = images.length > 0;
 
     const userDetail = memberMap[msg?.sender] || {};
     const isCurrentUser = msg?.sender === currentUserId;
     const isEditing = editingMessageId === msg.id;
     const showTimestamp = shouldShowTimestamp(messages, index);
     // const shouldRenderImageOnly = checkImageOnlyMessage(msg);
-const sanitizedMessageContent = cleanedHTML(msg.content || "");
+    const sanitizedMessageContent = cleanedHTML(msg.content || "");
     // Check if content has image components
     const hasImageComponents =
       sanitizedMessageContent.includes("image-component");
@@ -577,7 +579,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
     );
     const hasNonImageAttachments =
       msg.attachment?.some(
-        (att : any) => !att.attributes?.type?.startsWith("image/")
+        (att: any) => !att.attributes?.type?.startsWith("image/")
       ) ?? false;
     const hasReplyOrForward = !!(msg.reply_to || msg.is_forwarded);
     const hasAnyAttachments = (msg.attachment?.length || 0) > 0;
@@ -587,21 +589,21 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
       !msg.deleted_at &&
       !hasNonImageAttachments &&
       !hasReplyOrForward;
-      const shouldRenderImageWithText = 
-            hasImageComponents && 
-            !hasNoTextContent && 
-    !msg.deleted_at;
+    const shouldRenderImageWithText =
+      hasImageComponents &&
+      !hasNoTextContent &&
+      !msg.deleted_at;
     const plainTextContent = extractPlainText(sanitizedMessageContent);
     const isEmojiOnlyContent = isEmojiOnlyText(plainTextContent);
-      const shouldRenderEmojiOnly =
+    const shouldRenderEmojiOnly =
       isEmojiOnlyContent &&
       !hasAnyAttachments &&
       !hasReplyOrForward &&
       !hasImageComponents &&
       !msg.deleted_at;
-      const prevMsg = messages[index - 1];
-      const isSameSender = prevMsg && prevMsg.sender === msg.sender;
-      const showSenderName = !isSameSender;
+    const prevMsg = messages[index - 1];
+    const isSameSender = prevMsg && prevMsg.sender === msg.sender;
+    const showSenderName = !isSameSender;
     // console.log("shouldRenderImageOnly >>>",shouldRenderImageOnly);
 
     // Deleted message
@@ -648,7 +650,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               userDetail={userDetail}
               showActions={msg.reaction}
               reactions={msg.reactions}
-                groupedReactions={groupReactionsWithUsers(
+              groupedReactions={groupReactionsWithUsers(
                 msg.reactions || [],
                 userDetail.id || "",
                 msg.group || []
@@ -677,7 +679,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               userDetail={userDetail}
               showActions={msg.reaction}
               reactions={msg.reactions}
-                groupedReactions={groupReactionsWithUsers(
+              groupedReactions={groupReactionsWithUsers(
                 msg.reactions || [],
                 userDetail.id || "",
                 msg.group || []
@@ -697,61 +699,62 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
           )}
 
           {/* Image + Text message */}
-        {shouldRenderImageWithText && msg?.attachment?.length && (
-          <MessageWrapper
-            msg={msg}
-            isCurrentUser={isCurrentUser}
-            currentUserId={currentUserId}
-            showSenderName={showSenderName}
-            userDetail={userDetail}
-            showActions={msg.reaction}
+          {shouldRenderImageWithText && msg?.attachment?.length && (
+            <MessageWrapper
+              msg={msg}
+              isCurrentUser={isCurrentUser}
+              currentUserId={currentUserId}
+              showSenderName={showSenderName}
+              userDetail={userDetail}
+              showActions={msg.reaction}
               reactions={msg.reactions}
-                groupedReactions={groupReactionsWithUsers(
+              groupedReactions={groupReactionsWithUsers(
                 msg.reactions || [],
                 userDetail.id || "",
                 msg.group || []
-        )}
-          >
-            {isEditing ? (
-              <EditMessageForm
-                content={editedContent}
-                onChange={setEditedContent}
-                onSave={() => handleSaveEdit(msg)}
-                onCancel={handleCancelEdit}
-                onKeyDown={(e) => handleKeyPress(e, msg)}
-              />
-            ) : (
-              <TextMessageContent
-                msg={msg}
-                currentUserId={currentUserId}
-                className={`px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}
-                isCurrentUser={isCurrentUser}
-                content={
-                  <>
-                    {/* Render images first */}
-                    {hasImages && (
-                      <div className="mb-2">
-                        <ChatImageGrid images={images} />
-                      </div>
-                    )}
-                    {/* Render text content */}
-                    {textHTML && (
-                      <RichTextReadOnlyEditor
-                        content={textHTML}
-                        className="prose prose-sm max-w-none"
+              )}
+            >
+              {isEditing ? (
+                <EditMessageForm
+                  content={editedContent}
+                  onChange={setEditedContent}
+                  onSave={() => handleSaveEdit(msg)}
+                  onCancel={handleCancelEdit}
+                  onKeyDown={(e) => handleKeyPress(e, msg)}
+                />
+              ) : (
+                <TextMessageContent
+                  msg={msg}
+                  currentUserId={currentUserId}
+                  className={`px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}
+                  isCurrentUser={isCurrentUser}
+                  content={
+                    <>
+                      {/* Render images first */}
+                      {hasImages && (
+                        <div className="mb-2">
+                          <ChatImageGrid images={images} />
+                        </div>
+                      )}
+                      {/* Render text content */}
+                      {textHTML && (
+                        <RichTextReadOnlyEditor
+                          content={textHTML}
+                          className="prose prose-sm max-w-none"
+                          memberDetails={memberMap}
+                        />
+                      )}
+                      <RenderAttachments
+                        key={msg.id}
+                        message={msg}
+                        isCurrentUser={isCurrentUser}
                       />
-                    )}
-                    <RenderAttachments
-                      key={msg.id}
-                      message={msg}
-                      isCurrentUser={isCurrentUser}
-                    />
-                  </>
-                }
-                {...messageActions}
-              />
-            )}
-          </MessageWrapper>
+                    </>
+                  }
+                  {...messageActions}
+                />
+              )}
+            </MessageWrapper>
           )}
 
           {/* Message with attachments */}
@@ -764,11 +767,11 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               userDetail={userDetail}
               showActions={msg.reaction}
               reactions={msg.reactions}
-                groupedReactions={groupReactionsWithUsers(
+              groupedReactions={groupReactionsWithUsers(
                 msg.reactions || [],
                 userDetail.id || "",
                 msg.group || []
-        )}
+              )}
             >
               <TextMessageContent
                 msg={msg}
@@ -776,26 +779,27 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
                 className={`${textHTML && `px-3 ${isCurrentUser ? "bg-indigo-600 text-white rounded-tr-none" : "bg-gray-100 text-gray-800 rounded-tl-none"}`}`}
                 isCurrentUser={isCurrentUser}
                 content={
-              <>
-              <RenderAttachments
-                key={msg.id}
-                message={msg}
-                isCurrentUser={isCurrentUser}
-              />
-                {textHTML && (
+                  <>
+                    <RenderAttachments
+                      key={msg.id}
+                      message={msg}
+                      isCurrentUser={isCurrentUser}
+                    />
+                    {textHTML && (
                       <RichTextReadOnlyEditor
                         content={msg.content}
                         className="prose prose-sm max-w-none"
+                        memberDetails={memberMap}
                       />
                     )}</>
-                    }
+                }
                 onEdit={messageActions.onEdit}
                 onDelete={messageActions.onDelete}
                 onReply={messageActions.onReply}
               />
-                
+
             </MessageWrapper>
-        )}
+          )}
 
           {/* Message with attachments */}
           {/* {!shouldRenderImageOnly && msg?.attachment?.length > 0 && (
@@ -831,11 +835,11 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
               userDetail={userDetail}
               showActions={msg.reaction}
               reactions={msg.reactions}
-                groupedReactions={groupReactionsWithUsers(
+              groupedReactions={groupReactionsWithUsers(
                 msg.reactions || [],
                 userDetail.id || "",
                 msg.group || []
-        )}
+              )}
             >
               {isEditing ? (
                 <EditMessageForm
@@ -853,19 +857,20 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
                   isCurrentUser={isCurrentUser}
                   content={
                     msg.forwarded_from &&
-                    memberMap[msg.forwarded_from?.sender] ? (
+                      memberMap[msg.forwarded_from?.sender] ? (
                       <ForwardedMessage
                         forwardedFromUser={
                           memberMap[msg.forwarded_from?.sender]
                         }
                         forwardedFrom={msg.forwarded_from}
                         msg={msg}
-                      />
-                    ) : msg?.reply_to && memberMap[msg?.reply_to?.sender] ? (
-                      <ForwardedMessage
+                        />
+                      ) : msg?.reply_to && memberMap[msg?.reply_to?.sender] ? (
+                        <ForwardedMessage
                         forwardedFromUser={memberMap[msg?.reply_to?.sender]}
                         forwardedFrom={msg?.reply_to}
                         msg={msg}
+                        memberDetails={memberMap} 
                         reply={true}
                       />
                     ) : (
@@ -877,6 +882,7 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
                         <RichTextReadOnlyEditor
                           content={msg.content}
                           text="sm"
+                          memberDetails={memberMap}
                           className="prose text-lg prose-sm max-w-none"
                         />
                       </>
@@ -900,6 +906,9 @@ const sanitizedMessageContent = cleanedHTML(msg.content || "");
           messages.map((msg, index) => renderMessage(msg, messages, index))
         )}
         <ImageFullscreenProvider />
+        {/* {typingInfo?.isTyping && typingMember && (
+              <TypingIndicator typingMember={typingMember} />
+            )} */}
         <div ref={messagesEndRef} />
       </div>
     </div>
