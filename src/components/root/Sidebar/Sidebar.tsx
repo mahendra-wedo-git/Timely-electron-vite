@@ -18,6 +18,8 @@ import { selectMemberMap } from "src/redux/memberRootSlice";
 import { getFileIcon } from "src/assets/attachment";
 import { getFileURL } from "src/utils";
 import { fetchWorkspaceMembers } from "src/redux/workspaceMemberSlice";
+import TimelyLogo from "../../../assets/timely-logos/blue-without-text.png";
+import { Image } from "react-bootstrap";
 
 interface NavItem {
   id: string;
@@ -94,7 +96,8 @@ const Sidebar: React.FC = () => {
     <div className="sidebar">
       <div className="sidebar-header">
         <div className="logo">
-          <div className="logo-icon">T</div>
+          {/* <div className="logo-icon">T</div> */}
+          <div className="logo-icon"><Image src={TimelyLogo} sizes="100vw" width={40} height={40} alt="Timely Logo" /></div>
           <h2>{workspace}</h2>
         </div>
       </div>
