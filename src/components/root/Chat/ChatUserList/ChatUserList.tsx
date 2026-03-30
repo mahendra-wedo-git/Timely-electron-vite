@@ -149,21 +149,21 @@ function QuickActionsMenu({ chat, onClose, position }: QuickActionsMenuProps) {
           </>
         )}
       </button>
-      <button
+      {/* <button
         onClick={handleArchive}
         className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-gray-100 flex items-center"
       >
         <Archive className="5-3 w-3 mr-3" />
         Archive
-      </button>
-      <div className="border-t border-gray-200 my-1"></div>
+      </button> */}
+      {/* <div className="border-t border-gray-200 my-1"></div>
       <button
         onClick={handleDelete}
         className="w-full px-4 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center"
       >
         <Trash2 className="5-3 w-3 mr-3" />
         Delete
-      </button>
+      </button> */}
     </div>
   );
 }

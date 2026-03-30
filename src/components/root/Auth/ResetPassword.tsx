@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, CheckCircle } from 'lucide-react';
 import { useAppContext } from 'src/context';
 import { AuthService } from 'src/services';
+import { Image } from 'react-bootstrap';
 
 const authService = new AuthService();
 
@@ -72,8 +73,8 @@ export const TimelyResetPassword = () => {
             <div className="w-full max-w-md">
                 {/* Logo and Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4">
-                        <span className="text-white text-2xl font-bold">T</span>
+                    <div className="inline-flex items-center justify-center rounded-2xl mb-4">
+                        <Image src="/assets/timely-logo-white.png" sizes="100vw" width={100} height={100} alt="Timely Logo" />
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset your password</h1>
                     <p className="text-gray-600">
@@ -143,7 +144,7 @@ export const TimelyResetPassword = () => {
                 {/* Footer */}
                 <div className="mt-8 text-center">
                     <p className="text-sm text-gray-500">
-                        © 2024 Timely. All rights reserved.
+                        &copy; {new Date().getFullYear()}{" "} Timely. All rights reserved.
                     </p>
                 </div>
             </div>

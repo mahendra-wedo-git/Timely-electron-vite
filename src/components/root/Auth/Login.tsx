@@ -7,6 +7,7 @@ import { setCurrentUser, setToken } from "src/redux/userSlice";
 import { Form } from "src/components/common";
 import { loginSchema } from "src/utils";
 import { Input } from "src/components/core";
+import { Image } from "react-bootstrap";
 interface ILogin {
   email: string;
   password: string;
@@ -60,8 +61,8 @@ export const TimelyLogin = () => {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl mb-4">
-            <span className="text-white text-2xl font-bold">T</span>
+          <div className="inline-flex items-center justify-center  rounded-2xl mb-4">
+            <Image src="/assets/timely-logo-white.png" sizes="100vw" width={100} height={100} alt="Timely Logo" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome to Timely
@@ -148,7 +149,7 @@ export const TimelyLogin = () => {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
-            © 2024 Timely. All rights reserved.
+            &copy; {new Date().getFullYear()}{" "} Timely. All rights reserved.
           </p>
         </div>
       </div>
