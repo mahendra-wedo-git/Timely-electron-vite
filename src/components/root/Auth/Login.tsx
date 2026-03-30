@@ -8,6 +8,7 @@ import { Form } from "src/components/common";
 import { loginSchema } from "src/utils";
 import { Input } from "src/components/core";
 import { Image } from "react-bootstrap";
+import TimelyLogo from "../../../assets/timely-logos/timely-logo-white.png";
 interface ILogin {
   email: string;
   password: string;
@@ -62,7 +63,7 @@ export const TimelyLogin = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center  rounded-2xl mb-4">
-            <Image src="/assets/timely-logo-white.png" sizes="100vw" width={100} height={100} alt="Timely Logo" />
+            <Image src={TimelyLogo} sizes="100vw" width={100} height={100} alt="Timely Logo" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome to Timely
