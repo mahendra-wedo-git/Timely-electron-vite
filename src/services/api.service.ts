@@ -33,10 +33,33 @@ export abstract class APIService {
       (response) => response,
       (error) => {
         if (error.response && error.response.status === 401) {
-          const currentPath = window.location.pathname;
-          window.location.replace(
-            `/${currentPath ? `?next_path=${currentPath}` : ``}`,
-          );
+          storage.removeItem(localStorageKeys.AUTH_TOKEN);
+          // Login / user slice use raw localStorage for these keys
+          localStorage.removeItem(localStorageKeys.USER_EMAIL);
+          localStorage.removeItem("currentUser");
+
+          // Notify React to re-check auth from localStorage immediately.
+          // In packaged Electron builds, UI may otherwise update only after manual refresh.
+          window.dispatchEvent(new Event("timely:auth-logout"));
+
+          // file:// (packaged Electron): pathname is the real path to index.html, not the SPA route.
+          // HashRouter keeps the app path in the hash (e.g. #/wedo/dashboard).
+          const spaPath =
+            window.location.protocol === "file:"
+              ? window.location.hash.replace(/^#/, "") || "/"
+              : `${window.location.pathname}${window.location.search}`;
+
+          const qs =
+            spaPath && spaPath !== "/"
+              ? `?next_path=${encodeURIComponent(spaPath)}`
+              : "";
+
+          if (window.location.protocol === "file:") {
+            // Only update hash to let HashRouter handle navigation (no full document replace).
+            window.location.hash = `/${qs}`;
+          } else {
+            window.location.replace(`/${qs}`);
+          }
         }
         return Promise.reject(error);
       },

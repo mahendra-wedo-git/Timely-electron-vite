@@ -14,8 +14,21 @@ const App = () => {
   const isLogin = Boolean(localStorage.getItem("userEmail"));
   const [initialRoute, setInitialRoute] = useState("");
   const [loading, setLoading] = useState(true); // State to handle loading
+  // Forces App to re-render when auth state changes in localStorage
+  // (e.g. after a 401 logout handled in an axios interceptor).
+  const [, setAuthRefreshTick] = useState(0);
   const localRoute = localStorage.getItem("lastRoute");
   const workspace = localStorage.getItem("workspace") || "wedo";
+
+  useEffect(() => {
+    const onAuthLogout = () => {
+      setAuthRefreshTick((t) => t + 1);
+    };
+
+    window.addEventListener("timely:auth-logout", onAuthLogout);
+    return () => window.removeEventListener("timely:auth-logout", onAuthLogout);
+  }, []);
+
   useEffect(() => {
     const fetchRoute = async () => {
       const lastRoute = await window.api.getStore("lastRoute");
