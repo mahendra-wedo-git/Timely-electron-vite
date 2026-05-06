@@ -1,4 +1,4 @@
-import { FC, use, useEffect, useState } from "react";
+import { FC, RefObject, useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CheckCheckIcon,
@@ -45,7 +45,7 @@ interface GroupedMessages {
 interface MessageAreaProps {
   groupedMessages: GroupedMessages;
   currentUserId: string;
-  messagesEndRef?: any;
+  messagesEndRef?: RefObject<HTMLDivElement | null>;
   deleteMassages?: any;
   handleForward?: any;
   handleReplay?: any;
@@ -175,7 +175,7 @@ const MessageActionsToolbar: FC<{
           </div>
         </div>
       )}
-      {isCurrentUser && onEdit && (
+      {/* {isCurrentUser && onEdit && (
         <button
           onClick={onEdit}
           className="p-1.5 border hover:bg-gray-100 rounded-full transition"
@@ -183,7 +183,7 @@ const MessageActionsToolbar: FC<{
         >
           <Edit2 size={10} className="text-gray-600" />
         </button>
-      )}
+      )} */}
       <button
         onClick={onForward}
         className="p-1.5 border hover:bg-gray-100 rounded-full transition"
@@ -471,8 +471,34 @@ export const MessageArea: FC<MessageAreaProps> = ({
   const [expandedMessages, setExpandedMessages] = useState<
     Record<string, boolean>
   >({});
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const totalMessages = useMemo(
+    () =>
+      Object.values(groupedMessages || {}).reduce(
+        (count, messages) => count + messages.length,
+        0
+      ),
+    [groupedMessages]
+  );
   const { workspace: currentWorkspaceSlug, project: currentProjectId } =
     useParams();
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const forceToBottom = (behavior: ScrollBehavior) => {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior,
+      });
+    };
+
+    requestAnimationFrame(() => forceToBottom("smooth"));
+    const timeoutId = window.setTimeout(() => forceToBottom("auto"), 220);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [totalMessages, messagesEndRef]);
 
   // Set global variables for image components
   (window as any).__CURRENT_PROJECT_ID__ = currentProjectId;
@@ -900,7 +926,11 @@ console.log("msgmsgmsgmsgmsg",msg)
 
   // MAIN RENDER
   return (
-    <div className="flex-1 overflow-y-auto bg-white py-4 sm:py-5 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 relative">
+    <div
+      ref={scrollContainerRef}
+      data-chat-scroll-container
+      className="flex-1 overflow-y-auto bg-white py-4 sm:py-5 md:py-6 px-3 sm:px-4 md:px-6 lg:px-8 relative"
+    >
       <div className="mx-auto space-y-2 max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-4xl ">
         {Object.entries(groupedMessages).map(([date, messages]) =>
           messages.map((msg, index) => renderMessage(msg, messages, index))

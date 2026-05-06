@@ -134,13 +134,25 @@ export const ChatWindow = () => {
         }),
       );
       dispatch(fetchChatGroupLog({ workspaceSlug, chatId: currentChatId }));
-      scrollToBottom();
+      requestAnimationFrame(() => scrollToBottom("auto"));
     }
     if (workspaceSlug) dispatch(fetchLastMessage({ workspaceSlug }));
   }, [workspaceSlug, currentChatId, dispatch]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    const scrollContainer = messagesEndRef.current?.closest(
+      "[data-chat-scroll-container]",
+    ) as HTMLDivElement | null;
+
+    if (scrollContainer) {
+      scrollContainer.scrollTo({
+        top: scrollContainer.scrollHeight,
+        behavior,
+      });
+      return;
+    }
+
+    messagesEndRef.current?.scrollIntoView({ behavior, block: "end" });
   };
 
   const deleteMassages = (message: any) => {
@@ -527,11 +539,11 @@ export const ChatWindow = () => {
                      chatSocketService={chatSocketService}
                       currentUser={receiverUserId || ""}
                     onSendMessage={(content, attachments) => {
-                      if (!chatSocketService) return;
+                      if (!chatSocketService || !currentChatId) return;
 
                       chatSocketService.send({
                         type: "message",
-                        content: content,
+                        content: content || "<p></p>",
                         group_id: currentChatId,
                         reply_to: replyTo ? selectedMassage?.id : null,
                         clientMessageId: uuidv4(),
@@ -549,7 +561,7 @@ export const ChatWindow = () => {
 
                       // Reorder chat list by sender
                       dispatch(reorderGroupsBasedOnSender(currentChatId || ""));
-                      scrollToBottom();
+                      requestAnimationFrame(() => scrollToBottom("smooth"));
                     }}
                     onCancelReply={() => setReplyTo(null)}
                     placeholder="Type a message..."
