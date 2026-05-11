@@ -11,7 +11,7 @@ export const MentionPreview: FC<MentionPreviewProps> = ({
   memberDetails,
 }) => {
   const user = memberDetails?.[userId];
-  console.log("useruseruseruser",user,memberDetails)
+  // console.log("useruseruseruser",user,memberDetails)
 
   if (!user) {
     return (

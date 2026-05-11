@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { IoNotificationsOff } from "react-icons/io5";
 import { selectMemberMap } from "src/redux/memberRootSlice";
+import { clearTyping, selectTyping } from "src/redux/massagesSlice";
 
 interface IChatUser {
   setSelectedChat: (chat: IChatGroup) => void;
@@ -225,11 +226,11 @@ export const ChatUserList: FC<IChatUser> = ({
   const groupDetails: IChatGroup | null = workspaceSlug
     ? useAppSelector((state) => getGroup(state, lastSelected || ""))
     : null;
-  useEffect(() => {
+    const typing = useAppSelector(selectTyping);
+    useEffect(() => {
     if (!workspaceSlug || !currentUser?.id) return;
 
     if (!lastSelected) return;
-
     setSelectedChat(groupDetails as IChatGroup);
     dispatch(
       setCurrentSelectedGroup({
@@ -283,6 +284,16 @@ export const ChatUserList: FC<IChatUser> = ({
         const lastMsg = lastMessage[chat.id] || null;
         const isMe = lastMsg?.sender === currentUser?.id;
         // const userDetails = memberMap[chat.members[0]];
+        const typingInfo = typing[chat.id || ""];
+        // remove the typing indicator after 5 seconds of inactivity
+        useEffect(() => {
+          if (!typingInfo?.isTyping) return;
+          const timeoutId = setTimeout(() => {
+            dispatch(clearTyping(chat.id));
+          }, 5000);
+
+          return () => clearTimeout(timeoutId);
+        }, [typingInfo, chat.id, dispatch]);
         return (
           <>
             <button
@@ -360,7 +371,13 @@ export const ChatUserList: FC<IChatUser> = ({
                 </div>
                 <p className="text-xs text-gray-600 truncate">
                   {/* {lastMsg?.content || "No messages yet"} */}
-                  {lastMsg
+                  {typingInfo?.isTyping ? 
+                  <div className="flex gap-0.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-blue-500 delay-0" />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-blue-400 delay-150" />
+                    <span className="w-1.5 h-1.5 rounded-full animate-bounce bg-blue-300 delay-300" />
+                  </div> : 
+                  lastMsg
                     ? `${isMe ? "You: " : ""}${stripAndTruncateHTML(lastMsg.content || "", 20)}`
                     : "No messages yet"}
                   {/* {chat.lastMessage || "No messages yet"} */}

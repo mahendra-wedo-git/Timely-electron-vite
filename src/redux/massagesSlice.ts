@@ -368,17 +368,6 @@ const messageSlice = createSlice({
       const chatType = action.payload;
       state.typing[chatType.group] = { isTyping: true, sender: chatType.sender };
 
-      // Clear existing timer
-      if (state.typingTimers[chatType.group]) {
-        clearTimeout(state.typingTimers[chatType.group]);
-      }
-
-      // Set new timer (Note: This won't work perfectly in Redux due to serialization)
-      // You may want to handle this differently, like using middleware
-      state.typingTimers[chatType.group] = setTimeout(() => {
-        state.typing[chatType.group] = { isTyping: false };
-        delete state.typingTimers[chatType.group];
-      }, 5000) as any;
     },
 
     clearTyping: (state, action: PayloadAction<string>) => {

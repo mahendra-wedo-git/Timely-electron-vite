@@ -263,11 +263,11 @@ useEffect(() => {
     [chatSocketService, currentChatId, currentUser?.id]
   );
 
-   useEffect(() => {
-    return () => {
-      throttledTyping.cancel();
-    };
-  }, [throttledTyping]);
+  //  useEffect(() => {
+  //   return () => {
+  //     throttledTyping.cancel();
+  //   };
+  // }, [throttledTyping]);
 
   const editor = useEditor({
     onUpdate: ({ editor }) => {

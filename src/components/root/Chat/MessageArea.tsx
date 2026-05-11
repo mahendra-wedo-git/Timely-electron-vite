@@ -16,7 +16,7 @@ import {
   isEmojiOnlyText,
   isEmptyHtmlString,
 } from "src/utils/string.helper";
-import { useAppSelector } from "src/redux/hooks";
+import { useAppSelector, useAppDispatch } from "src/redux/hooks";
 import { selectMemberMap } from "src/redux/memberRootSlice";
 import { ForwardedMessage } from "./ForwardMessages";
 import { GroupActivityItem } from "./group-activity";
@@ -29,7 +29,7 @@ import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import { renderEmoji } from "src/utils/emoji.helper";
 import { IChatReaction } from "src/types";
 import { useChatSocket } from "src/context/chatContext";
-import { selectTyping } from "src/redux/massagesSlice";
+import { selectTyping, clearTyping } from "src/redux/massagesSlice";
 import { TypingIndicator } from "./typing-indicator";
 
 // ============= TYPES =============
@@ -50,6 +50,7 @@ interface MessageAreaProps {
   handleForward?: any;
   handleReplay?: any;
   handleEditMessage?: any;
+  currentChatId?: string;
 }
 
 // COMPONENTS
@@ -460,12 +461,29 @@ export const MessageArea: FC<MessageAreaProps> = ({
   handleForward,
   handleReplay,
   handleEditMessage,
+  currentChatId
 }) => {
+  const dispatch = useAppDispatch();
   const memberMap = useAppSelector(selectMemberMap);
   const typing = useAppSelector(selectTyping);
-  const typingInfo = typing[currentUserId];
-  // const typingMember = typingInfo.sender ? memberMap[typingInfo?.sender] : null;  
-  console.log("typingInfotypingInfo",typingInfo)
+  const typingInfo = typing[currentChatId || ""];
+  const typingMember = typingInfo?.sender ? memberMap[typingInfo?.sender] : null;  
+  
+  // Handle typing timeout to clear indicator after 5 seconds
+  useEffect(() => {
+    if (typingInfo?.isTyping && currentChatId) {
+      const timer = setTimeout(() => {
+        // scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: "smooth" });
+        scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: "smooth" });
+        // Dispatch clearTyping action after 5 seconds
+        dispatch(clearTyping(currentChatId));
+        console.log("Clearing typing for group:", currentChatId);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [typingInfo?.isTyping, currentChatId, dispatch]);
+  
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [expandedMessages, setExpandedMessages] = useState<
@@ -586,7 +604,6 @@ export const MessageArea: FC<MessageAreaProps> = ({
 
   //  RENDER MESSAGE
   const renderMessage = (msg: any, messages: any[], index: number) => {
-console.log("msgmsgmsgmsgmsg",msg)
     const { images, textHTML } = extractImageComponents(msg.content);
     const hasImages = images.length > 0;
 
@@ -936,9 +953,9 @@ console.log("msgmsgmsgmsgmsg",msg)
           messages.map((msg, index) => renderMessage(msg, messages, index))
         )}
         <ImageFullscreenProvider />
-        {/* {typingInfo?.isTyping && typingMember && (
+        {typingInfo?.isTyping && typingMember && (
               <TypingIndicator typingMember={typingMember} />
-            )} */}
+            )}
         <div ref={messagesEndRef} />
       </div>
     </div>

@@ -44,7 +44,7 @@ const MentionReadOnlyItem = (props: any) => {
   useEffect(() => {
     // Only initialize tippy after component is mounted and ref is available
     if (!isMounted || !spanRef.current || !entityIdentifier || !memberDetails) return;
-    console.log("memberDetailsmemberDetailsmemberDetails",memberDetails)
+    // console.log("memberDetailsmemberDetailsmemberDetails",memberDetails)
 
     // Small delay to ensure DOM is fully ready
     const timeoutId = setTimeout(() => {

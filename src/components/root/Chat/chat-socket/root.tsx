@@ -119,7 +119,7 @@ export function ChatSocketContainer() {
                 (group: any) => group.id === parsed.group,
               ) as IChatGroup;
               const Attachments = parsed?.attachments?.length > 0;
-              const isGroupChat = senderDetails.members.length > 1;
+              const isGroupChat = senderDetails?.members.length > 1;
               const sanitizedMessageContent = cleanedHTML(parsed.content);
               const plainTextContent = extractPlainText(
                 sanitizedMessageContent,
@@ -245,7 +245,7 @@ export function ChatSocketContainer() {
             break;
             case "typing":
             if (parsed.sender !== currentUser?.id) {
-              setTyping(parsed);
+              dispatch(setTyping(parsed));
             }
             break;
         }

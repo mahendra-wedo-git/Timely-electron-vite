@@ -527,6 +527,7 @@ export const ChatWindow = () => {
                     handleForward={handleForward}
                     handleReplay={handleReplay}
                     handleEditMessage={handleEditMessage}
+                    currentChatId={currentChatId || ""}
                   />
 
                   <TiptapChatEditor
